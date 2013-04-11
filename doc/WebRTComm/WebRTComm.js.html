@@ -50,14 +50,14 @@
 /** 
  * The JavaScript Framework WebRTComm allow Web Application developers to easily 
  * integrate multimedia communication service (e.g. VoIP) in their web site, thanks 
- * to the W3C WebRTC API. The WebRTCComm Framework provides a high level communication 
+ * to the W3C WebRTC API. The WebRTComm Framework provides a high level communication 
  * API on top of the opensource JAIN SIP JavaScript Stack (implementing transport of SIP over WebSocket). 
  * By using a convergent HTTP/SIP Application Server (e.g. Mobicents MSS) or directly access a 
  * SIP server (e.g. Asterisk), the web developer can rapidly and easily link his web site to a 
  * telephony infrastructure.&lt;br> 
  * 
  * A simple test web application of the WebRTComm Framework can be found 
- * &lt;a href="http://code.google.com/p/jain-sip/source/browse/?repo=javascript#git%2Fsrc%2Ftest%2FWebRTCommTestWebApp">here&lt;/a>
+ * &lt;a href="https://code.google.com/p/webrtcomm/source/browse/?repo=test%2FWebRTCommTestWebApp">here&lt;/a>
  * 
  * @module WebRTComm 
  * @author Laurent STRULLU (laurent.strullu@orange.com) 
@@ -473,7 +473,6 @@ PrivateJainSipCallConnector.prototype.sendSipInviteRequest =function(){
         calleeSipUri += "@"+this.clientConnector.configuration.sipDomain;
     }
     var fromSipUriString=this.clientConnector.configuration.sipUserName+"@"+this.clientConnector.configuration.sipDomain;
-      
     var jainSipCseqHeader=this.clientConnector.jainSipHeaderFactory.createCSeqHeader(1,"INVITE");
     var jainSipCallIdHeader=this.clientConnector.jainSipHeaderFactory.createCallIdHeader(this.sipCallId);
     var jainSipMaxForwardHeader=this.clientConnector.jainSipHeaderFactory.createMaxForwardsHeader(70);
@@ -481,7 +480,15 @@ PrivateJainSipCallConnector.prototype.sendSipInviteRequest =function(){
     var jainSipAllowListHeader=this.clientConnector.jainSipHeaderFactory.createHeaders("Allow: INVITE,ACK,CANCEL,BYE");         
     var jainSipFromUri=this.clientConnector.jainSipAddressFactory.createSipURI_user_host(null,fromSipUriString);
     var jainSipFromAdress=this.clientConnector.jainSipAddressFactory.createAddress_name_uri(this.configuration.displayName,jainSipFromUri);
-    
+        // Setup display name
+    if(this.configuration.displayName)
+    {
+      jainSipFromAdress.setDisplayName(this.configuration.displayName);      
+    }
+    else if(this.clientConnector.configuration.sipDisplayName)
+    {
+      jainSipFromAdress.setDisplayName(this.clientConnector.configuration.sipDisplayName);      
+    }
     var tagFrom=new Date().getTime();
     var jainSipFromHeader=this.clientConnector.jainSipHeaderFactory.createFromHeader(jainSipFromAdress, tagFrom);           
     var jainSiptoUri=this.clientConnector.jainSipAddressFactory.createSipURI_user_host(null,calleeSipUri);
@@ -730,9 +737,9 @@ PrivateJainSipCallConnector.prototype.processInvitedSipRequestEvent =function(re
             this.webRTCommCall.onPrivateCallConnectorRemoteSdpOfferEvent(this.jainSipInvitedRequest.getContent());
             
             // Notify incoming communication
-            var that=this;
             var callerPhoneNumber = headerFrom.getAddress().getURI().getUser();
-            this.webRTCommCall.onPrivateCallConnectorCallRingingEvent(callerPhoneNumber);    
+            var callerDisplayName = headerFrom.getAddress().getDisplayName();
+            this.webRTCommCall.onPrivateCallConnectorCallRingingEvent(callerPhoneNumber,callerDisplayName);    
         } 
         else if(requestMethod=="CANCEL")  
         {
@@ -1373,7 +1380,7 @@ PrivateJainSipClientConnector.prototype.processDisconnected=function(){
  * @param {string} error WebSocket connection error
  */ 
 PrivateJainSipClientConnector.prototype.processConnectionError=function(error){
-    console.war("PrivateJainSipClientConnector:processConnectionError(): SIP connection has failed, error:"+error);
+    console.warn("PrivateJainSipClientConnector:processConnectionError(): SIP connection has failed, error:"+error);
     try
     {
         this.reset();
@@ -1758,6 +1765,7 @@ WebRTCommCall = function(webRTCommClient)
         this.webRTCommClient=webRTCommClient;
         this.calleePhoneNumber = undefined;
         this.callerPhoneNumber = undefined;
+        this.callerDisplayName=undefined;
         this.incomingCallFlag = false;
         this.configuration=undefined;
         this.connector=undefined;
@@ -1828,6 +1836,15 @@ WebRTCommCall.prototype.getId= function() {
  */ 
 WebRTCommCall.prototype.getCallerPhoneNumber= function() {
     return this.callerPhoneNumber;
+}
+
+/**
+ * Get caller display Name
+ * @public
+ * @returns {String} callerDisplayName or undefined
+ */ 
+WebRTCommCall.prototype.getCallerDisplayName= function() {
+    return this.callerDisplayName;
 }
 
 /**
@@ -2720,14 +2737,17 @@ WebRTCommCall.prototype.onPrivateCallConnectorCallOpenErrorEvent=function(error)
  * Implementation of the PrivateCallConnector listener interface: process call ringing event
  * @private 
  * @param {string} callerPhoneNumber  caller contact identifier (e.g. bob@sip.net)
+ * @param {string} callerDisplayName  caller contact identifier (e.g. bob@sip.net)
  */ 
-WebRTCommCall.prototype.onPrivateCallConnectorCallRingingEvent=function(callerPhoneNumber)
+WebRTCommCall.prototype.onPrivateCallConnectorCallRingingEvent=function(callerPhoneNumber,callerDisplayName)
 {
     console.debug("WebRTCommCall:onPrivateCallConnectorCallRingingEvent():callerPhoneNumber="+callerPhoneNumber);
+    console.debug("WebRTCommCall:onPrivateCallConnectorCallRingingEvent():callerDisplayName="+callerDisplayName);
     // Notify the closed event to the listener
+    this.callerPhoneNumber=callerPhoneNumber;
+    this.callerDisplayName=callerDisplayName;
     if(this.webRTCommClient.eventListener.onWebRTCommCallRingingEvent)
     {
-        this.callerPhoneNumber=callerPhoneNumber;
         var that=this;
         setTimeout(function(){
             try {
@@ -4340,7 +4360,7 @@ WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallMessageEvent= funct
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0-dev</a> on Tue Apr 09 2013 10:49:11 GMT+0200 (CEST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0-dev</a> on Thu Apr 11 2013 10:36:54 GMT+0200 (CEST)
 </footer>
 
 <script> prettyPrint(); </script>

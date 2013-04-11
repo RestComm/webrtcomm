@@ -16,6 +16,7 @@ WebRTCommCall = function(webRTCommClient)
         this.webRTCommClient=webRTCommClient;
         this.calleePhoneNumber = undefined;
         this.callerPhoneNumber = undefined;
+        this.callerDisplayName=undefined;
         this.incomingCallFlag = false;
         this.configuration=undefined;
         this.connector=undefined;
@@ -86,6 +87,15 @@ WebRTCommCall.prototype.getId= function() {
  */ 
 WebRTCommCall.prototype.getCallerPhoneNumber= function() {
     return this.callerPhoneNumber;
+}
+
+/**
+ * Get caller display Name
+ * @public
+ * @returns {String} callerDisplayName or undefined
+ */ 
+WebRTCommCall.prototype.getCallerDisplayName= function() {
+    return this.callerDisplayName;
 }
 
 /**
@@ -978,14 +988,17 @@ WebRTCommCall.prototype.onPrivateCallConnectorCallOpenErrorEvent=function(error)
  * Implementation of the PrivateCallConnector listener interface: process call ringing event
  * @private 
  * @param {string} callerPhoneNumber  caller contact identifier (e.g. bob@sip.net)
+ * @param {string} callerDisplayName  caller contact identifier (e.g. bob@sip.net)
  */ 
-WebRTCommCall.prototype.onPrivateCallConnectorCallRingingEvent=function(callerPhoneNumber)
+WebRTCommCall.prototype.onPrivateCallConnectorCallRingingEvent=function(callerPhoneNumber,callerDisplayName)
 {
     console.debug("WebRTCommCall:onPrivateCallConnectorCallRingingEvent():callerPhoneNumber="+callerPhoneNumber);
+    console.debug("WebRTCommCall:onPrivateCallConnectorCallRingingEvent():callerDisplayName="+callerDisplayName);
     // Notify the closed event to the listener
+    this.callerPhoneNumber=callerPhoneNumber;
+    this.callerDisplayName=callerDisplayName;
     if(this.webRTCommClient.eventListener.onWebRTCommCallRingingEvent)
     {
-        this.callerPhoneNumber=callerPhoneNumber;
         var that=this;
         setTimeout(function(){
             try {

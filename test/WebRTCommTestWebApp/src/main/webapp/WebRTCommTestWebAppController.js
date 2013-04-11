@@ -22,23 +22,7 @@ function WebRTCommTestWebAppController(view) {
 WebRTCommTestWebAppController.prototype.constructor=WebRTCommTestWebAppController;
 
 // Default SIP profile to use
-/*WebRTCommTestWebAppController.prototype.DEFAULT_SIP_OUTBOUND_PROXY="ws://10.193.197.77:10060/sip";
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_USER_AGENT="WebRTCommTestWebApp/0.0.1" 
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_USER_AGENT_CAPABILITIES=undefined // +g.oma.sip-im
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_DOMAIN="10.193.200.25";
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_DISPLAY_NAME="alice";
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_USER_NAME="alice";
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_LOGIN="1234";
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_PASSWORD="1234";
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_CONTACT="818512341234";
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_REGISTER_MODE=false;
-WebRTCommTestWebAppController.prototype.DEFAULT_STUN_SERVER="10.194.124.24:3478"; // stun.l.google.com:19302
-WebRTCommTestWebAppController.prototype.DEFAULT_AUDIO_CODECS_FILTER=undefined; // RTCPeerConnection default codec filter
-WebRTCommTestWebAppController.prototype.DEFAULT_VIDEO_CODECS_FILTER=undefined; // RTCPeerConnection default codec filter
-WebRTCommTestWebAppController.prototype.DEFAULT_LOCAL_VIDEO_FORMAT="{\"mandatory\": {\"maxWidth\": 500}}"
-*/
-
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_OUTBOUND_PROXY="ws://10.194.124.24:80";
+WebRTCommTestWebAppController.prototype.DEFAULT_SIP_OUTBOUND_PROXY="ws://webrtcsipserver:80";
 WebRTCommTestWebAppController.prototype.DEFAULT_SIP_USER_AGENT="WebRTCommTestWebApp/0.0.1" 
 WebRTCommTestWebAppController.prototype.DEFAULT_SIP_USER_AGENT_CAPABILITIES=undefined // +g.oma.sip-im
 WebRTCommTestWebAppController.prototype.DEFAULT_SIP_DOMAIN="webrtc.orange.com";
@@ -48,46 +32,11 @@ WebRTCommTestWebAppController.prototype.DEFAULT_SIP_LOGIN=undefined;
 WebRTCommTestWebAppController.prototype.DEFAULT_SIP_PASSWORD=undefined;
 WebRTCommTestWebAppController.prototype.DEFAULT_SIP_CONTACT="bob";
 WebRTCommTestWebAppController.prototype.DEFAULT_SIP_REGISTER_MODE=true;
-WebRTCommTestWebAppController.prototype.DEFAULT_STUN_SERVER="10.194.124.24:3478"; // stun.l.google.com:19302
+WebRTCommTestWebAppController.prototype.DEFAULT_STUN_SERVER="webrtcstunserver:3478"; // stun.l.google.com:19302
 WebRTCommTestWebAppController.prototype.DEFAULT_AUDIO_CODECS_FILTER=undefined; // RTCPeerConnection default codec filter
 WebRTCommTestWebAppController.prototype.DEFAULT_VIDEO_CODECS_FILTER=undefined; // RTCPeerConnection default codec filter
 WebRTCommTestWebAppController.prototype.DEFAULT_LOCAL_VIDEO_FORMAT="{\"mandatory\": {\"maxWidth\": 500}}"
 WebRTCommTestWebAppController.prototype.DEFAULT_SIP_URI_CONTACT_PARAMETERS=undefined;
-
-
-/*WebRTCommTestWebAppController.prototype.DEFAULT_SIP_OUTBOUND_PROXY="ws://10.194.70.190:9080/sip";
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_USER_AGENT="WebRTCommTestWebApp/0.0.1" 
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_USER_AGENT_CAPABILITIES=undefined // +g.oma.sip-im
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_DOMAIN="sip.test.com";
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_DISPLAY_NAME="alice";
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_USER_NAME="alice";
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_LOGIN=undefined;
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_PASSWORD=undefined;
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_CONTACT="bob";
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_REGISTER_MODE=true;
-WebRTCommTestWebAppController.prototype.DEFAULT_STUN_SERVER="10.194.124.24:3478"; // stun.l.google.com:19302
-WebRTCommTestWebAppController.prototype.DEFAULT_AUDIO_CODECS_FILTER=undefined; // RTCPeerConnection default codec filter
-WebRTCommTestWebAppController.prototype.DEFAULT_VIDEO_CODECS_FILTER=undefined; // RTCPeerConnection default codec filter
-WebRTCommTestWebAppController.prototype.DEFAULT_LOCAL_VIDEO_FORMAT="{\"mandatory\": {\"maxWidth\": 500}}"
-*/
-
-//WebRTCommTestWebAppController.prototype.DEFAULT_SIP_OUTBOUND_PROXY="ws://10.193.192.136:9080/sip";
-/*WebRTCommTestWebAppController.prototype.DEFAULT_SIP_OUTBOUND_PROXY="ws://10.192.135.192:10060";
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_USER_AGENT="CloudTelAsterisk" 
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_USER_AGENT_CAPABILITIES="expires=200;click2call=no;+g.oma.sip-im;+audio;language=\"en,fr\"" // +g.oma.sip-im
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_DOMAIN="10.192.135.188";
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_DISPLAY_NAME="7003";
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_USER_NAME="7003";
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_LOGIN="7003";
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_PASSWORD="7003";
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_CONTACT="bob";
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_REGISTER_MODE=true;
-WebRTCommTestWebAppController.prototype.DEFAULT_STUN_SERVER="10.194.124.24:3478"; // stun.l.google.com:19302
-WebRTCommTestWebAppController.prototype.DEFAULT_AUDIO_CODECS_FILTER=undefined; // RTCPeerConnection default codec filter
-WebRTCommTestWebAppController.prototype.DEFAULT_VIDEO_CODECS_FILTER=undefined; // RTCPeerConnection default codec filter
-WebRTCommTestWebAppController.prototype.DEFAULT_LOCAL_VIDEO_FORMAT="{\"mandatory\": {\"maxWidth\": 500}}"
-*/
-
 
 /**
  * on load event handler
@@ -201,7 +150,7 @@ WebRTCommTestWebAppController.prototype.initView=function(){
     this.view.hideRemoteVideo();
     this.view.setStunServerTextInputValue(this.webRTCommClientConfiguration.RTCPeerConnection.stunServer);
     this.view.setSipOutboundProxyTextInputValue(this.webRTCommClientConfiguration.sip.sipOutboundProxy);
-    this.view.setSipUserAgentTextInputValue(this.DEFAULT_SIP_USER_AGENT);
+    this.view.setSipUserAgentTextInputValue(this.webRTCommClientConfiguration.sip.sipUserAgent);
     this.view.setSipUriContactParametersTextInputValue(this.webRTCommClientConfiguration.sip.sipUriContactParameters);
     this.view.setSipUserAgentCapabilitiesTextInputValue(this.webRTCommClientConfiguration.sip.sipUserAgentCapabilities);
     this.view.setSipDomainTextInputValue(this.webRTCommClientConfiguration.sip.sipDomain);
@@ -428,7 +377,7 @@ WebRTCommTestWebAppController.prototype.onClickCallButtonViewEventHandler=functi
         try
         {
             var callConfiguration = {
-                displayName:this.DEFAULT_SIP_DISPLAY_NAME,
+                displayName:this.view.getSipDisplayNameTextInputValue(),
                 localMediaStream: this.localAudioVideoMediaStream,
                 audioMediaFlag:this.view.getAudioMediaValue(),
                 videoMediaFlag:this.view.getVideoMediaValue(),
@@ -885,8 +834,9 @@ WebRTCommTestWebAppController.prototype.onWebRTCommCallRingingEvent=function(web
     this.view.disableSendMessageButton();
     this.view.disableCancelCallButton();
     this.view.disableConnectButton();
-    alert("Communication from "+webRTCommCall.getCallerPhoneNumber() + ", accept or reject"); 
-
+    var caller = webRTCommCall.getCallerDisplayName();
+    if(caller==undefined) caller = webRTCommCall.getCallerPhoneNumber() 
+    alert("Communication from "+ caller + ", accept or reject"); 
 }
 
 /**
@@ -925,6 +875,7 @@ WebRTCommTestWebAppController.prototype.onWebRTCommCallHangupEvent=function(webR
     this.view.stopRemoteVideo();
     this.view.stopRinging();
     this.webRTCommCall=undefined;
+    
     if(webRTCommCall.getCallerPhoneNumber())
         alert("Communication closed by "+webRTCommCall.getCallerPhoneNumber());
     else 

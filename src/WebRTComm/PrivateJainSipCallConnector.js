@@ -446,7 +446,6 @@ PrivateJainSipCallConnector.prototype.sendSipInviteRequest =function(){
         calleeSipUri += "@"+this.clientConnector.configuration.sipDomain;
     }
     var fromSipUriString=this.clientConnector.configuration.sipUserName+"@"+this.clientConnector.configuration.sipDomain;
-      
     var jainSipCseqHeader=this.clientConnector.jainSipHeaderFactory.createCSeqHeader(1,"INVITE");
     var jainSipCallIdHeader=this.clientConnector.jainSipHeaderFactory.createCallIdHeader(this.sipCallId);
     var jainSipMaxForwardHeader=this.clientConnector.jainSipHeaderFactory.createMaxForwardsHeader(70);
@@ -454,7 +453,15 @@ PrivateJainSipCallConnector.prototype.sendSipInviteRequest =function(){
     var jainSipAllowListHeader=this.clientConnector.jainSipHeaderFactory.createHeaders("Allow: INVITE,ACK,CANCEL,BYE");         
     var jainSipFromUri=this.clientConnector.jainSipAddressFactory.createSipURI_user_host(null,fromSipUriString);
     var jainSipFromAdress=this.clientConnector.jainSipAddressFactory.createAddress_name_uri(this.configuration.displayName,jainSipFromUri);
-    
+        // Setup display name
+    if(this.configuration.displayName)
+    {
+      jainSipFromAdress.setDisplayName(this.configuration.displayName);      
+    }
+    else if(this.clientConnector.configuration.sipDisplayName)
+    {
+      jainSipFromAdress.setDisplayName(this.clientConnector.configuration.sipDisplayName);      
+    }
     var tagFrom=new Date().getTime();
     var jainSipFromHeader=this.clientConnector.jainSipHeaderFactory.createFromHeader(jainSipFromAdress, tagFrom);           
     var jainSiptoUri=this.clientConnector.jainSipAddressFactory.createSipURI_user_host(null,calleeSipUri);
@@ -703,9 +710,9 @@ PrivateJainSipCallConnector.prototype.processInvitedSipRequestEvent =function(re
             this.webRTCommCall.onPrivateCallConnectorRemoteSdpOfferEvent(this.jainSipInvitedRequest.getContent());
             
             // Notify incoming communication
-            var that=this;
             var callerPhoneNumber = headerFrom.getAddress().getURI().getUser();
-            this.webRTCommCall.onPrivateCallConnectorCallRingingEvent(callerPhoneNumber);    
+            var callerDisplayName = headerFrom.getAddress().getDisplayName();
+            this.webRTCommCall.onPrivateCallConnectorCallRingingEvent(callerPhoneNumber,callerDisplayName);    
         } 
         else if(requestMethod=="CANCEL")  
         {

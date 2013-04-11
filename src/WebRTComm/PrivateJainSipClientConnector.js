@@ -499,7 +499,7 @@ PrivateJainSipClientConnector.prototype.processDisconnected=function(){
  * @param {string} error WebSocket connection error
  */ 
 PrivateJainSipClientConnector.prototype.processConnectionError=function(error){
-    console.war("PrivateJainSipClientConnector:processConnectionError(): SIP connection has failed, error:"+error);
+    console.warn("PrivateJainSipClientConnector:processConnectionError(): SIP connection has failed, error:"+error);
     try
     {
         this.reset();
