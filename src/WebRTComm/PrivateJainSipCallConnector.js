@@ -288,7 +288,6 @@ PrivateJainSipCallConnector.prototype.resetSipContext=function(){
     console.debug("PrivateJainSipCallConnector:resetSipContext()");      
     this.sipCallState=undefined;
     this.sdpOffer=undefined;
-    this.jainSipAuthorizationHeader=undefined;
     this.jainSipInvitingSentRequest=undefined;
     this.jainSipInvitingDialog=undefined;
     this.jainSipInvitingTransaction=undefined;
@@ -453,14 +452,14 @@ PrivateJainSipCallConnector.prototype.sendSipInviteRequest =function(){
     var jainSipAllowListHeader=this.clientConnector.jainSipHeaderFactory.createHeaders("Allow: INVITE,ACK,CANCEL,BYE");         
     var jainSipFromUri=this.clientConnector.jainSipAddressFactory.createSipURI_user_host(null,fromSipUriString);
     var jainSipFromAdress=this.clientConnector.jainSipAddressFactory.createAddress_name_uri(this.configuration.displayName,jainSipFromUri);
-        // Setup display name
+    // Setup display name
     if(this.configuration.displayName)
     {
-      jainSipFromAdress.setDisplayName(this.configuration.displayName);      
+        jainSipFromAdress.setDisplayName(this.configuration.displayName);      
     }
     else if(this.clientConnector.configuration.sipDisplayName)
     {
-      jainSipFromAdress.setDisplayName(this.clientConnector.configuration.sipDisplayName);      
+        jainSipFromAdress.setDisplayName(this.clientConnector.configuration.sipDisplayName);      
     }
     var tagFrom=new Date().getTime();
     var jainSipFromHeader=this.clientConnector.jainSipHeaderFactory.createFromHeader(jainSipFromAdress, tagFrom);           
@@ -481,13 +480,46 @@ PrivateJainSipCallConnector.prototype.sendSipInviteRequest =function(){
                       
     this.clientConnector.jainSipMessageFactory.addHeader( this.jainSipInvitingRequest, jainSipAllowListHeader);
     this.clientConnector.jainSipMessageFactory.addHeader( this.jainSipInvitingRequest, this.clientConnector.jainSipContactHeader);
-    if(this.jainSipAuthorizationHeader)
-    {
-        this.clientConnector.jainSipMessageFactory.addHeader(this.jainSipInvitingRequest, this.jainSipAuthorizationHeader);
-    }
     this.jainSipInvitingTransaction = this.clientConnector.jainSipProvider.getNewClientTransaction(this.jainSipInvitingRequest);
     this.jainSipInvitingRequest.setTransaction(this.jainSipInvitingTransaction);
     this.jainSipInvitingDialog=this.jainSipInvitingTransaction.getDialog();
+    this.jainSipInvitingTransaction.sendRequest();
+}
+
+/**
+ * Send SIP INVITE request
+ * @private 
+ */ 
+PrivateJainSipCallConnector.prototype.sendAuthenticatedSipInviteRequest =function(jainSipAuthorizationHeader){
+    console.debug("PrivateJainSipCallConnector:sendAuthenticatedSipInviteRequest()");
+    this.jainSipInvitingRequest.removeHeader("Authorization");  
+    var newJainSipInvitingRequest = new SIPRequest();
+    newJainSipInvitingRequest.setMethod(this.jainSipInvitingRequest.getMethod());
+    newJainSipInvitingRequest.setRequestURI(this.jainSipInvitingRequest.getRequestURI());
+    var headerList=this.jainSipInvitingRequest.getHeaders();
+    for(var i=0;i<headerList.length;i++)
+    {
+        newJainSipInvitingRequest.addHeader(headerList[i]);
+    }
+    
+    var num=new Number(this.jainSipInvitingRequest.getCSeq().getSeqNumber());
+    newJainSipInvitingRequest.getCSeq().setSeqNumber(num+1);
+    newJainSipInvitingRequest.setCallId(this.jainSipInvitingRequest.getCallId());
+    newJainSipInvitingRequest.setVia(this.clientConnector.jainSipListeningPoint.getViaHeader());
+    newJainSipInvitingRequest.setFrom(this.jainSipInvitingRequest.getFrom());
+    newJainSipInvitingRequest.setTo(this.jainSipInvitingRequest.getTo());
+    newJainSipInvitingRequest.setMaxForwards(this.jainSipInvitingRequest.getMaxForwards());
+
+    if(this.jainSipInvitingRequest.getContent()!=null)
+    {
+        var content=this.jainSipInvitingRequest.getContent();
+        var contentType=this.jainSipInvitingRequest.getContentTypeHeader();
+        newJainSipInvitingRequest.setContent(content, contentType);
+    }
+    this.jainSipInvitingRequest=newJainSipInvitingRequest;
+    this.clientConnector.jainSipMessageFactory.addHeader(this.jainSipInvitingRequest, jainSipAuthorizationHeader); 
+    this.jainSipInvitingTransaction = this.clientConnector.jainSipProvider.getNewClientTransaction(this.jainSipInvitingRequest);
+    this.jainSipInvitingRequest.setTransaction(this.jainSipInvitingransaction);
     this.jainSipInvitingTransaction.sendRequest();
 }
 
@@ -519,8 +551,8 @@ PrivateJainSipCallConnector.prototype.processInvitingSipResponseEvent =function(
         else if(statusCode==407)
         {
             // Send Authenticated SIP INVITE
-            this.jainSipAuthorizationHeader=this.clientConnector.jainSipHeaderFactory.createAuthorizationHeader(jainSipResponse,this.jainSipInvitingRequest,this.clientConnector.configuration.sipPassword,this.clientConnector.configuration.sipLogin);
-            this.sendSipInviteRequest();
+            var jainSipAuthorizationHeader=this.clientConnector.jainSipHeaderFactory.createAuthorizationHeader(jainSipResponse,this.jainSipInvitingRequest,this.clientConnector.configuration.sipPassword,this.clientConnector.configuration.sipLogin);
+            this.sendAuthenticatedSipInviteRequest(jainSipAuthorizationHeader);
             // Update SIP call state            
             this.sipCallState=this.SIP_INVITING_407_STATE;
         }
