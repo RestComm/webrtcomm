@@ -197,11 +197,36 @@
                 }
             }
 
+            function playRemoteAudio(remoteMediaStream) 
+            {
+                if(typeof navigator.webkitGetUserMedia != 'undefined')
+                {     
+                    document.getElementById("remoteAudio").src=webkitURL.createObjectURL(remoteMediaStream);
+                }
+                else if(typeof navigator.mozGetUserMedia != 'undefined')
+                {
+                    document.getElementById("remoteAudio").mozSrcObject=remoteMediaStream;
+                }
+                document.getElementById("remoteAudio").play();         
+            }
+            
+            function stopRemoteAudio() 
+            {
+                document.getElementById("remoteAudio").pause();
+                if(typeof navigator.webkitGetUserMedia != 'undefined')
+                {     
+                    document.getElementById("remoteAudio").src=undefined;
+                }
+                else if(typeof navigator.mozGetUserMedia != 'undefined')
+                {
+                    document.getElementById("remoteAudio").mozSrcObject=undefined;
+                }
+            }
+            
             function playRinging(remoteMediaStream) 
             {
                 document.getElementById("ringing").play();
             }
-
 
             function stopRinging() 
             {
@@ -218,50 +243,106 @@
                 document.getElementById("sipRegistrationCkeckBox").checked=true;
             }
 
-            function uncheckAudioMediaFlag() 
+            function uncheckAudioMediaCheckBox() 
             {
                 document.getElementById("audioMediaCkeckBox").checked=false;
             }
 
-            function checkAudioMediaFlag() 
+            function checkAudioMediaCheckBox() 
             {
                 document.getElementById("audioMediaCkeckBox").checked=true;
             }
 
-            function uncheckVideoMediaFlag() 
+            function uncheckVideoMediaCheckBox() 
             {
                 document.getElementById("videoMediaCkeckBox").checked=false;
             }
 
-            function checkVideoMediaFlag() 
+            function checkVideoMediaCheckBox() 
             {
                 document.getElementById("videoMediaCkeckBox").checked=true;
             }
-            function uncheckAudioMediaFlag() 
+            function uncheckAudioMediaCheckBox() 
             {
                 document.getElementById("audioMediaCkeckBox").checked=false;
             }
 
-            function checkAudioMediaFlag() 
+            function checkAudioMediaCheckBox() 
             {
                 document.getElementById("audioMediaCkeckBox").checked=true;
             }
 
-            function uncheckMessageMediaFlag() 
+            function uncheckMessageMediaCheckBox() 
             {
                 document.getElementById("messageMediaCkeckBox").checked=false;
             }
 
-            function checkMessageMediaFlag() 
+            function checkMessageMediaCheckBox() 
             {
                 document.getElementById("messageMediaCkeckBox").checked=true;
             }
             
+            
+            function uncheckDtlsSrtpKeyAgreementCheckBox() 
+            {
+                document.getElementById("dtlsSrtpKeyAgreementCkeckBox").checked=false;
+            }
+
+            function checkDtlsSrtpKeyAgreementCheckBox() 
+            {
+                document.getElementById("dtlsSrtpKeyAgreementCkeckBox").checked=true;
+            }
+               
+            function uncheckUseStunServerCkeckBox() 
+            {
+                document.getElementById("useStunServerCkeckBox").checked=false;
+            }
+
+            function checkUseStunServerCkeckBox() 
+            {
+                document.getElementById("useStunServerCkeckBox").checked=true;
+            }
+            
+            function uncheckUseTurnServerCkeckBox() 
+            {
+                document.getElementById("useTurnServerCkeckBox").checked=false;
+            }
+
+            function checkUseTurnServerCkeckBox() 
+            {
+                document.getElementById("useTurnServerCkeckBox").checked=true;
+            }
+            
+            function uncheckForceTurnMediaRelayCkeckBox() 
+            {
+                document.getElementById("forceTurnMediaRelayCkeckBox").checked=false;
+            }
+
+            function checkForceTurnMediaRelayCkeckBox() 
+            {
+                document.getElementById("forceTurnMediaRelayCkeckBox").checked=true;
+            }
+           
             function setStunServerTextInputValue(value) 
             {
                 document.getElementById("stunServer").value=value;
             }
-
+            
+            function setTurnServerTextInputValue(value) 
+            {
+                document.getElementById("turnServer").value=value;
+            }
+            
+            function setTurnLoginTextInputValue(value) 
+            {
+                document.getElementById("turnLogin").value=value;
+            }
+            
+            function setTurnPasswordTextInputValue(value) 
+            {
+                document.getElementById("turnPassword").value=value;
+            }
+            
             function setSipOutboundProxyTextInputValue(value) 
             {
                 document.getElementById("sipOutboundProxy").value=value;
@@ -340,6 +421,22 @@
                 return getTextInputValue("stunServer")
             }
 
+
+            function getTurnServerTextInputValue() 
+            {
+                return getTextInputValue("turnServer")
+            }
+            
+            function getTurnLoginTextInputValue() 
+            {
+                return getTextInputValue("turnLogin")
+            }
+            
+            function getTurnPasswordTextInputValue() 
+            {
+                return getTextInputValue("turnPassword")
+            }
+            
             function getSipOutboundProxyTextInputValue() 
             {
                 return getTextInputValue("sipOutboundProxy");
@@ -406,9 +503,29 @@
             }
             
              
+            function getUseStunServerValue() 
+            {
+                return document.getElementById("useStunServerCkeckBox").checked;
+            }
+             
+            function getUseTurnServerValue() 
+            {
+                return document.getElementById("useTurnServerCkeckBox").checked;
+            }
+            
             function getMessageMediaValue() 
             {
                 return document.getElementById("messageMediaCkeckBox").checked;
+            }
+            
+            function getDtlsSrtpKeyAgreementValue() 
+            {
+                return document.getElementById("dtlsSrtpKeyAgreementCkeckBox").checked;
+            }
+            
+            function getForceTurnMediaRelayValue() 
+            {
+                return document.getElementById("forceTurnMediaRelayCkeckBox").checked;
             }
             
             function getAudioCodecsFilterTextInputValue() 
@@ -430,9 +547,10 @@
 
     </head>
     <body onload='webRTCommTestWebAppController.onLoadViewEventHandler();' onunload='webRTCommTestWebAppController.onUnloadViewEventHandler();'>
+        <label style="color:red">Firefox 20.x: activate RTCPeerConnection configuration (about:config)</label>
         <div id="webRTCommClientConfigurationDiv" >
             <br/>
-            <label style="color:black; font-weight: bold">SIP Profile settings</label>
+            <label style="color:black; font-weight: bold">SIP Profile settings (modification requires reconnection)</label>
             <div style="border:black solid thin; width:800px " id="webRTCommClientSipProfileConfigurationDiv"> 
                 <div id='sipDisplayNameDiv'>
                     <label>SIP Display Name:</label>
@@ -452,8 +570,22 @@
                 </div>
                 <div id='stunServerDiv'>
                     <label>STUN server:</label>
-                    <input  id="stunServer"  type="text" size="40" >
+                    <input  id='useStunServerCkeckBox' type="checkbox" checked>
+                    <input  id="stunServer"  type="text" size="20" >
                     <label style="color:red">sample: Google public STUN server:stun.l.google.com:19302</label>
+                </div>
+                <div id='turnServerDiv'>
+                    <label>TURN server:</label>
+                    <input  id='useTurnServerCkeckBox' type="checkbox" checked>
+                    <input  id="turnServer"  type="text" size="20" >
+                    <label>TURN login</label>
+                    <input  id="turnLogin"  type="text" size="20" >
+                    <label>TURN password</label>
+                    <input  id="turnPassword"  type="text" size="20" >
+                </div>
+                <div id='forceTurnMediaRelayDiv'>
+                    <label>Force TURN media relay:</label>
+                    <input  id='forceTurnMediaRelayCkeckBox' type="checkbox" checked >
                 </div>
                 <div id='sipWsUrlDiv'>
                     <label>SIP outbound proxy WS URL:</label>
@@ -466,14 +598,14 @@
                 <div id='sipUriContactParametersDiv'>
                     <label>SIP URI Contact parameters:</label>
                     <input id="sipUriContactParameters"  type="text" size="30"> 
-                     <label style="color:red">sample: rtcweb-breaker=yes;....</label>
+                    <label style="color:red">sample: rtcweb-breaker=yes;....</label>
                 </div> 
                 <div id='sipUserAgentCapabilitiesDiv'>
                     <label>SIP User Agent Capabilities:</label>
                     <input id="sipUserAgentCapabilities"  type="text" size="30"> 
-                     <label style="color:red">sample: +g.oma.sip-im;....</label>
+                    <label style="color:red">sample: +g.oma.sip-im;....</label>
                 </div> 
-                 <div id='sipUserAgentDiv'>
+                <div id='sipUserAgentDiv'>
                     <label>SIP User agent:</label>
                     <input id="sipUserAgent"  type="text" size="30"> 
                 </div>   
@@ -513,6 +645,11 @@
                     <label>Local video format:</label>
                     <input id='localVideoFormat' type="text" size="100" onchange = "webRTCommTestWebAppController.onChangeLocalVideoFormatViewEventHandler();">
                 </div>
+                 <div id='messageMediaDiv'>
+                    <label>DTLS SRTP mode:</label>
+                    <input  id='dtlsSrtpKeyAgreementCkeckBox' type="checkbox" checked>
+                    <label style="color:red">(ckecked: DTLS, unchecked:SDES)</label>
+                </div>
             </div> 
             <audio id="ringing" loop src="audio/ringing.wav" />
             <audio id="ringingBack" loop src="audio/ringing.wav" />
@@ -535,12 +672,13 @@
         <br/>
         <div id='media'>
             <div style="position:relative;">
-             <textarea style="color: #444;font-family: 'Courier New', monospace;font-size: 1em;height: 50px; width:400px" id="messageTextArea" disabled placeholder="Enter some text, then press Send."></textarea>
-             <input  id='sendMessageButton'  style="" type='button' value='Send Message' disabled onclick = "webRTCommTestWebAppController.onClickSendMessageButtonViewEventHandler();"/>
+                <textarea style="color: #444;font-family: 'Courier New', monospace;font-size: 1em;height: 50px; width:400px" id="messageTextArea" disabled placeholder="Enter some text, then press Send."></textarea>
+                <input  id='sendMessageButton'  style="" type='button' value='Send Message' disabled onclick = "webRTCommTestWebAppController.onClickSendMessageButtonViewEventHandler();"/>
             </div>
             <div>
-                <video id="localVideo" style="height: auto; width: auto"></video>  
-                <video id="remoteVideo" style="height: auto; width: auto"></video>  
+                <video id="localVideo" style="height: auto; width: auto" ></video>  
+                <video id="remoteVideo" style="height: auto; width: auto" ></video>
+                <audio id="remoteAudio"></audio>
             </div>
         </div>
     </body>

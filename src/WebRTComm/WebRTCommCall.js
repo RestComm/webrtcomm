@@ -22,7 +22,9 @@ WebRTCommCall = function(webRTCommClient)
         this.connector=undefined;
         this.peerConnection = undefined;
         this.peerConnectionState = undefined;
-        this.remoteMediaStream=undefined; 
+        this.remoteBundledAudioVideoMediaStream=undefined; 
+        this.remoteAudioMediaStream=undefined;
+        this.remoteVideoMediaStream=undefined; 
         this.remoteSdpOffer=undefined;
         this.messageChannel=undefined;
     }
@@ -118,12 +120,30 @@ WebRTCommCall.prototype.getCalleePhoneNumber= function() {
 }
 
 /**
- * get remote media stream
+ * get bundled audio & video remote media stream
  * @public
- * @return remoteMediaStream RemoteMediaStream or undefined
+ * @return {MediaStream} remoteBundledAudioVideoMediaStream or undefined
  */ 
-WebRTCommCall.prototype.getRemoteMediaStream= function() {
-    return this.remoteMediaStream;
+WebRTCommCall.prototype.getRemoteBundledAudioVideoMediaStream= function() {
+    return this.remoteBundledAudioVideoMediaStream;
+}
+
+/**
+ * get remote audio media stream
+ * @public
+ * @return {MediaStream} remoteAudioMediaStream or undefined
+ */ 
+WebRTCommCall.prototype.getRemoteAudioMediaStream= function() {
+    return this.remoteAudioMediaStream;
+}
+
+/**
+ * get remote audio media stream
+ * @public
+ * @return {MediaStream} remoteAudioMediaStream or undefined
+ */ 
+WebRTCommCall.prototype.getRemoteVideoMediaStream= function() {
+    return this.remoteVideoMediaStream;
 }
 
 /**
@@ -160,6 +180,7 @@ WebRTCommCall.prototype.open=function(calleePhoneNumber, configuration){
                 {
                     try
                     {
+                        var that=this;
                         this.calleePhoneNumber=calleePhoneNumber;
                         this.configuration=configuration; 
                         this.connector.open(configuration);
@@ -167,15 +188,6 @@ WebRTCommCall.prototype.open=function(calleePhoneNumber, configuration){
                         // Setup RTCPeerConnection first
                         this.createRTCPeerConnection();
                         this.peerConnection.addStream(this.configuration.localMediaStream);
-                        var that=this;
-                        var mediaContraints = {
-                            mandatory:
-                            {
-                                OfferToReceiveAudio:this.configuration.audioMediaFlag, 
-                                OfferToReceiveVideo:this.configuration.videoMediaFlag
-                            }
-                        };
-                        
                         if(this.configuration.messageMediaFlag)
                         {
                             if(this.peerConnection.createDataChannel) 
@@ -188,7 +200,6 @@ WebRTCommCall.prototype.open=function(calleePhoneNumber, configuration){
                                     console.debug("WebRTCommCall:onRtcPeerConnectionMessageChannelOnMessageEvent(): this.messageChannel.label="+this.messageChannel.label); 
                                     console.debug("WebRTCommCall:onRtcPeerConnectionMessageChannelOnMessageEvent(): this.messageChannel.reliable="+this.messageChannel.reliable); 
                                     console.debug("WebRTCommCall:onRtcPeerConnectionMessageChannelOnMessageEvent(): this.messageChannel.binaryType="+this.messageChannel.binaryType);
-                                    var that=this;
                                     this.messageChannel.onopen = function(event) {
                                         that.onRtcPeerConnectionMessageChannelOnOpenEvent(event);
                                     }  
@@ -211,21 +222,42 @@ WebRTCommCall.prototype.open=function(calleePhoneNumber, configuration){
                         
                         if(window.webkitRTCPeerConnection)
                         {
+                            var sdpContraints = {
+                                mandatory:
+                                {
+                                    OfferToReceiveAudio:this.configuration.audioMediaFlag, 
+                                    OfferToReceiveVideo:this.configuration.videoMediaFlag,
+                                },
+                                optional: []
+                            };
+                        
+                            console.debug("WebRTCommCall:open():sdpContraints="+JSON.stringify(sdpContraints));
                             this.peerConnection.createOffer(function(offer) {
                                 that.onRtcPeerConnectionCreateOfferSuccessEvent(offer);
                             }, function(error) {
                                 that.onRtcPeerConnectionCreateOfferErrorEvent(error);
-                            },mediaContraints); 
+                            },sdpContraints); 
                         }
                         else if(window.mozRTCPeerConnection)
                         {
+                            var sdpContraints = {
+                                mandatory:
+                                {
+                                    OfferToReceiveAudio:this.configuration.audioMediaFlag, 
+                                    OfferToReceiveVideo:this.configuration.videoMediaFlag,
+                                    MozDontOfferDataChannel:!this.configuration.messageMediaFlag
+                                },
+                                optional: []
+                            };
+                        
+                            console.debug("WebRTCommCall:open():sdpContraints="+JSON.stringify(sdpContraints));
                             this.peerConnection.createOffer(function(offer) {
                                 that.onRtcPeerConnectionCreateOfferSuccessEvent(offer);
                             }, function(error) {
                                 that.onRtcPeerConnectionCreateOfferErrorEvent(error);
-                            },mediaContraints); 
+                            },sdpContraints); 
                         } 
-                        console.debug("WebRTCommCall:open():mediaContraints="+ JSON.stringify(mediaContraints));
+                        console.debug("WebRTCommCall:open():sdpContraints="+ JSON.stringify(sdpContraints));
                     }
                     catch(exception){
                         console.error("WebRTCommCall:open(): catched exception:"+exception);
@@ -551,11 +583,11 @@ WebRTCommCall.prototype.unmuteLocalAudioMediaStream =function(){
  */ 
 WebRTCommCall.prototype.muteRemoteAudioMediaStream =function(){
     console.debug("WebRTCommCall:muteRemoteAudioMediaStream()");
-    if(this.remoteMediaStream && this.remoteMediaStream.signalingState==this.remoteMediaStream.LIVE)
+    if(this.remoteBundledAudioVideoMediaStream && this.remoteBundledAudioVideoMediaStream.signalingState==this.remoteBundledAudioVideoMediaStream.LIVE)
     {
         var audioTracks = undefined;
-        if(this.remoteMediaStream.audioTracks) audioTracks=this.remoteMediaStream.audioTracks;
-        else if(this.remoteMediaStream.getAudioTracks) audioTracks=this.remoteMediaStream.getAudioTracks();
+        if(this.remoteBundledAudioVideoMediaStream.audioTracks) audioTracks=this.remoteBundledAudioVideoMediaStream.audioTracks;
+        else if(this.remoteBundledAudioVideoMediaStream.getAudioTracks) audioTracks=this.remoteBundledAudioVideoMediaStream.getAudioTracks();
         if(audioTracks)
         {
             for(var i=0; i<audioTracks.length;i++)
@@ -584,11 +616,11 @@ WebRTCommCall.prototype.muteRemoteAudioMediaStream =function(){
  */ 
 WebRTCommCall.prototype.unmuteRemoteAudioMediaStream =function(){
     console.debug("WebRTCommCall:unmuteRemoteAudioMediaStream()");
-    if(this.remoteMediaStream && this.remoteMediaStream.signalingState==this.remoteMediaStream.LIVE)
+    if(this.remoteBundledAudioVideoMediaStream && this.remoteBundledAudioVideoMediaStream.signalingState==this.remoteBundledAudioVideoMediaStream.LIVE)
     {
         var audioTracks = undefined;
-        if(this.remoteMediaStream.audioTracks) audioTracks=this.remoteMediaStream.audioTracks;
-        else if(this.remoteMediaStream.getAudioTracks) audioTracks=this.remoteMediaStream.getAudioTracks();
+        if(this.remoteBundledAudioVideoMediaStream.audioTracks) audioTracks=this.remoteBundledAudioVideoMediaStream.audioTracks;
+        else if(this.remoteBundledAudioVideoMediaStream.getAudioTracks) audioTracks=this.remoteBundledAudioVideoMediaStream.getAudioTracks();
         if(audioTracks)
         {
             for(var i=0; i<audioTracks.length;i++)
@@ -686,11 +718,11 @@ WebRTCommCall.prototype.showLocalVideoMediaStream =function(){
  */ 
 WebRTCommCall.prototype.hideRemoteVideoMediaStream =function(){
     console.debug("WebRTCommCall:hideRemoteVideoMediaStream()");
-    if(this.remoteMediaStream && this.remoteMediaStream.signalingState==this.remoteMediaStream.LIVE)
+    if(this.remoteBundledAudioVideoMediaStream && this.remoteBundledAudioVideoMediaStream.signalingState==this.remoteBundledAudioVideoMediaStream.LIVE)
     {
         var videoTracks = undefined;
-        if(this.remoteMediaStream.videoTracks) videoTracks=this.remoteMediaStream.videoTracks;
-        else if(this.remoteMediaStream.getVideoTracks) videoTracks=this.remoteMediaStream.getVideoTracks();      
+        if(this.remoteBundledAudioVideoMediaStream.videoTracks) videoTracks=this.remoteBundledAudioVideoMediaStream.videoTracks;
+        else if(this.remoteBundledAudioVideoMediaStream.getVideoTracks) videoTracks=this.remoteBundledAudioVideoMediaStream.getVideoTracks();      
         if(videoTracks)
         {
             videoTracks.enabled= !videoTracks.enabled;
@@ -720,11 +752,11 @@ WebRTCommCall.prototype.hideRemoteVideoMediaStream =function(){
  */ 
 WebRTCommCall.prototype.showRemoteVideoMediaStream =function(){
     console.debug("WebRTCommCall:showRemoteVideoMediaStream()");
-    if(this.remoteMediaStream && this.remoteMediaStream.signalingState==this.remoteMediaStream.LIVE)
+    if(this.remoteBundledAudioVideoMediaStream && this.remoteBundledAudioVideoMediaStream.signalingState==this.remoteBundledAudioVideoMediaStream.LIVE)
     {
         var videoTracks = undefined;
-        if(this.remoteMediaStream.videoTracks) videoTracks=this.remoteMediaStream.videoTracks;
-        else if(this.remoteMediaStream.getVideoTracks) videoTracks=this.remoteMediaStream.getVideoTracks();
+        if(this.remoteBundledAudioVideoMediaStream.videoTracks) videoTracks=this.remoteBundledAudioVideoMediaStream.videoTracks;
+        else if(this.remoteBundledAudioVideoMediaStream.getVideoTracks) videoTracks=this.remoteBundledAudioVideoMediaStream.getVideoTracks();
         if(videoTracks)
         {
             videoTracks.enabled= !videoTracks.enabled;
@@ -799,25 +831,51 @@ WebRTCommCall.prototype.createRTCPeerConnection =function(){
     var that = this;
     if(this.webRTCommClient.configuration.RTCPeerConnection.stunServer)
     {
-        rtcPeerConnectionConfiguration = {
-            iceServers: [{
-                url:"stun:"+this.webRTCommClient.configuration.RTCPeerConnection.stunServer
-            }]
-        };
+        rtcPeerConnectionConfiguration.iceServers.push({
+            url:"stun:"+this.webRTCommClient.configuration.RTCPeerConnection.stunServer
+        });
     }
-         
-    var mediaContraints = {
-        optional: [{
-            RtpDataChannels: true
-        }]
-    };
+    if(this.webRTCommClient.configuration.RTCPeerConnection.turnServer
+        && this.webRTCommClient.configuration.RTCPeerConnection.turnLogin 
+        && this.webRTCommClient.configuration.RTCPeerConnection.turnPassword)
+        {
+        rtcPeerConnectionConfiguration.iceServers.push({
+            url:"turn:"+this.webRTCommClient.configuration.RTCPeerConnection.turnLogin+"@"+this.webRTCommClient.configuration.RTCPeerConnection.turnServer, 
+            credential:this.webRTCommClient.configuration.RTCPeerConnection.turnPassword
+        });
+    }     
+    
+    
+    console.debug("WebRTCommCall:createPeerConnection():rtcPeerConnectionConfiguration="+JSON.stringify(rtcPeerConnectionConfiguration));
+    console.debug("WebRTCommCall:createPeerConnection():peerConnectionContraints="+JSON.stringify(peerConnectionContraints));
+    
     if(window.webkitRTCPeerConnection)
     {
-        this.peerConnection = new window.webkitRTCPeerConnection(rtcPeerConnectionConfiguration, mediaContraints);
+        // Google implementation
+        var iceTransports="all"; 
+        if(this.webRTCommClient.configuration.RTCPeerConnection.forceTurnMediaRelay)
+        {
+            iceTransports="relay"     
+        }
+    
+        var peerConnectionContraints = {
+            mandatory:
+            {
+                IceTransports:iceTransports
+            },
+            optional: [{
+                RtpDataChannels: true
+            }, {
+                DtlsSrtpKeyAgreement:this.webRTCommClient.configuration.RTCPeerConnection.dtlsSrtpKeyAgreement
+            }]
+        };
+    
+        this.peerConnection = new window.webkitRTCPeerConnection(rtcPeerConnectionConfiguration, peerConnectionContraints);
     }
     else if(window.mozRTCPeerConnection)
     {
-        this.peerConnection = new window.mozRTCPeerConnection(rtcPeerConnectionConfiguration, mediaContraints);
+        // Mozilla implementation
+        this.peerConnection = new window.mozRTCPeerConnection(rtcPeerConnectionConfiguration, peerConnectionContraints);
     }
       
     this.peerConnection.onaddstream = function(event) {
@@ -830,6 +888,15 @@ WebRTCommCall.prototype.createRTCPeerConnection =function(){
     
     this.peerConnection.onstatechange= function(event) {
         that.onRtcPeerConnectionStateChangeEvent(event);
+    }
+    
+    if(window.webkitRTCPeerConnection)
+    {
+        // Google implementation only for the time being
+        this.peerConnection.onsignalingstatechange= function(event) {
+            console.warn("RTCPeerConnection API update");
+            that.onRtcPeerConnectionStateChangeEvent(event);
+        }
     }
           
     this.peerConnection.onicecandidate= function(rtcIceCandidateEvent) {
@@ -844,17 +911,31 @@ WebRTCommCall.prototype.createRTCPeerConnection =function(){
         that.onRtcPeerConnectionIceChangeEvent(event);
     } 
     
+    if(window.webkitRTCPeerConnection)
+    {
+        // Google implementation only for the time being
+        this.peerConnection.oniceconnectionchange= function(event) {
+            console.warn("RTCPeerConnection API update");
+            that.onRtcPeerConnectionIceChangeEvent(event);
+        } 
+    }
+    
     this.peerConnection.onopen= function(event) {
         that.onRtcPeerConnectionOnOpenEvent(event);
     }
      
-    this.peerConnection.onidentityresult= function(event) {
-        that.onRtcPeerConnectionIdentityResultEvent(event);
+    if(window.webkitRTCPeerConnection)
+    {
+        // Google implementation only for the time being
+        this.peerConnection.onidentityresult= function(event) {
+            that.onRtcPeerConnectionIdentityResultEvent(event);
+        }
     }
     
+    /* Obsolete
     this.peerConnection.onnegotiationneeded= function(event) {
         that.onRtcPeerConnectionIceNegotiationNeededEvent(event);
-    }
+    }*/
     
     this.peerConnection.ondatachannel= function(event) {
         that.onRtcPeerConnectionOnMessageChannelEvent(event);
@@ -1112,13 +1193,25 @@ WebRTCommCall.prototype.onRtcPeerConnectionOnAddStreamEvent=function(event){
     try
     {
         console.debug("WebRTCommCall:onRtcPeerConnectionOnAddStreamEvent(): event="+event); 
+        console.debug("WebRTCommCall:onRtcPeerConnectionOnAddStreamEvent(): event.type="+event.type); 
         if(this.peerConnection)
         {           
             console.debug("WebRTCommCall:onRtcPeerConnectionOnAddStreamEvent(): this.peerConnection.signalingState="+ this.peerConnection.signalingState); 
             console.debug("WebRTCommCall:onRtcPeerConnectionOnAddStreamEvent(): this.peerConnection.iceGatheringState="+ this.peerConnection.iceGatheringState);
             console.debug("WebRTCommCall:onRtcPeerConnectionOnAddStreamEvent(): this.peerConnection.iceConnectionState="+ this.peerConnection.iceConnectionState); 
             console.debug("WebRTCommCall:onRtcPeerConnectionOnAddStreamEvent(): this.peerConnectionState="+this.peerConnectionState);
-            this.remoteMediaStream = event.stream;
+            if(window.webkitRTCPeerConnection)
+            {
+                // Gooogle implementation
+                this.remoteBundledAudioVideoMediaStream = event.stream;
+            } 
+            else if(window.mozRTCPeerConnection)
+            {
+                // Mozilla implementation
+                if(event.type=="audio") this.remoteAudioMediaStream = event.stream; 
+                else if(event.type=="video") this.remoteVideoMediaStream = event.stream; 
+                else console.error("WebRTCommCall:onRtcPeerConnectionOnAddStreamEvent(): unsupported event.type"+event); 
+            }   
         }
         else
         {
@@ -1147,7 +1240,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionOnRemoveStreamEvent=function(event){
             console.debug("WebRTCommCall:onRtcPeerConnectionOnRemoveStreamEvent(): this.peerConnection.iceGatheringState="+this.peerConnection.iceGatheringState);
             console.debug("WebRTCommCall:onRtcPeerConnectionOnRemoveStreamEvent(): this.peerConnection.iceConnectionState="+this.peerConnection.iceConnectionState); 
             console.debug("WebRTCommCall:onRtcPeerConnectionOnRemoveStreamEvent(): this.peerConnectionState="+this.peerConnectionState);
-            this.remoteMediaStream = undefined;
+            this.remoteBundledAudioVideoMediaStream = undefined;
         }
         else
         {
@@ -1344,7 +1437,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionCreateOfferErrorEvent=function(error)
 WebRTCommCall.prototype.onRtcPeerConnectionSetLocalDescriptionSuccessEvent=function(){
     try
     {
-        console.debug("WebRTCommCall:onRtcPeerConnectionSetLocalDescriptionSuccessEvent()"); 
+        console.debug("WebRTCommCall:onRtcPeerConnectionSetLocalDescriptionSuccessEvent():"+JSON.stringify(this.peerConnection)); 
         if(this.peerConnection)
         {
             console.debug("WebRTCommCall:onRtcPeerConnectionSetLocalDescriptionSuccessEvent(): this.peerConnection.signalingState="+this.peerConnection.signalingState);
@@ -1354,14 +1447,18 @@ WebRTCommCall.prototype.onRtcPeerConnectionSetLocalDescriptionSuccessEvent=funct
 
             if(window.mozRTCPeerConnection)
             {
+                var sdpOfferString = undefined;
+                if(this.peerConnection.localDescription) sdpOfferString = this.peerConnection.localDescription.sdp;
+                else sdpOfferString = this.peerConnectionLocalDescription.sdp;
+                
                 if(this.peerConnectionState == 'preparing-offer') 
                 {
-                    this.connector.invite(this.peerConnection.localDescription.sdp)
+                    this.connector.invite(this.peerConnectionLocalDescription.sdp)
                     this.peerConnectionState = 'offer-sent';
                 } 
                 else if (this.peerConnectionState == 'preparing-answer') 
                 {
-                    this.connector.accept(this.peerConnection.localDescription.sdp)
+                    this.connector.accept(this.peerConnectionLocalDescription.sdp)
                     this.peerConnectionState = 'established';
                     // Notify opened event to listener
                     if(this.webRTCommClient.eventListener.onWebRTCommCallOpenedEvent) 
@@ -1537,32 +1634,38 @@ WebRTCommCall.prototype.onRtcPeerConnectionSetRemoteDescriptionSuccessEvent=func
             else if (this.peerConnectionState == 'offer-received') 
             {            
                 var that=this;
-                var mediaContraints = {
-                    mandatory:
-                    {
-                        OfferToReceiveAudio:this.configuration.audioMediaFlag, 
-                        OfferToReceiveVideo:this.configuration.videoMediaFlag
-                    }
-                };
                 if(window.webkitRTCPeerConnection)
                 {
+                    var sdpContraints = {
+                        mandatory:
+                        {
+                            OfferToReceiveAudio:this.configuration.audioMediaFlag, 
+                            OfferToReceiveVideo:this.configuration.videoMediaFlag,
+                        },
+                        optional: []
+                    };
                     this.peerConnection.createAnswer(function(answer) {
                         that.onRtcPeerConnectionCreateAnswerSuccessEvent(answer);
                     }, function(error) {
                         that.onRtcPeerConnectionCreateAnswerErrorEvent(error);
-                    }, mediaContraints);  
+                    }, sdpContraints);  
                 }
                 else if(window.mozRTCPeerConnection)
                 {
+                    var sdpContraints = {
+                        mandatory:
+                        {
+                            OfferToReceiveAudio:this.configuration.audioMediaFlag, 
+                            OfferToReceiveVideo:this.configuration.videoMediaFlag,
+                            MozDontOfferDataChannel: !this.configuration.messageMediaFlag
+                        },
+                        optional: []
+                    };
                     this.peerConnection.createAnswer(function(answer) {
                         that.onRtcPeerConnectionCreateAnswerSuccessEvent(answer);
                     }, function(error) {
                         that.onRtcPeerConnectionCreateAnswerErrorEvent(error);
-                    },{
-                        "mandatory": {
-                            "MozDontOffermessageChannel": true
-                        }
-                    }); 
+                    },sdpContraints); 
                 } 
             }
             else {

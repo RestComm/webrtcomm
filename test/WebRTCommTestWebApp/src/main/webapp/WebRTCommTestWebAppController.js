@@ -32,11 +32,16 @@ WebRTCommTestWebAppController.prototype.DEFAULT_SIP_LOGIN=undefined;
 WebRTCommTestWebAppController.prototype.DEFAULT_SIP_PASSWORD=undefined;
 WebRTCommTestWebAppController.prototype.DEFAULT_SIP_CONTACT="bob";
 WebRTCommTestWebAppController.prototype.DEFAULT_SIP_REGISTER_MODE=true;
-WebRTCommTestWebAppController.prototype.DEFAULT_STUN_SERVER="webrtcstunserver:3478"; // stun.l.google.com:19302
+WebRTCommTestWebAppController.prototype.DEFAULT_STUN_SERVER="webrtcstunserver:3478"; 
+WebRTCommTestWebAppController.prototype.DEFAULT_TURN_SERVER="webrtcturnserver:5000";  
+WebRTCommTestWebAppController.prototype.DEFAULT_TURN_LOGIN="test"; 
+WebRTCommTestWebAppController.prototype.DEFAULT_TURN_PASSWORD="1234"; 
 WebRTCommTestWebAppController.prototype.DEFAULT_AUDIO_CODECS_FILTER=undefined; // RTCPeerConnection default codec filter
 WebRTCommTestWebAppController.prototype.DEFAULT_VIDEO_CODECS_FILTER=undefined; // RTCPeerConnection default codec filter
 WebRTCommTestWebAppController.prototype.DEFAULT_LOCAL_VIDEO_FORMAT="{\"mandatory\": {\"maxWidth\": 500}}"
 WebRTCommTestWebAppController.prototype.DEFAULT_SIP_URI_CONTACT_PARAMETERS=undefined;
+WebRTCommTestWebAppController.prototype.DEFAULT_DTLS_SRTP_KEY_AGREEMENT_MODE=false;
+WebRTCommTestWebAppController.prototype.DEFAULT_FORCE_TURN_MEDIA_RELAY_MODE=false;
 
 /**
  * on load event handler
@@ -62,7 +67,12 @@ WebRTCommTestWebAppController.prototype.onLoadViewEventHandler=function()
         },
         RTCPeerConnection:
         {
-            stunServer:this.DEFAULT_STUN_SERVER         
+            stunServer:this.DEFAULT_STUN_SERVER,
+            turnServer:this.DEFAULT_TURN_SERVER, 
+            turnLogin:this.DEFAULT_TURN_LOGIN,
+            turnPassword:this.DEFAULT_TURN_PASSWORD,
+            dtlsSrtpKeyAgreement:this.DEFAULT_DTLS_SRTP_KEY_AGREEMENT_MODE,
+            forceTurnMediaRelay:this.DEFAULT_FORCE_TURN_MEDIA_RELAY_MODE
         }
     } 
     
@@ -142,13 +152,21 @@ WebRTCommTestWebAppController.prototype.initView=function(){
     this.view.disableConnectButton();
     this.view.disableSendMessageButton();
     this.view.checkSipRegisterMode();
-    this.view.checkAudioMediaFlag();
-    this.view.checkVideoMediaFlag();
+    this.view.checkAudioMediaCheckBox();
+    this.view.checkVideoMediaCheckBox();
+    this.view.checkUseStunServerCkeckBox();
+    this.view.uncheckUseTurnServerCkeckBox();
+    this.view.uncheckDtlsSrtpKeyAgreementCheckBox();
+    this.view.uncheckForceTurnMediaRelayCkeckBox();
     this.view.stopLocalVideo();
     this.view.hideLocalVideo();
     this.view.stopRemoteVideo();
+     this.view.stopRemoteAudio();
     this.view.hideRemoteVideo();
     this.view.setStunServerTextInputValue(this.webRTCommClientConfiguration.RTCPeerConnection.stunServer);
+    this.view.setTurnServerTextInputValue(this.webRTCommClientConfiguration.RTCPeerConnection.turnServer);
+    this.view.setTurnLoginTextInputValue(this.webRTCommClientConfiguration.RTCPeerConnection.turnLogin);
+    this.view.setTurnPasswordTextInputValue(this.webRTCommClientConfiguration.RTCPeerConnection.turnPassword);
     this.view.setSipOutboundProxyTextInputValue(this.webRTCommClientConfiguration.sip.sipOutboundProxy);
     this.view.setSipUserAgentTextInputValue(this.webRTCommClientConfiguration.sip.sipUserAgent);
     this.view.setSipUriContactParametersTextInputValue(this.webRTCommClientConfiguration.sip.sipUriContactParameters);
@@ -317,7 +335,29 @@ WebRTCommTestWebAppController.prototype.onClickConnectButtonViewEventHandler=fun
     {
         try
         {
-            this.webRTCommClientConfiguration.RTCPeerConnection.stunServer= this.view.getStunServerTextInputValue();
+            if(this.view.getUseStunServerValue())
+            {
+                this.webRTCommClientConfiguration.RTCPeerConnection.stunServer= this.view.getStunServerTextInputValue();
+            }
+            else 
+            {
+                this.webRTCommClientConfiguration.RTCPeerConnection.stunServer=undefined;
+            }
+            if(this.view.getUseTurnServerValue())
+            {
+                this.webRTCommClientConfiguration.RTCPeerConnection.turnServer= this.view.getTurnServerTextInputValue();
+                this.webRTCommClientConfiguration.RTCPeerConnection.turnLogin= this.view.getTurnLoginTextInputValue();
+                this.webRTCommClientConfiguration.RTCPeerConnection.turnPassword= this.view.getTurnPasswordTextInputValue();
+            }
+            else  
+            { 
+                this.webRTCommClientConfiguration.RTCPeerConnection.turnServer= undefined;
+                this.webRTCommClientConfiguration.RTCPeerConnection.turnLogin= undefined;
+                this.webRTCommClientConfiguration.RTCPeerConnection.turnPassword= undefined;
+            }
+
+            this.webRTCommClientConfiguration.RTCPeerConnection.forceTurnMediaRelay=this.view.getForceTurnMediaRelayValue();
+            this.webRTCommClientConfiguration.RTCPeerConnection.dtlsSrtpKeyAgreement=this.view.getDtlsSrtpKeyAgreementValue();
             this.webRTCommClientConfiguration.sip.sipOutboundProxy = this.view.getSipOutboundProxyTextInputValue();
             this.webRTCommClientConfiguration.sip.sipUserAgent = this.view.getSipUserAgentTextInputValue(); 
             this.webRTCommClientConfiguration.sip.sipUriContactParameters = this.view.getSipUriContactParametersTextInputValue();
@@ -709,7 +749,7 @@ WebRTCommTestWebAppController.prototype.onWebRTCommClientOpenErrorEvent=function
     this.view.disableAcceptCallButton();
     this.view.disableEndCallButton();
     this.view.disableCancelCallButton();
-     this.view.disableSendMessageButton();
+    this.view.disableSendMessageButton();
     this.webRTCommCall=undefined;
     alert("Connection has failed, offline"); 
 } 
@@ -751,6 +791,7 @@ WebRTCommTestWebAppController.prototype.onWebRTCommCallClosedEvent=function(webR
     this.view.disableConnectButton();
     this.view.disableSendMessageButton();
     this.view.stopRemoteVideo();
+    this.view.stopRemoteAudio();
     this.view.hideRemoteVideo();
     this.webRTCommCall=undefined;  
     alert("Communication closed"); 
@@ -775,12 +816,23 @@ WebRTCommTestWebAppController.prototype.onWebRTCommCallOpenedEvent=function(webR
     this.view.disableDisconnectButton();
     this.view.disableConnectButton();
     this.view.enableSendMessageButton();
-    if(webRTCommCall.getRemoteMediaStream())
+    if(webRTCommCall.getRemoteBundledAudioVideoMediaStream())
     {
         this.view.showRemoteVideo();
-        this.view.playRemoteVideo(webRTCommCall.getRemoteMediaStream());
+        this.view.playRemoteVideo(webRTCommCall.getRemoteBundledAudioVideoMediaStream());
     }
-    
+    else
+    {
+        if(webRTCommCall.getRemoteAudioMediaStream())
+        {
+            this.view.playRemoteAudio(webRTCommCall.getRemoteAudioMediaStream());
+        } 
+        if(webRTCommCall.getRemoteVideoMediaStream())
+        {
+            this.view.showRemoteVideo();
+            this.view.playRemoteVideo(webRTCommCall.getRemoteVideoMediaStream());
+        } 
+    }
     alert("Communication opened"); 
 }
 
@@ -813,6 +865,7 @@ WebRTCommTestWebAppController.prototype.onWebRTCommCallOpenErrorEvent=function(w
     this.view.disableSendMessageButton();
     this.view.hideRemoteVideo();
     this.view.stopRemoteVideo();
+    this.view.stopRemoteAudio();
     this.view.stopRinging();
     this.webRTCommCall=undefined;
     alert("Communication failed: error:"+error); 
@@ -873,6 +926,7 @@ WebRTCommTestWebAppController.prototype.onWebRTCommCallHangupEvent=function(webR
     this.view.disableSendMessageButton();
     this.view.hideRemoteVideo();
     this.view.stopRemoteVideo();
+    this.view.stopRemoteAudio();
     this.view.stopRinging();
     this.webRTCommCall=undefined;
     
