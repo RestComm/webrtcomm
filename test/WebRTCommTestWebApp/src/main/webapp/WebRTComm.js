@@ -1980,7 +1980,7 @@ WebRTCommCall.prototype.open=function(calleePhoneNumber, configuration){
                                 mandatory:
                                 {
                                     OfferToReceiveAudio:this.configuration.audioMediaFlag, 
-                                    OfferToReceiveVideo:this.configuration.videoMediaFlag,
+                                    OfferToReceiveVideo:this.configuration.videoMediaFlag
                                 },
                                 optional: []
                             };
@@ -2668,11 +2668,10 @@ WebRTCommCall.prototype.createRTCPeerConnection =function(){
     if(window.webkitRTCPeerConnection)
     {
         // Google implementation only for the time being
-        this.peerConnection.oniceconnectionchange= function(event) {
-            console.warn("RTCPeerConnection API update");
+        this.peerConnection.oniceconnectionstatechange= function(event) {
             that.onRtcPeerConnectionIceChangeEvent(event);
         } 
-    }
+    }   
     
     this.peerConnection.onopen= function(event) {
         that.onRtcPeerConnectionOnOpenEvent(event);
@@ -3106,32 +3105,37 @@ WebRTCommCall.prototype.onRtcPeerConnectionCreateOfferSuccessEvent=function(sdpO
                 var sdpParser = new SDPParser();
                 var parsedSdpOffer = sdpParser.parse(sdpOfferString);
                 
-                // Check if offer is inline with the requested media constraints
+                // Check if offer is ok with the requested media constraints
                 if(this.configuration.videoMediaFlag==false)
                 {
                     this.removeMediaDescription(parsedSdpOffer,"video"); 
-                    sdpOffer.sdp=parsedSdpOffer;
                 }
+                
                 if(this.configuration.audioMediaFlag==false)
                 {
                     this.removeMediaDescription(parsedSdpOffer,"audio"); 
-                    sdpOffer.sdp=parsedSdpOffer;
                 }
+                
                 if(this.configuration.audioCodecsFilter || this.configuration.videoCodecsFilter)
                 {
                     try
                     {
                         // Apply audio/video codecs filter to RTCPeerConnection SDP offer to
                         this.applyConfiguredCodecFilterOnSessionDescription(parsedSdpOffer, this.configuration.audioCodecsFilter);
-                        console.debug("WebRTCommCall:onRtcPeerConnectionCreateOfferSuccessEvent(): parsedSdpOffer="+parsedSdpOffer);
-                        sdpOffer.sdp=parsedSdpOffer;
                     }
                     catch(exception)
                     {
                         console.error("WebRTCommCall:onRtcPeerConnectionCreateOfferSuccessEvent(): configured codec filtering has failded, use inital RTCPeerConnection SDP offer");
                     }
                 }
-            
+                // Check if offer is ok with the requested RTCPeerConnection constraints
+                if(this.webRTCommClient.configuration.RTCPeerConnection.forceTurnMediaRelay==true)
+                {
+                    this.forceTurnMediaRelay(parsedSdpOffer); 
+                }
+                
+                // Apply modified SDP Offer
+                sdpOffer.sdp=parsedSdpOffer;
                 this.peerConnectionLocalDescription=sdpOffer;
                 this.peerConnection.setLocalDescription(sdpOffer, function() {
                     that.onRtcPeerConnectionSetLocalDescriptionSuccessEvent();
@@ -3394,7 +3398,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionSetRemoteDescriptionSuccessEvent=func
                         mandatory:
                         {
                             OfferToReceiveAudio:this.configuration.audioMediaFlag, 
-                            OfferToReceiveVideo:this.configuration.videoMediaFlag,
+                            OfferToReceiveVideo:this.configuration.videoMediaFlag
                         },
                         optional: []
                     };
@@ -3841,7 +3845,6 @@ WebRTCommCall.prototype.getOfferedCodecsInMediaDescription=function(mediaDescrip
         for(var k = 0; k <  attributFields.length; k++) 
         {
             var attributField = attributFields[k];
-            console.debug("WebRTCommCall:getOfferedCodecsInMediaDescription(): attributField.getName()="+attributField.getName()); 
             if(attributField.getName()=="rtpmap")
             {
                 try
@@ -3930,8 +3933,7 @@ WebRTCommCall.prototype.updateMediaDescription=function(mediaDescription, filter
         var attributFields = mediaDescription.getAttributes();
         for(var k = 0; k <  attributFields.length; k++) 
         {
-            var attributField = attributFields[k];
-            console.debug("WebRTCommCall:updateMediaDescription(): attributField.getName()="+attributField.getName()); 
+            var attributField = attributFields[k]; 
             if(attributField.getName()=="rtpmap" || attributField.getName()=="fmtp")
             {
                 try
@@ -3993,6 +3995,54 @@ WebRTCommCall.prototype.removeMediaDescription=function(sessionDescription, medi
         throw "WebRTCommCall:removeMediaDescription(): bad arguments"      
     }
 }
+
+/**
+ * Modifiy SDP, remove non "relay" ICE candidates
+ * @private
+ * @param {SessionDescription} sessionDescription  JAIN (gov.nist.sdp) SDP offer object 
+ */ 
+WebRTCommCall.prototype.forceTurnMediaRelay=function(sessionDescription){ 
+    console.debug("WebRTCommCall:forceTurnMediaRelay()");
+    if(sessionDescription instanceof SessionDescription)
+    {
+        try
+        {
+            var mediaDescriptions = sessionDescription.getMediaDescriptions(false);
+            for (var i = 0; i <  mediaDescriptions.length; i++) 
+            {
+                var mediaDescription = mediaDescriptions[i];
+                var newAttributeFieldArray=new Array();
+                var attributFields = mediaDescription.getAttributes();
+                for(var k = 0; k <  attributFields.length; k++) 
+                {
+                    var attributField = attributFields[k];
+                    if(attributField.getName()=="candidate" )
+                    {
+                        var candidateValue = attributField.getValue(); 
+                        var isRelayCandidate = candidateValue.indexOf("typ relay")>0;
+                        if(isRelayCandidate)
+                        {
+                            newAttributeFieldArray.push(attributField);
+                        }
+                    }
+                    else newAttributeFieldArray.push(attributField);
+                }
+                mediaDescription.setAttributes(newAttributeFieldArray);
+            }
+        }
+        catch(exception)
+        {
+            console.error("WebRTCommCall:forceTurnMediaRelay(): catched exception, exception:"+exception);
+            throw exception;
+        }
+    }
+    else 
+    {
+        throw "WebRTCommCall:forceTurnMediaRelay(): bad arguments"      
+    }
+}
+
+
 
 
 /**
