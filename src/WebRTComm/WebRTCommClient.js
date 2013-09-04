@@ -163,6 +163,7 @@ WebRTCommClient.prototype.close=function(){
  * <span style="margin-left: 30px">dataMediaFlag:false,<br></span>
  * <span style="margin-left: 30px">audioCodecsFilter:PCMA,PCMU,OPUS,<br></span>
  * <span style="margin-left: 30px">videoCodecsFilter:VP8,H264,<br></span>
+ * <span style="margin-left: 30px">opusFmtpCodecsParameters:maxaveragebitrate=128000,<br></span>
  * }<br>
  * </p>
  * @returns {WebRTCommCall} new created WebRTCommCall object

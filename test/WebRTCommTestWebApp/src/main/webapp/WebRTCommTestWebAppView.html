@@ -5,8 +5,38 @@
         <script src="./jain-sip.js" type="text/javascript"></script> 
         <script src="./WebRTComm.js" type="text/javascript"></script>     
         <script src="./WebRTCommTestWebAppController.js" type="text/javascript" ></script>
+        <script src="./WebRTCommTestWebAppCookie.js" type="text/javascript" ></script>
         <script type='text/javascript'>	 
             webRTCommTestWebAppController=new WebRTCommTestWebAppController(this);
+			
+            webRTCommTestWebAppCookie = new WebRTCommTestWebAppCookie();
+            webRTCommTestWebAppCookie.addElementIdInCookie("sipDisplayName");
+            webRTCommTestWebAppCookie.addElementIdInCookie("sipUserName");
+            webRTCommTestWebAppCookie.addElementIdInCookie("sipLogin");
+            webRTCommTestWebAppCookie.addElementIdInCookie("sipPassword");
+            webRTCommTestWebAppCookie.addElementIdInCookie("useStunServerCkeckBox");
+            webRTCommTestWebAppCookie.addElementIdInCookie("stunServer");
+            webRTCommTestWebAppCookie.addElementIdInCookie("useTurnServerCkeckBox");
+            webRTCommTestWebAppCookie.addElementIdInCookie("turnServer");
+            webRTCommTestWebAppCookie.addElementIdInCookie("turnLogin");
+            webRTCommTestWebAppCookie.addElementIdInCookie("turnPassword");
+            webRTCommTestWebAppCookie.addElementIdInCookie("forceTurnMediaRelayCkeckBox");
+            webRTCommTestWebAppCookie.addElementIdInCookie("sipOutboundProxy");
+            webRTCommTestWebAppCookie.addElementIdInCookie("sipDomain");
+            webRTCommTestWebAppCookie.addElementIdInCookie("sipUriContactParameters");
+            webRTCommTestWebAppCookie.addElementIdInCookie("sipUserAgentCapabilities");
+            webRTCommTestWebAppCookie.addElementIdInCookie("sipUserAgent");		
+            webRTCommTestWebAppCookie.addElementIdInCookie("sipContact");
+            webRTCommTestWebAppCookie.addElementIdInCookie("sipRegistrationCkeckBox");
+            webRTCommTestWebAppCookie.addElementIdInCookie("audioMediaCkeckBox");
+            webRTCommTestWebAppCookie.addElementIdInCookie("videoMediaCkeckBox");
+            webRTCommTestWebAppCookie.addElementIdInCookie("messageMediaCkeckBox");
+            webRTCommTestWebAppCookie.addElementIdInCookie("audioCodecsFilter");
+            webRTCommTestWebAppCookie.addElementIdInCookie("videoCodecsFilter");
+            webRTCommTestWebAppCookie.addElementIdInCookie("localVideoFormat");
+            webRTCommTestWebAppCookie.addElementIdInCookie("localAudioFormat");
+            webRTCommTestWebAppCookie.addElementIdInCookie("opusFmtpCodecsParameters");
+            webRTCommTestWebAppCookie.addElementIdInCookie("dtlsSrtpKeyAgreementCkeckBox");
 
             function enableConnectButton() 
             {
@@ -408,6 +438,16 @@
                 document.getElementById("localVideoFormat").value=value;
             }
             
+            function setLocalAudioFormatTextInputValue(value) 
+            {
+                document.getElementById("localAudioFormat").value=value;
+            }
+            
+            function setOpusFmtpCodecsParametersTextInputValue(value) 
+            {
+                document.getElementById("opusFmtpCodecsParameters").value=value; 
+            }
+            
             function getTextInputValue(elementId) 
             {
                 var value = document.getElementById(elementId).value;
@@ -543,12 +583,25 @@
                 return getTextInputValue("localVideoFormat")
             }
             
+            function getLocalAudioFormatTextInputValue() 
+            {
+                return getTextInputValue("localAudioFormat")
+            }
+            
+            function getOpusFmtpCodecsParametersTextInputValue() 
+            {
+                return getTextInputValue("opusFmtpCodecsParameters")
+            }
+            
+            
         </script>
 
     </head>
-    <body onload='webRTCommTestWebAppController.onLoadViewEventHandler();' onunload='webRTCommTestWebAppController.onUnloadViewEventHandler();'>
+    <body onload='webRTCommTestWebAppController.onLoadViewEventHandler();webRTCommTestWebAppCookie.fromCookieToDocument()' onunload='webRTCommTestWebAppController.onUnloadViewEventHandler();'>
         <label style="color:red">Firefox 20.x: activate RTCPeerConnection configuration (about:config)</label>
         <div id="webRTCommClientConfigurationDiv" >
+            <br/>
+            <input id="resetSettings" value="Default settings" onclick = "webRTCommTestWebAppCookie.deleteAllCookies();webRTCommTestWebAppController.initView();webRTCommTestWebAppCookie.fromDocumentToCookie();" type="button" > 
             <br/>
             <label style="color:black; font-weight: bold">SIP Profile settings (modification requires reconnection)</label>
             <div style="border:black solid thin; width:800px " id="webRTCommClientSipProfileConfigurationDiv"> 
@@ -641,14 +694,22 @@
                     <label>Video codecs filter (ordered by priority e.g. VP8, H264):</label>
                     <input id='videoCodecsFilter' type="text" size="30" >
                 </div>
+                <div id='localAudioFormatDiv'>
+                    <label>Local audio format:</label>
+                    <input id='localAudioFormat' type="text" size="150" onchange = "webRTCommTestWebAppController.onChangeLocalAudioFormatViewEventHandler();">
+                </div>
                 <div id='localVideoFormatDiv'>
                     <label>Local video format:</label>
-                    <input id='localVideoFormat' type="text" size="100" onchange = "webRTCommTestWebAppController.onChangeLocalVideoFormatViewEventHandler();">
+                    <input id='localVideoFormat' type="text" size="150" onchange = "webRTCommTestWebAppController.onChangeLocalVideoFormatViewEventHandler();">
                 </div>
-                 <div id='messageMediaDiv'>
+                <div id='messageMediaDiv'>
                     <label>DTLS SRTP mode:</label>
                     <input  id='dtlsSrtpKeyAgreementCkeckBox' type="checkbox" checked>
                     <label style="color:red">(ckecked: DTLS, unchecked:SDES)</label>
+                </div>
+                <div id='opusFmtpCodecsParametersDiv'>
+                    <label>Opus fmtp codecs parameters:</label>
+                    <input id='opusFmtpCodecsParameters' type="text" size="50" >
                 </div>
             </div> 
             <audio id="ringing" loop src="audio/ringing.wav" />
@@ -656,9 +717,9 @@
         </div>
         <br/>
         <div id='input'>
-            <input id='connectButton'  type='button' disabled value='Connect' onclick = "webRTCommTestWebAppController.onClickConnectButtonViewEventHandler();"/>
+            <input id='connectButton'  type='button' disabled value='Connect' onclick = "webRTCommTestWebAppCookie.fromDocumentToCookie();webRTCommTestWebAppController.onClickConnectButtonViewEventHandler();"/>
             <input id='disconnectButton'  type='button' value='Disconnect' disabled onclick = "webRTCommTestWebAppController.onClickDisconnectButtonViewEventHandler();"/>
-            <input id='callButton'  type='button' value='Call' disabled onclick = "webRTCommTestWebAppController.onClickCallButtonViewEventHandler(getSipContactTextInputValue());"/>
+            <input id='callButton'  type='button' value='Call' disabled onclick = "webRTCommTestWebAppCookie.fromDocumentToCookie();webRTCommTestWebAppController.onClickCallButtonViewEventHandler(getSipContactTextInputValue());"/>
             <input id='cancelCallButton'  type='button'  value='Cancel Call' disabled onclick = "webRTCommTestWebAppController.onClickCancelCallButtonViewEventHandler();"/>
             <input id='acceptCallButton'  type='button' value='Accept Call' disabled onclick = "webRTCommTestWebAppController.onClickAcceptCallButtonViewEventHandler();"/>
             <input id='rejectCallButton'  type='button' value='Reject Call' disabled onclick = "webRTCommTestWebAppController.onClickRejectCallButtonViewEventHandler();"/>

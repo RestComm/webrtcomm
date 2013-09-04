@@ -1914,6 +1914,7 @@ WebRTCommCall.prototype.getRemoteVideoMediaStream= function() {
  * <span style="margin-left: 30px">messageMediaFlag:false,<br></span>
  * <span style="margin-left: 30px">audioCodecsFilter:PCMA,PCMU,OPUS,<br></span>
  * <span style="margin-left: 30px">videoCodecsFilter:VP8,H264,<br></span>
+ * <span style="margin-left: 30px">opusFmtpCodecsParameters:maxaveragebitrate=128000,<br></span>
  * }<br>
  * </p>
  * @throw {String} Exception "bad argument, check API documentation"
@@ -3137,12 +3138,12 @@ WebRTCommCall.prototype.onRtcPeerConnectionCreateOfferSuccessEvent=function(sdpO
                     this.removeMediaDescription(parsedSdpOffer,"audio"); 
                 }
                 
-                if(this.configuration.audioCodecsFilter || this.configuration.videoCodecsFilter)
+                if(this.configuration.audioCodecsFilter || this.configuration.videoCodecsFilter ||  this.configuration.opusFmtpCodecsParameters)
                 {
                     try
                     {
                         // Apply audio/video codecs filter to RTCPeerConnection SDP offer to
-                        this.applyConfiguredCodecFilterOnSessionDescription(parsedSdpOffer, this.configuration.audioCodecsFilter);
+                        this.applyConfiguredCodecFilterOnSessionDescription(parsedSdpOffer);
                     }
                     catch(exception)
                     {
@@ -3850,14 +3851,23 @@ WebRTCommCall.prototype.applyConfiguredCodecFilterOnSessionDescription=function(
                 var mediaDescription = mediaDescriptions[i];
                 var mediaField = mediaDescription.getMedia();
                 var mediaType = mediaField.getType();
-                if(mediaType=="audio" &&  this.configuration.audioCodecsFilter)
+                if(mediaType=="audio")
                 {
-                    var offeredAudioCodecs = this.getOfferedCodecsInMediaDescription(mediaDescription);
-                    // Filter offered codec
-                    var splitAudioCodecsFilters = (this.configuration.audioCodecsFilter).split(",");
-                    this.applyCodecFiltersOnOfferedCodecs(offeredAudioCodecs, splitAudioCodecsFilters);
-                    // Apply modification on audio media description
-                    this.updateMediaDescription(mediaDescription, offeredAudioCodecs, splitAudioCodecsFilters);
+                    if(this.configuration.audioCodecsFilter)
+                    {
+                       var offeredAudioCodecs = this.getOfferedCodecsInMediaDescription(mediaDescription);
+                       // Filter offered codec first
+                       var splitAudioCodecsFilters = (this.configuration.audioCodecsFilter).split(",");
+                       this.applyCodecFiltersOnOfferedCodecs(offeredAudioCodecs, splitAudioCodecsFilters);
+                       // Apply modification on audio media description
+                       this.updateMediaDescription(mediaDescription, offeredAudioCodecs, splitAudioCodecsFilters);
+                    }
+                    
+                    // Add OPUS parameter if required
+                    if(this.configuration.opusFmtpCodecsParameters)
+                    {
+                        this.updateOpusMediaDescription(mediaDescription, this.configuration.opusFmtpCodecsParameters);     
+                    }
                 }
                 else if(mediaType=="video" && this.configuration.videoCodecsFilter)
                 {
@@ -4022,6 +4032,76 @@ WebRTCommCall.prototype.updateMediaDescription=function(mediaDescription, filter
         throw "WebRTCommCall:updateMediaDescription(): bad arguments"      
     }
 }
+
+/**
+ * Update offered OPUS media description avec required FMTP parameters
+ * @private
+ * @param {MediaDescription} mediaDescription  JAIN (gov.nist.sdp) MediaDescription object 
+ * @param {string} opusMediaFmtpParameters FMTP OPUS parameters
+ */ 
+WebRTCommCall.prototype.updateOpusMediaDescription=function(mediaDescription, opusMediaFmtpParameters){ 
+    console.debug("WebRTCommCall:updateOpusMediaDescription()");
+    if(mediaDescription instanceof MediaDescription && typeof(opusMediaFmtpParameters)=='string')
+    {
+        // Find OPUS payload Type 
+        var opusPayloadType=undefined;
+        var attributFields = mediaDescription.getAttributes();
+        for(var i = 0; i <  attributFields.length; i++) 
+        {
+            var attributField = attributFields[i]; 
+            if(attributField.getName()=="rtpmap")
+            {
+                try
+                {
+                    var rtpmapValue = attributField.getValue().toLowerCase(); 
+                    if(rtpmapValue.indexOf("opus")>=0)
+                    {    
+                        var splitedRtpmapValue = rtpmapValue.split(" ");
+                        opusPayloadType = splitedRtpmapValue[0];
+                        break;
+                    }
+                }
+                catch(exception)
+                {
+                    console.error("WebRTCommCall:updateMediaDescription(): rtpmap/fmtp format not supported");  
+                }
+            }
+         }
+        
+         if(opusPayloadType)
+         {
+            console.debug("WebRTCommCall:updateOpusMediaDescription():opusPayloadType="+opusPayloadType);
+            // Update FMTP OPUS SDP parameter  
+            for(var j = 0; j <  attributFields.length; j++) 
+            {
+                var attributField = attributFields[j]; 
+                if(attributField.getName()=="fmtp")
+                {
+                    try
+                    {
+                       var fmtpValue = attributField.getValue(); 
+                       var splitedFmtpValue = rtpmapValue.split(" ");
+                       var payloadType = splitedFmtpValue[0];
+                       if(opusPayloadType==payloadType)
+                       {
+                          attributField.setValue(fmtpValue+" "+opusMediaFmtpParameters);   
+                           console.debug("WebRTCommCall:updateOpusMediaDescription():fmtp="+ attributField.getValue()); 
+                       }
+                    }
+                    catch(exception)
+                    {
+                      console.error("WebRTCommCall:updateMediaDescription(): rtpmap/fmtp format not supported");  
+                    }
+                }
+            }
+         }
+    }
+    else 
+    {
+       throw "WebRTCommCall:updateMediaDescription(): bad arguments"      
+    }
+}
+
 
 /**
  * Modifiy SDP based on configured codec filter
@@ -4274,6 +4354,7 @@ WebRTCommClient.prototype.close=function(){
  * <span style="margin-left: 30px">dataMediaFlag:false,<br></span>
  * <span style="margin-left: 30px">audioCodecsFilter:PCMA,PCMU,OPUS,<br></span>
  * <span style="margin-left: 30px">videoCodecsFilter:VP8,H264,<br></span>
+ * <span style="margin-left: 30px">opusFmtpCodecsParameters:maxaveragebitrate=128000,<br></span>
  * }<br>
  * </p>
  * @returns {WebRTCommCall} new created WebRTCommCall object

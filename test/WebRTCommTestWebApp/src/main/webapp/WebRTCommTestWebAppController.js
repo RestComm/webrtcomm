@@ -22,7 +22,7 @@ function WebRTCommTestWebAppController(view) {
 WebRTCommTestWebAppController.prototype.constructor=WebRTCommTestWebAppController;
 
 // Default SIP profile to use
-WebRTCommTestWebAppController.prototype.DEFAULT_SIP_OUTBOUND_PROXY="ws://webrtcsipserver:80";
+WebRTCommTestWebAppController.prototype.DEFAULT_SIP_OUTBOUND_PROXY="ws://10.194.124.24:80";
 WebRTCommTestWebAppController.prototype.DEFAULT_SIP_USER_AGENT="WebRTCommTestWebApp/0.0.1" 
 WebRTCommTestWebAppController.prototype.DEFAULT_SIP_USER_AGENT_CAPABILITIES=undefined // +g.oma.sip-im
 WebRTCommTestWebAppController.prototype.DEFAULT_SIP_DOMAIN="webrtc.orange.com";
@@ -32,13 +32,15 @@ WebRTCommTestWebAppController.prototype.DEFAULT_SIP_LOGIN=undefined;
 WebRTCommTestWebAppController.prototype.DEFAULT_SIP_PASSWORD=undefined;
 WebRTCommTestWebAppController.prototype.DEFAULT_SIP_CONTACT="bob";
 WebRTCommTestWebAppController.prototype.DEFAULT_SIP_REGISTER_MODE=true;
-WebRTCommTestWebAppController.prototype.DEFAULT_STUN_SERVER="webrtcstunserver:3478"; 
-WebRTCommTestWebAppController.prototype.DEFAULT_TURN_SERVER="webrtcturnserver:5000";  
-WebRTCommTestWebAppController.prototype.DEFAULT_TURN_LOGIN="test"; 
-WebRTCommTestWebAppController.prototype.DEFAULT_TURN_PASSWORD="1234"; 
+WebRTCommTestWebAppController.prototype.DEFAULT_STUN_SERVER="10.194.124.24:3478"; 
+WebRTCommTestWebAppController.prototype.DEFAULT_TURN_SERVER=undefined;  
+WebRTCommTestWebAppController.prototype.DEFAULT_TURN_LOGIN=undefined; 
+WebRTCommTestWebAppController.prototype.DEFAULT_TURN_PASSWORD=undefined; 
 WebRTCommTestWebAppController.prototype.DEFAULT_AUDIO_CODECS_FILTER=undefined; // RTCPeerConnection default codec filter
+WebRTCommTestWebAppController.prototype.DEFAULT_AUDIO_CODECS_OPUS_PARAMETERS="maxaveragebitrate=128000";
 WebRTCommTestWebAppController.prototype.DEFAULT_VIDEO_CODECS_FILTER=undefined; // RTCPeerConnection default codec filter
-WebRTCommTestWebAppController.prototype.DEFAULT_LOCAL_VIDEO_FORMAT="{\"mandatory\": {\"maxWidth\": 500}}"
+WebRTCommTestWebAppController.prototype.DEFAULT_LOCAL_AUDIO_FORMAT="{\"mandatory\" : {\"googEchoCancellation\": true,\"googNoiseSuppression\" :true,\"googAutoGainControl\" : true,\"googAutoGainControl2\" : true,\"googHighpassFilter\" :true},\"optional\" : []}";
+WebRTCommTestWebAppController.prototype.DEFAULT_LOCAL_VIDEO_FORMAT="{\"mandatory\": {\"maxWidth\": 500},\"optional\" : []}"
 WebRTCommTestWebAppController.prototype.DEFAULT_SIP_URI_CONTACT_PARAMETERS=undefined;
 WebRTCommTestWebAppController.prototype.DEFAULT_DTLS_SRTP_KEY_AGREEMENT_MODE=false;
 WebRTCommTestWebAppController.prototype.DEFAULT_FORCE_TURN_MEDIA_RELAY_MODE=false;
@@ -154,6 +156,7 @@ WebRTCommTestWebAppController.prototype.initView=function(){
     this.view.checkSipRegisterMode();
     this.view.checkAudioMediaCheckBox();
     this.view.checkVideoMediaCheckBox();
+    this.view.checkMessageMediaCheckBox();
     this.view.checkUseStunServerCkeckBox();
     this.view.uncheckUseTurnServerCkeckBox();
     this.view.uncheckDtlsSrtpKeyAgreementCheckBox();
@@ -161,7 +164,7 @@ WebRTCommTestWebAppController.prototype.initView=function(){
     this.view.stopLocalVideo();
     this.view.hideLocalVideo();
     this.view.stopRemoteVideo();
-     this.view.stopRemoteAudio();
+    this.view.stopRemoteAudio();
     this.view.hideRemoteVideo();
     this.view.setStunServerTextInputValue(this.webRTCommClientConfiguration.RTCPeerConnection.stunServer);
     this.view.setTurnServerTextInputValue(this.webRTCommClientConfiguration.RTCPeerConnection.turnServer);
@@ -179,12 +182,17 @@ WebRTCommTestWebAppController.prototype.initView=function(){
     this.view.setSipContactTextInputValue(this.sipContact);
     this.view.setAudioCodecsFilterTextInputValue(WebRTCommTestWebAppController.prototype.DEFAULT_AUDIO_CODECS_FILTER);
     this.view.setVideoCodecsFilterTextInputValue(WebRTCommTestWebAppController.prototype.DEFAULT_VIDEO_CODECS_FILTER);
-    this.view.setLocalVideoFormatTextInputValue(WebRTCommTestWebAppController.prototype.DEFAULT_LOCAL_VIDEO_FORMAT)
+    this.view.setLocalAudioFormatTextInputValue(WebRTCommTestWebAppController.prototype.DEFAULT_LOCAL_AUDIO_FORMAT)
+    this.view.setLocalVideoFormatTextInputValue(WebRTCommTestWebAppController.prototype.DEFAULT_LOCAL_VIDEO_FORMAT);
+    this.view.setOpusFmtpCodecsParametersTextInputValue(WebRTCommTestWebAppController.prototype.DEFAULT_AUDIO_CODECS_OPUS_PARAMETERS)
+
     
     // Get local user media
     try
     {
-        this.getLocalUserMedia(WebRTCommTestWebAppController.prototype.DEFAULT_LOCAL_VIDEO_FORMAT)
+        this.getLocalUserMedia(
+          WebRTCommTestWebAppController.prototype.DEFAULT_LOCAL_AUDIO_FORMAT,
+          WebRTCommTestWebAppController.prototype.DEFAULT_LOCAL_VIDEO_FORMAT)
     }
     catch(exception)
     {
@@ -193,8 +201,9 @@ WebRTCommTestWebAppController.prototype.initView=function(){
     }   
 }
   
-WebRTCommTestWebAppController.prototype.getLocalUserMedia=function(videoContraints){
-    console.debug ("WebRTCommTestWebAppController:getLocalUserMedia():videoContraints="+JSON.stringify(videoContraints));  
+WebRTCommTestWebAppController.prototype.getLocalUserMedia=function(audioConstraints, videoConstraints){
+    console.debug ("WebRTCommTestWebAppController:getLocalUserMedia():audioConstraints="+JSON.stringify(audioConstraints));  
+    console.debug ("WebRTCommTestWebAppController:getLocalUserMedia():videoConstraints="+JSON.stringify(videoConstraints));  
     var that = this;
     this.view.stopLocalVideo();
     if(this.localAudioVideoMediaStream) this.localAudioVideoMediaStream.stop();
@@ -202,8 +211,8 @@ WebRTCommTestWebAppController.prototype.getLocalUserMedia=function(videoContrain
     {
         // Google Chrome user agent
         navigator.getUserMedia({
-            audio:true, 
-            video: JSON.parse(videoContraints)
+            audio: JSON.parse(audioConstraints), 
+            video: JSON.parse(videoConstraints)
         }, function(localMediaStream) {
             that.onGetUserMediaSuccessEventHandler(localMediaStream);
         }, function(error) {
@@ -317,7 +326,7 @@ WebRTCommTestWebAppController.prototype.onChangeLocalVideoFormatViewEventHandler
     // Get local user media
     try
     {
-        this.getLocalUserMedia(this.view.getLocalVideoFormatTextInputValue());
+        this.getLocalUserMedia(this.view.getLocalAudioFormatTextInputValue(), this.view.getLocalVideoFormatTextInputValue());
     }
     catch(exception)
     {
@@ -423,7 +432,8 @@ WebRTCommTestWebAppController.prototype.onClickCallButtonViewEventHandler=functi
                 videoMediaFlag:this.view.getVideoMediaValue(),
                 messageMediaFlag:this.view.getMessageMediaValue(),
                 audioCodecsFilter:this.view.getAudioCodecsFilterTextInputValue(),
-                videoCodecsFilter:this.view.getVideoCodecsFilterTextInputValue()
+                videoCodecsFilter:this.view.getVideoCodecsFilterTextInputValue(),
+                opusFmtpCodecsParameters:this.view.getOpusFmtpCodecsParametersTextInputValue()
             }
             this.webRTCommCall = this.webRTCommClient.call(calleePhoneNumber, callConfiguration);
             this.view.disableCallButton();
