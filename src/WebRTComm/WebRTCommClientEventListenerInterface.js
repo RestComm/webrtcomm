@@ -27,11 +27,28 @@ WebRTCommClientEventListenerInterface.prototype.onWebRTCommClientOpenErrorEvent=
 
 
 /**
- * Open error event 
+ * Close event 
  * @public
  */
-WebRTCommClientEventListenerInterface.prototype.onWebRTCommClientClosedEvent= function(error) {
+WebRTCommClientEventListenerInterface.prototype.onWebRTCommClientClosedEvent= function() {
     throw "WebRTCommClientEventListenerInterface:onWebRTCommClientClosedEvent(): not implemented;"; 
 }
 
+/**
+ * Message event
+ * @public
+ * @param {String} from  remote Peer phone number
+ * @param {String} message received message
+ */
+WebRTCommClientEventListenerInterface.prototype.onWebRTCommClientMessageEvent= function(from, message) {
+    throw "WebRTCommCallEventListenerInterface:onWebRTCommClientMessageEvent(): not implemented;";   
+}
 
+/**
+ * Send message error event
+ * @public
+ * @param {String} error code
+ */
+WebRTCommClientEventListenerInterface.prototype.onWebRTCommClientSendMessageErrorEvent= function(error) {
+    throw "WebRTCommCallEventListenerInterface:onWebRTCommClientMessageEvent(): not implemented;";   
+}

@@ -191,8 +191,8 @@ WebRTCommTestWebAppController.prototype.initView=function(){
     try
     {
         this.getLocalUserMedia(
-          WebRTCommTestWebAppController.prototype.DEFAULT_LOCAL_AUDIO_FORMAT,
-          WebRTCommTestWebAppController.prototype.DEFAULT_LOCAL_VIDEO_FORMAT)
+            WebRTCommTestWebAppController.prototype.DEFAULT_LOCAL_AUDIO_FORMAT,
+            WebRTCommTestWebAppController.prototype.DEFAULT_LOCAL_VIDEO_FORMAT)
     }
     catch(exception)
     {
@@ -570,11 +570,11 @@ WebRTCommTestWebAppController.prototype.onClickRejectCallButtonViewEventHandler=
 WebRTCommTestWebAppController.prototype.onClickSendMessageButtonViewEventHandler=function()
 {
     console.debug ("WebRTCommTestWebAppController:onClickSendMessageButtonViewEventHandler()"); 
+    var message = document.getElementById("messageTextArea").value;
     if(this.webRTCommCall)
     {
         try
         {
-            var message = document.getElementById("messageTextArea").value;
             this.webRTCommCall.sendMessage(message);
             document.getElementById("messageTextArea").value="";
         }
@@ -586,8 +586,18 @@ WebRTCommTestWebAppController.prototype.onClickSendMessageButtonViewEventHandler
     }
     else
     {
-        console.error("WebRTCommTestWebAppController:onClickRejectCallButtonViewEventHandler(): internal error");      
+        try
+        {
+            this.webRTCommClient.sendMessage(this.view.getSipContactTextInputValue(),message); 
+            document.getElementById("messageTextArea").value="";
+        }
+        catch(exception)
+        {
+            console.error("WebRTCommTestWebAppController:onClickRejectCallButtonViewEventHandler(): catched exception:"+exception); 
+            alert("Send message failed:"+exception)
+        }     
     }
+                
 }
 
 
@@ -745,7 +755,7 @@ WebRTCommTestWebAppController.prototype.onWebRTCommClientOpenedEvent=function()
     this.view.disableAcceptCallButton();
     this.view.disableEndCallButton();
     this.view.disableCancelCallButton();
-    this.view.disableSendMessageButton();
+    this.view.enableSendMessageButton();
     alert("Online"); 
 }
     
@@ -825,7 +835,6 @@ WebRTCommTestWebAppController.prototype.onWebRTCommCallOpenedEvent=function(webR
     this.view.disableCancelCallButton();
     this.view.disableDisconnectButton();
     this.view.disableConnectButton();
-    this.view.enableSendMessageButton();
     if(webRTCommCall.getRemoteBundledAudioVideoMediaStream())
     {
         this.view.showRemoteVideo();
@@ -872,7 +881,6 @@ WebRTCommTestWebAppController.prototype.onWebRTCommCallOpenErrorEvent=function(w
     this.view.disableEndCallButton();
     this.view.disableCancelCallButton();
     this.view.disableConnectButton();
-    this.view.disableSendMessageButton();
     this.view.hideRemoteVideo();
     this.view.stopRemoteVideo();
     this.view.stopRemoteAudio();
@@ -894,7 +902,6 @@ WebRTCommTestWebAppController.prototype.onWebRTCommCallRingingEvent=function(web
     this.view.enableRejectCallButton();
     this.view.enableAcceptCallButton();
     this.view.disableEndCallButton();
-    this.view.disableSendMessageButton();
     this.view.disableCancelCallButton();
     this.view.disableConnectButton();
     var caller = webRTCommCall.getCallerDisplayName();
@@ -914,7 +921,6 @@ WebRTCommTestWebAppController.prototype.onWebRTCommCallRingingBackEvent=function
     this.view.disableRejectCallButton();
     this.view.disableAcceptCallButton();
     this.view.disableEndCallButton();
-    this.view.disableSendMessageButton();
     this.view.enableCancelCallButton();
     this.view.disableConnectButton();
 }
@@ -933,7 +939,6 @@ WebRTCommTestWebAppController.prototype.onWebRTCommCallHangupEvent=function(webR
     this.view.disableEndCallButton();
     this.view.disableCancelCallButton();
     this.view.disableConnectButton();
-    this.view.disableSendMessageButton();
     this.view.hideRemoteVideo();
     this.view.stopRemoteVideo();
     this.view.stopRemoteAudio();
@@ -953,18 +958,26 @@ WebRTCommTestWebAppController.prototype.onWebRTCommCallMessageEvent=function(web
 {
     console.debug ("WebRTCommTestWebAppController:onWebRTCommCallMessageEvent(): webRTCommCall.getId()="+webRTCommCall.getId()); 
     if(webRTCommCall.isIncoming()) alert("Message from "+webRTCommCall.getCallerPhoneNumber()+":"+message);
-    else alert("Message from "+webRTCommCall.getCalleePhoneNumber()+":"+message);
+    else alert("Call context message received from "+webRTCommCall.getCalleePhoneNumber()+":"+message);
 }
 
 
 /**
  * Message event
  * @public
- * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
+ * @param {String} from phone number
+ * @param {String} message message
  */
-WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallMessageEvent= function(webRTCommCall, message) {
-    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallMessageEvent(): not implemented;";   
+WebRTCommTestWebAppController.prototype.onWebRTCommClientMessageEvent= function(from, message) {
+    alert("Message received from "+ from +":"+message);  
 }
 
-
+/**
+ * Message event
+ * @public
+ * @param {String} error
+ */
+WebRTCommTestWebAppController.prototype.onWebRTCommClientSendMessageErrorEvent= function(error) {
+    alert("Send message has failed:"+ error);  
+}
 

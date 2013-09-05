@@ -149,6 +149,32 @@ WebRTCommClient.prototype.close=function(){
     }
 }
  
+ 
+ 
+/**
+ * Send a short text message
+ * @public 
+ * @param {String} to destination identifier (Tel URI, SIP URI: sip:bob@sip.net)
+ * @param {String} message Message to send <br>
+ * @throw {String} Exception "bad argument, check API documentation"
+ * @throw {String} Exception "bad configuration, missing parameter"
+ * @throw {String} Exception "bad state, unauthorized action"
+ */ 
+WebRTCommClient.prototype.sendMessage = function (to,message)
+{
+    console.debug ("WebRTCommClient:sendMessage(): to="+to);
+    console.debug ("WebRTCommClient:sendMessage(): message="+message);
+    if(this.isOpened())
+    {   
+        this.connector.sendMessage(to,message); 
+    }
+    else
+    {   
+        console.error("WebRTCommClient:sendMessage(): bad state, unauthorized action");
+        throw "WebRTCommClient:sendMessage(): bad state, unauthorized action";    
+    }
+}
+
 /**
  * Request a WebRTC communication, asynchronous action, call events are notified to the eventListener 
  * @public 

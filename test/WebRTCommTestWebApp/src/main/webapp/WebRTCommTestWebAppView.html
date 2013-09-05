@@ -598,7 +598,6 @@
 
     </head>
     <body onload='webRTCommTestWebAppController.onLoadViewEventHandler();webRTCommTestWebAppCookie.fromCookieToDocument()' onunload='webRTCommTestWebAppController.onUnloadViewEventHandler();'>
-        <label style="color:red">Firefox 20.x: activate RTCPeerConnection configuration (about:config)</label>
         <div id="webRTCommClientConfigurationDiv" >
             <br/>
             <input id="resetSettings" value="Default settings" onclick = "webRTCommTestWebAppCookie.deleteAllCookies();webRTCommTestWebAppController.initView();webRTCommTestWebAppCookie.fromDocumentToCookie();" type="button" > 
@@ -732,7 +731,9 @@
         </div>
         <br/>
         <div id='media'>
+            <label style="color:red">Send Message: Use WebRTC DataChannel if available otherwise use SIP MESSAGE request:</label>
             <div style="position:relative;">
+                
                 <textarea style="color: #444;font-family: 'Courier New', monospace;font-size: 1em;height: 50px; width:400px" id="messageTextArea" disabled placeholder="Enter some text, then press Send."></textarea>
                 <input  id='sendMessageButton'  style="" type='button' value='Send Message' disabled onclick = "webRTCommTestWebAppController.onClickSendMessageButtonViewEventHandler();"/>
             </div>

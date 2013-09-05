@@ -22,7 +22,7 @@ PrivateJainSipClientConnector = function(webRTCommClient)
 } 
 
 // Private webRtc class variable
-PrivateJainSipClientConnector.prototype.SIP_ALLOW_HEADER="Allow: INVITE,ACK,CANCEL,BYE, OPTIONS";
+PrivateJainSipClientConnector.prototype.SIP_ALLOW_HEADER="Allow: INVITE,ACK,CANCEL,BYE,OPTIONS,MESSAGE";
 
 //  State of SIP REGISTER state machine
 PrivateJainSipClientConnector.prototype.SIP_UNREGISTERED_STATE="SIP_UNREGISTERED_STATE";
@@ -95,17 +95,17 @@ PrivateJainSipClientConnector.prototype.open=function(configuration){
                     {
                         try
                         {
-                        var sipUri = this.jainSipContactHeader.getAddress().getURI();
-                        var parameters = this.configuration.sipUriContactParameters.split(";");
-                        for(var i=0; i<parameters.length;i++ )
-                        {                                               
-                          var nameValue = parameters[i].split("=");
-                          sipUri.uriParms.set_nv(new NameValue(nameValue[0], nameValue[1]));
-                        }
+                            var sipUri = this.jainSipContactHeader.getAddress().getURI();
+                            var parameters = this.configuration.sipUriContactParameters.split(";");
+                            for(var i=0; i<parameters.length;i++ )
+                            {                                               
+                                var nameValue = parameters[i].split("=");
+                                sipUri.uriParms.set_nv(new NameValue(nameValue[0], nameValue[1]));
+                            }
                         }
                         catch(exception)
                         {
-                          console.error("PrivateJainSipClientConnector:open(): catched exception:"+exception);   
+                            console.error("PrivateJainSipClientConnector:open(): catched exception:"+exception);   
                         }
                     }
                     
@@ -546,11 +546,17 @@ PrivateJainSipClientConnector.prototype.processRequest=function(requestEvent){
                     newWebRTCommCall.connector.sipCallState=PrivateJainSipCallConnector.prototype.SIP_INVITED_INITIAL_STATE;
                     newWebRTCommCall.connector.onJainSipClientConnectorSipRequestEvent(requestEvent);
                 }
+                else if(jainSipRequestMethod=="MESSAGE")
+                {
+                    this.processSipMessageRequest(requestEvent);
+
+                }	
                 else
                 {
                     console.warn("PrivateJainSipClientConnector:processRequest(): SIP request ignored"); 
-                   //@todo Should send SIP response 404 NOT FOUND or 501 NOT_IMPLEMENTED 
+                //@todo Should send SIP response 404 NOT FOUND or 501 NOT_IMPLEMENTED 				 
                 }
+                
             }
         }
     }
@@ -584,7 +590,15 @@ PrivateJainSipClientConnector.prototype.processResponse=function(responseEvent){
             }
             else
             {
-                console.warn("PrivateJainSipClientConnector:processResponse(): PrivateJainSipCallConnector not found, SIP response ignored");  
+                if(jainSipResponse.getCSeq().getMethod()=="MESSAGE")
+                {
+                   this.processSipMessageResponse(responseEvent); 
+                }
+                else 
+                {
+                   console.warn("PrivateJainSipClientConnector:processResponse(): PrivateJainSipCallConnector not found, SIP response ignored");   
+                }
+ 
             }
         }
     }
@@ -849,6 +863,8 @@ PrivateJainSipClientConnector.prototype.processSipRegisterResponse=function(resp
     }
 }
 
+
+
 /**
  * Handle SIP OPTIONS RESPONSE (default behaviour: send 200 OK response)                  
  * @param {RequestEvent} requestEvent JAIN SIP request event to process
@@ -866,3 +882,155 @@ PrivateJainSipClientConnector.prototype.processSipOptionRequest=function(request
     jainSip200OKResponse.removeHeader("P-Called-Party-ID");
     requestEvent.getServerTransaction().sendResponse(jainSip200OKResponse);
 }
+
+
+/**
+ * Handle SIP MESSAGE request,  send 200 OK response systematically          
+ * @param {RequestEvent} requestEvent JAIN SIP request event to process
+ * @private 
+ */ 
+PrivateJainSipClientConnector.prototype.processSipMessageRequest=function(requestEvent){
+    console.debug ("PrivateJainSipClientConnector:processSipMessageRequest()");  
+	
+    // Build SIP 200 OK response   
+    var jainSipRequest=requestEvent.getRequest();
+    var jainSip200OKResponse=jainSipRequest.createResponse(200, "OK");
+    jainSip200OKResponse.addHeader(this.jainSipContactHeader);
+    jainSip200OKResponse.removeHeader("P-Asserted-Identity");
+    jainSip200OKResponse.removeHeader("P-Charging-Vector");
+    jainSip200OKResponse.removeHeader("P-Charging-Function-Addresses");
+    jainSip200OKResponse.removeHeader("P-Called-Party-ID");
+    requestEvent.getServerTransaction().sendResponse(jainSip200OKResponse);
+	
+    var from = requestEvent.getRequest().getHeader("From").getAddress().getURI().getUser();
+    var message = requestEvent.getRequest().getContent(); 
+    
+    // Find call linked with the message
+    var targetedWebRTCommCall=undefined;
+    for(var sipCallId in this.callConnectors)
+    {
+        var callConnector = this.findCallConnector(sipCallId);
+        if(callConnector.isOpened())
+        {
+            if(callConnector.webRTCommCall.isIncoming() && callConnector.webRTCommCall.callerPhoneNumber==from)
+            {
+                targetedWebRTCommCall = callConnector.webRTCommCall;
+                break;
+            }
+            else if(callConnector.webRTCommCall.calleePhoneNumber==from)
+            {
+                targetedWebRTCommCall = callConnector.webRTCommCall;
+                break; 
+            }
+        }
+    }
+
+    if(targetedWebRTCommCall && targetedWebRTCommCall.eventListener.onWebRTCommClientMessageEvent)
+    {
+        setTimeout(function(){
+            try{
+                targetedWebRTCommCall.eventListener.onWebRTCommCallMessageEvent(targetedWebRTCommCall, message);
+            }
+            catch(exception){
+                console.error("PrivateJainSipClientConnector:onWebRTCommClientMessageEvent(): catched exception in event listener:"+exception);
+            }          
+        },1);       
+    }
+    else 
+    {
+        // No linked call to the event message, forward the message to the client   
+        if(targetedWebRTCommCall.eventListener.onWebRTCommClientMessageEvent)
+        {
+            setTimeout(function(){
+                try{
+                    this.webRTCommClient.eventListener.onWebRTCommClientMessageEvent(from, message);
+                }
+                catch(exception){
+                    console.error("PrivateJainSipClientConnector:onWebRTCommClientMessageEvent(): catched exception in event listener:"+exception);
+                }          
+            },1);       
+        }
+    }
+}
+
+/**
+ * Process SIP MESSAGE response
+ * @private 
+ * @param {ResponseEvent} responseEvent JAIN SIP response to process
+ */ 
+PrivateJainSipClientConnector.prototype.processSipMessageResponse=function(responseEvent){
+   
+    var jainSipResponse=responseEvent.getResponse(); 
+    var statusCode = parseInt(jainSipResponse.getStatusCode()); 
+    console.debug ("PrivateJainSipClientConnector:processSipMessageResponse(): statusCode="+statusCode); 
+    if(statusCode <= 200)
+    {
+    }
+    else
+    {
+       this.webRTCommClient.eventListener.onWebRTCommClientSendMessageErrorEvent(statusCode);      
+    }
+}
+
+/**
+ * Send SIP MESSAGE request
+ * SIP MESSAGE response are not handled, consider that 200 OK is received                  
+ * @param {String} callee message destination
+ * @param {String} message message to send
+ * @public 
+ */ 
+PrivateJainSipClientConnector.prototype.sendMessage=function(callee,message)
+{
+    console.debug ("PrivateJainSipClientConnector:sendMessage(): callee="+callee); 
+    console.debug ("PrivateJainSipClientConnector:sendMessage():message="+message);  
+    var calleeSipUri = callee;
+    if(calleeSipUri.indexOf("@")==-1)
+    {
+        //No domain, add caller one 
+        calleeSipUri += "@"+this.configuration.sipDomain;
+    }
+    var fromSipUriString=this.configuration.sipUserName+"@"+this.configuration.sipDomain;
+    var jainSipCseqHeader=this.jainSipHeaderFactory.createCSeqHeader(1,"MESSAGE");
+    var jainSipCallIdHeader=this.jainSipHeaderFactory.createCallIdHeader(this.sipCallId);
+    var jainSipMaxForwardHeader=this.jainSipHeaderFactory.createMaxForwardsHeader(70);
+    var jainSipRequestUri=this.jainSipAddressFactory.createSipURI_user_host(null,calleeSipUri);
+    var jainSipAllowListHeader=this.jainSipHeaderFactory.createHeaders("Allow: INVITE,ACK,CANCEL,BYE,MESSAGE");         
+    var jainSipFromUri=this.jainSipAddressFactory.createSipURI_user_host(null,fromSipUriString);
+    var jainSipFromAdress=this.jainSipAddressFactory.createAddress_name_uri(this.configuration.displayName,jainSipFromUri);
+    
+    // Setup display name
+    if(this.configuration.displayName)
+    {
+        jainSipFromAdress.setDisplayName(this.configuration.displayName);      
+    }
+    else if(this.configuration.sipDisplayName)
+    {
+        jainSipFromAdress.setDisplayName(this.configuration.sipDisplayName);      
+    }
+    var tagFrom=new Date().getTime();
+    var jainSipFromHeader=this.jainSipHeaderFactory.createFromHeader(jainSipFromAdress, tagFrom);           
+    var jainSiptoUri=this.jainSipAddressFactory.createSipURI_user_host(null,calleeSipUri);
+    var jainSipToAddress=this.jainSipAddressFactory.createAddress_name_uri(null,jainSiptoUri);
+    var jainSipToHeader=this.jainSipHeaderFactory.createToHeader(jainSipToAddress, null);           
+    var jainSipViaHeader=this.jainSipListeningPoint.getViaHeader();
+    var jainSipContentTypeHeader=this.jainSipHeaderFactory.createContentTypeHeader("text","plain");
+
+    var jainSipMessageResquest=this.jainSipMessageFactory.createRequest(
+        jainSipRequestUri,
+        "MESSAGE",
+        jainSipCallIdHeader,
+        jainSipCseqHeader,
+        jainSipFromHeader,
+        jainSipToHeader,
+        jainSipViaHeader,
+        jainSipMaxForwardHeader,
+        jainSipContentTypeHeader,
+        message);
+                      
+    this.jainSipMessageFactory.addHeader( jainSipMessageResquest, jainSipAllowListHeader);
+    this.jainSipMessageFactory.addHeader( jainSipMessageResquest, this.jainSipContactHeader);
+    var jainSipTransaction = this.jainSipProvider.getNewClientTransaction(jainSipMessageResquest);
+    jainSipMessageResquest.setTransaction(jainSipTransaction);
+    jainSipTransaction.sendRequest();	
+}
+
