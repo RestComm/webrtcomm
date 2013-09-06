@@ -1786,6 +1786,7 @@ PrivateJainSipClientConnector.prototype.processSipMessageRequest=function(reques
     jainSip200OKResponse.removeHeader("P-Charging-Vector");
     jainSip200OKResponse.removeHeader("P-Charging-Function-Addresses");
     jainSip200OKResponse.removeHeader("P-Called-Party-ID");
+    jainSip200OKResponse.removeContent();
     requestEvent.getServerTransaction().sendResponse(jainSip200OKResponse);
 	
     var from = requestEvent.getRequest().getHeader("From").getAddress().getURI().getUser();
@@ -1825,11 +1826,12 @@ PrivateJainSipClientConnector.prototype.processSipMessageRequest=function(reques
     else 
     {
         // No linked call to the event message, forward the message to the client   
-        if(targetedWebRTCommCall.eventListener.onWebRTCommClientMessageEvent)
+        if(this.webRTCommClient.eventListener.onWebRTCommClientMessageEvent)
         {
+            var that=this;
             setTimeout(function(){
                 try{
-                    this.webRTCommClient.eventListener.onWebRTCommClientMessageEvent(from, message);
+                    that.webRTCommClient.eventListener.onWebRTCommClientMessageEvent(from, message);
                 }
                 catch(exception){
                     console.error("PrivateJainSipClientConnector:onWebRTCommClientMessageEvent(): catched exception in event listener:"+exception);
