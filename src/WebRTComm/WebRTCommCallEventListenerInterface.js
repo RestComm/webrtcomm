@@ -4,18 +4,18 @@
  *            required to be implented by the webapp 
  * @constructor
  * @public
- */ 
-WebRTCommCallEventListenerInterface = function(){
-    };
- 
+ */
+WebRTCommCallEventListenerInterface = function() {
+};
+
 /**
  * Open event
  * @public
  * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
- */ 
-WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallOpenedEvent= function(webRTCommCall) {
-    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallOpenedEvent(): not implemented;"; 
-}
+ */
+WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallOpenedEvent = function(webRTCommCall) {
+    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallOpenedEvent(): not implemented;";
+};
 
 
 /**
@@ -23,53 +23,43 @@ WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallOpenedEvent= functi
  * @public
  * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
  */
-WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallInProgressEvent= function(webRTCommCall) {
-    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallInProgressEvent(): not implemented;"; 
-}
- 
+WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallInProgressEvent = function(webRTCommCall) {
+    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallInProgressEvent(): not implemented;";
+};
+
 /**
  * Open error  event
  * @public
  * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
  * @param {String} error error message
  */
-WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallOpenErrorEvent= function(webRTCommCall,error) {
-    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallOpenErrorEvent(): not implemented;"; 
-}
- 
-/**
- * Open error  event
- * @public
- * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
- */
-WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallRingingEvent= function(webRTCommCall) {
-    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallRingingEvent(): not implemented;"; 
-} 
+WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallOpenErrorEvent = function(webRTCommCall, error) {
+    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallOpenErrorEvent(): not implemented;";
+};
 
 /**
  * Open error  event
  * @public
  * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
  */
-WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallRingingBackEvent= function(webRTCommCall) {
-    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallRingingBackEvent(): not implemented;"; 
-} 
+WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallRingingEvent = function(webRTCommCall) {
+    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallRingingEvent(): not implemented;";
+};
 
 /**
  * Open error  event
  * @public
  * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
  */
-WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallHangupEvent= function(webRTCommCall) {
-    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallHangupEvent(): not implemented;";   
-}
+WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallRingingBackEvent = function(webRTCommCall) {
+    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallRingingBackEvent(): not implemented;";
+};
 
 /**
- * Message event
+ * Open error  event
  * @public
  * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
- * @param {String} message received message
  */
-WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallMessageEvent= function(webRTCommCall, message) {
-    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallMessageEvent(): not implemented;";   
-}
+WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallHangupEvent = function(webRTCommCall) {
+    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallHangupEvent(): not implemented;";
+};
