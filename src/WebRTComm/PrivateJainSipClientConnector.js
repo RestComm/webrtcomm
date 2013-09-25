@@ -711,7 +711,7 @@ PrivateJainSipClientConnector.prototype.processSipRegisterResponse=function(resp
         {
             console.debug("PrivateJainSipClientConnector:processSipRegisterResponse(): 1XX response ignored"); 
         }
-        else if(statusCode==401)
+        else if(statusCode==401 || statusCode = 407)
         {
             if(this.configuration.sipPassword!=undefined && this.configuration.sipLogin!=undefined)
             {
@@ -817,7 +817,7 @@ PrivateJainSipClientConnector.prototype.processSipRegisterResponse=function(resp
         {
         //  Not temporary response for SIP REGISTER request  
         }
-        else if(statusCode==401)
+        else if(statusCode==401 || statusCode==401 )
         {
             this.sipRegisterState=this.SIP_UNREGISTERING_401_STATE;
             jainSipAuthorizationHeader=this.jainSipHeaderFactory.createAuthorizationHeader(jainSipResponse,this.jainSipRegisterRequest,this.configuration.sipPassword,this.configuration.sipLogin);
