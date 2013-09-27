@@ -34,6 +34,7 @@ WebRTCommTestWebAppController.prototype.DEFAULT_SIP_LOGIN = undefined;
 WebRTCommTestWebAppController.prototype.DEFAULT_SIP_PASSWORD = undefined;
 WebRTCommTestWebAppController.prototype.DEFAULT_SIP_CONTACT = "bob";
 WebRTCommTestWebAppController.prototype.DEFAULT_SIP_REGISTER_MODE = true;
+WebRTCommTestWebAppController.prototype.DEFAULT_ICE_SERVERS=undefined;
 WebRTCommTestWebAppController.prototype.DEFAULT_STUN_SERVER = "10.194.124.24:3478";
 WebRTCommTestWebAppController.prototype.DEFAULT_TURN_SERVER = undefined;
 WebRTCommTestWebAppController.prototype.DEFAULT_TURN_LOGIN = undefined;
@@ -71,6 +72,7 @@ WebRTCommTestWebAppController.prototype.onLoadViewEventHandler = function()
         },
         RTCPeerConnection:
                 {
+		    iceServers:this.DEFAULT_ICE_SERVERS,	
                     stunServer: this.DEFAULT_STUN_SERVER,
                     turnServer: this.DEFAULT_TURN_SERVER,
                     turnLogin: this.DEFAULT_TURN_LOGIN,

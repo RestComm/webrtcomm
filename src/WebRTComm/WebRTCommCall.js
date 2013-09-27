@@ -6,6 +6,7 @@
  * @public
  * @param  {WebRTCommClient} webRTCommClient client owner 
  * @author Laurent STRULLU (laurent.strullu@orange.com) 
+ * @author Jean Deruelle (jean.deruelle@telestax.com) 
  */
 WebRTCommCall = function(webRTCommClient)
 {
@@ -901,20 +902,25 @@ WebRTCommCall.prototype.createRTCPeerConnection = function() {
 
     this.peerConnectionState = 'new';
     var that = this;
-    if (this.webRTCommClient.configuration.RTCPeerConnection.stunServer)
-    {
-        rtcPeerConnectionConfiguration.iceServers.push({
-            url: "stun:" + this.webRTCommClient.configuration.RTCPeerConnection.stunServer
-        });
-    }
-    if (this.webRTCommClient.configuration.RTCPeerConnection.turnServer
-            && this.webRTCommClient.configuration.RTCPeerConnection.turnLogin
-            && this.webRTCommClient.configuration.RTCPeerConnection.turnPassword)
-    {
-        rtcPeerConnectionConfiguration.iceServers.push({
-            url: "turn:" + this.webRTCommClient.configuration.RTCPeerConnection.turnLogin + "@" + this.webRTCommClient.configuration.RTCPeerConnection.turnServer,
-            credential: this.webRTCommClient.configuration.RTCPeerConnection.turnPassword
-        });
+    /* https://code.google.com/p/webrtcomm/issues/detail?id=14 */
+    if(this.webRTCommClient.configuration.RTCPeerConnection.iceServers) {
+    	rtcPeerConnectionConfiguration = this.webRTCommClient.configuration.RTCPeerConnection.iceServers;
+    } else {
+	    if (this.webRTCommClient.configuration.RTCPeerConnection.stunServer)
+	    {
+		rtcPeerConnectionConfiguration.iceServers.push({
+		    url: "stun:" + this.webRTCommClient.configuration.RTCPeerConnection.stunServer
+		});
+	    }
+	    if (this.webRTCommClient.configuration.RTCPeerConnection.turnServer
+		    && this.webRTCommClient.configuration.RTCPeerConnection.turnLogin
+		    && this.webRTCommClient.configuration.RTCPeerConnection.turnPassword)
+	    {
+		rtcPeerConnectionConfiguration.iceServers.push({
+		    url: "turn:" + this.webRTCommClient.configuration.RTCPeerConnection.turnLogin + "@" + this.webRTCommClient.configuration.RTCPeerConnection.turnServer,
+		    credential: this.webRTCommClient.configuration.RTCPeerConnection.turnPassword
+		});
+	    }
     }
 
 
