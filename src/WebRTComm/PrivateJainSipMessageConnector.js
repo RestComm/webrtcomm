@@ -8,6 +8,7 @@
  * @param {string} sipCallId   SIP Call ID
  * @throw {String} Exception "bad argument"
  * @author Laurent STRULLU (laurent.strullu@orange.com) 
+ * @author Jean Deruelle (jean.deruelle@ŧelestax.com)
  */
 PrivateJainSipMessageConnector = function(clientConnector, webRTCommMessage, sipCallId)
 {
@@ -36,6 +37,7 @@ PrivateJainSipMessageConnector = function(clientConnector, webRTCommMessage, sip
  * @constant
  */
 PrivateJainSipMessageConnector.prototype.SIP_MESSAGE_SENDING_STATE = "SIP_MESSAGE_SENDING_STATE";
+PrivateJainSipMessageConnector.prototype.SIP_MESSAGE_407_STATE = "SIP_MESSAGE_407_STATE";
 PrivateJainSipMessageConnector.prototype.SIP_MESSAGE_SENT_STATE = "SIP_MESSAGE_SENT_STATE";
 PrivateJainSipMessageConnector.prototype.SIP_MESSAGE_SEND_FAILED_STATE = "SIP_MESSAGE_SEND_FAILED_STATE";
 PrivateJainSipMessageConnector.prototype.SIP_MESSAGE_RECEIVED_STATE = "SIP_MESSAGE_RECEIVED_STATE";
@@ -48,6 +50,44 @@ PrivateJainSipMessageConnector.prototype.SIP_MESSAGE_RECEIVED_STATE = "SIP_MESSA
  */ 
 PrivateJainSipMessageConnector.prototype.getId= function() {
     return this.sipCallId;  
+};
+
+/**
+ * Send Authenticated SIP MESSAGE request
+ * @param {Request} jainSipMessageRequest 
+ * @param {AuthorizationHeader} jainSipAuthorizationHeader
+ * @private
+ */
+PrivateJainSipMessageConnector.prototype.sendAuthenticatedSipMessageRequest = function(jainSipMessageRequest, jainSipAuthorizationHeader) {
+    console.debug("PrivateJainSipMessageConnector:sendAuthenticatedSipMessageRequest()");
+    jainSipMessageRequest.removeHeader("Authorization");
+    var newJainSipMessageRequest = new SIPRequest();
+    newJainSipMessageRequest.setMethod(jainSipMessageRequest.getMethod());
+    newJainSipMessageRequest.setRequestURI(jainSipMessageRequest.getRequestURI());
+    var headerList = jainSipMessageRequest.getHeaders();
+    for (var i = 0; i < headerList.length; i++)
+    {
+    	newJainSipMessageRequest.addHeader(headerList[i]);
+    }
+
+    var num = new Number(jainSipMessageRequest.getCSeq().getSeqNumber());
+    newJainSipMessageRequest.getCSeq().setSeqNumber(num + 1);
+    newJainSipMessageRequest.setCallId(jainSipMessageRequest.getCallId());
+    newJainSipMessageRequest.setVia(this.clientConnector.jainSipListeningPoint.getViaHeader());
+    newJainSipMessageRequest.setFrom(jainSipMessageRequest.getFrom());
+    newJainSipMessageRequest.setTo(jainSipMessageRequest.getTo());
+    newJainSipMessageRequest.setMaxForwards(jainSipMessageRequest.getMaxForwards());
+    if (jainSipMessageRequest.getContent() !== null)
+    {
+        var content = jainSipMessageRequest.getContent();
+        var contentType = jainSipMessageRequest.getContentTypeHeader();
+        newJainSipMessageRequest.setContent(content, contentType);
+    }
+    
+    this.clientConnector.jainSipMessageFactory.addHeader(newJainSipMessageRequest, jainSipAuthorizationHeader);
+    jainSipMessageTransaction = this.clientConnector.jainSipProvider.getNewClientTransaction(newJainSipMessageRequest);
+    newJainSipMessageRequest.setTransaction(jainSipMessageTransaction);
+    jainSipMessageTransaction.sendRequest();
 };
 
 /**
@@ -118,8 +158,8 @@ PrivateJainSipMessageConnector.prototype.onJainSipClientConnectorSipResponseEven
     console.debug("PrivateJainSipMessageConnector:onJainSipClientConnectorSipResponseEvent() responseEvent : " + responseEvent.getResponse().getStatusLine().getReasonPhrase());
     var jainSipResponse = responseEvent.getResponse();
     var statusCode = parseInt(jainSipResponse.getStatusCode());
-
-    if (this.sipMessageState === this.SIP_MESSAGE_SENDING_STATE)
+    
+    if (this.sipMessageState === this.SIP_MESSAGE_SENDING_STATE || this.sipMessageState === this.SIP_MESSAGE_407_STATE)
     {
         if (statusCode >= 100 && statusCode < 300) {
             this.sipMessageState = this.SIP_MESSAGE_SENT_STATE;
@@ -139,7 +179,7 @@ PrivateJainSipMessageConnector.prototype.onJainSipClientConnectorSipResponseEven
                 }
             }
             else
-            {
+            {            	
                 // No linked call to the event message, forward the message to the client   
                 if (this.webRTCommMessage.webRTCommClient.eventListener.onWebRTCommMessageSentEvent)
                 {
@@ -155,10 +195,22 @@ PrivateJainSipMessageConnector.prototype.onJainSipClientConnectorSipResponseEven
                 }
             }
         } else {
-            this.sipMessageState = this.SIP_MESSAGE_SEND_FAILED_STATE;
+            if (statusCode === 407)
+            {
+        	this.sipMessageState = this.SIP_MESSAGE_407_STATE;
+    		
+                // Send Authenticated SIP INVITE
+        	var jainSipOriginalMessageRequest = responseEvent.getOriginalTransaction().getOriginalRequest();
+                var jainSipAuthorizationHeader = this.clientConnector.jainSipHeaderFactory.createAuthorizationHeader(jainSipResponse, jainSipOriginalMessageRequest, 						   this.clientConnector.configuration.sipPassword, this.clientConnector.configuration.sipLogin);
+                this.sendAuthenticatedSipMessageRequest(jainSipOriginalMessageRequest, jainSipAuthorizationHeader);
+                return;
+            } else {
+            	this.sipMessageState = this.SIP_MESSAGE_SEND_FAILED_STATE;
+            }
+        	
             if (this.webRTCommMessage.webRTCommCall)
             {
-                if (this.webRTCommMessage.webRTCommCall.eventListener.onWebRTCommMessageSendErrorEvent)
+            	if (this.webRTCommMessage.webRTCommCall.eventListener.onWebRTCommMessageSendErrorEvent)
                 {
                     var that = this;
                     setTimeout(function() {
@@ -173,8 +225,8 @@ PrivateJainSipMessageConnector.prototype.onJainSipClientConnectorSipResponseEven
             }
             else
             {
-                // No linked call to the event message, forward the message to the client   
-                if (this.webRTCommMessage.webRTCommClient.eventListener.onWebRTCommMessageSendErrorEvent)
+            	if (this.webRTCommMessage.webRTCommClient.eventListener.onWebRTCommMessageSendErrorEvent)
+                // No linked call to the event message, forward the message to the client                  
                 {
                     var that = this;
                     setTimeout(function() {
