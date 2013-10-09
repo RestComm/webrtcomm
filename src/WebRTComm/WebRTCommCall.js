@@ -516,32 +516,33 @@ WebRTCommCall.prototype.sendMessage = function(text) {
                 newWebRTCommMessage.to = this.calleePhoneNumber;
             }
 
-            if (this.messageChannel && this.messageChannel.readyState === "open")
-            {
-                try
-                {
-                    this.messageChannel.send(newWebRTCommMessage.text);
-                    if (this.eventListener.onWebRTCommMessageSentEvent)
-                    {
-                        var that = this;
-                        setTimeout(function() {
-                            try {
-                                that.eventListener.onWebRTCommMessageSentEvent(newWebRTCommMessage);
-                            }
-                            catch (exception) {
-                                console.error("PrivateJainSipClientConnector:processMessageSipRequestEvent(): catched exception in event listener:" + exception);
-                            }
-                        }, 1);
-                    }
-                }
-                catch (exception)
-                {
-                    console.error("WebRTCommCall:sendMessage(): catched exception:" + exception);
-                    throw "WebRTCommCall:sendMessage(): catched exception:" + exception;
-                }
-            }
-            else
-            {
+	      // Commented out for https://code.google.com/p/webrtcomm/issues/detail?id=18 SIP MESSAGE sending is not consistent
+//            if (this.messageChannel && this.messageChannel.readyState === "open")
+//            {
+//                try
+//                {
+//                    this.messageChannel.send(newWebRTCommMessage.text);
+//                    if (this.eventListener.onWebRTCommMessageSentEvent)
+//                    {
+//                        var that = this;
+//                        setTimeout(function() {
+//                            try {
+//                                that.eventListener.onWebRTCommMessageSentEvent(newWebRTCommMessage);
+//                            }
+//                            catch (exception) {
+//                                console.error("PrivateJainSipClientConnector:processMessageSipRequestEvent(): catched exception in event listener:" + exception);
+//                            }
+//                        }, 1);
+//                    }
+//                }
+//                catch (exception)
+//                {
+//                    console.error("WebRTCommCall:sendMessage(): catched exception:" + exception);
+//                    throw "WebRTCommCall:sendMessage(): catched exception:" + exception;
+//                }
+//            }
+//            else
+//            {
                 try
                 {
                     newWebRTCommMessage.connector.send();
@@ -551,7 +552,7 @@ WebRTCommCall.prototype.sendMessage = function(text) {
                     console.error("WebRTCommCall:sendMessage(): catched exception:" + exception);
                     throw "WebRTCommCall:sendMessage(): catched exception:" + exception;
                 }
-            }
+//            }
             return newWebRTCommMessage;
         }
         else
