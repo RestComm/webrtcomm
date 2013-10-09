@@ -121,7 +121,7 @@ PrivateJainSipMessageConnector.prototype.onJainSipClientConnectorSipResponseEven
 
     if (this.sipMessageState === this.SIP_MESSAGE_SENDING_STATE)
     {
-        if (statusCode === 200) {
+        if (statusCode >= 100 && statusCode < 300) {
             this.sipMessageState = this.SIP_MESSAGE_SENT_STATE;
             if (this.webRTCommMessage.webRTCommCall)
             {
