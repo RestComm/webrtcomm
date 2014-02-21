@@ -3459,21 +3459,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionOnAddStreamEvent = function(event) {
             console.debug("WebRTCommCall:onRtcPeerConnectionOnAddStreamEvent(): this.peerConnection.iceGatheringState=" + this.peerConnection.iceGatheringState);
             console.debug("WebRTCommCall:onRtcPeerConnectionOnAddStreamEvent(): this.peerConnection.iceConnectionState=" + this.peerConnection.iceConnectionState);
             console.debug("WebRTCommCall:onRtcPeerConnectionOnAddStreamEvent(): this.peerConnectionState=" + this.peerConnectionState);
-            if (window.webkitRTCPeerConnection)
-            {
-                // Gooogle implementation
-                this.remoteBundledAudioVideoMediaStream = event.stream;
-            }
-            else if (window.mozRTCPeerConnection)
-            {
-                // Mozilla implementation
-                if (event.type === "audio")
-                    this.remoteAudioMediaStream = event.stream;
-                else if (event.type === "video")
-                    this.remoteVideoMediaStream = event.stream;
-                else
-                    console.error("WebRTCommCall:onRtcPeerConnectionOnAddStreamEvent(): unsupported event.type" + event);
-            }
+	    this.remoteBundledAudioVideoMediaStream = event.stream;
         }
         else
         {
