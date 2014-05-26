@@ -238,7 +238,7 @@ WebRTCommCall.prototype.open = function(calleePhoneNumber, configuration) {
 
                         if (window.webkitRTCPeerConnection)
                         {
-                            var sdpContraints = {
+                            var sdpConstraints = {
                                 mandatory:
                                         {
                                             OfferToReceiveAudio: this.configuration.audioMediaFlag,
@@ -247,16 +247,16 @@ WebRTCommCall.prototype.open = function(calleePhoneNumber, configuration) {
                                 optional: []
                             };
 
-                            console.debug("WebRTCommCall:open():sdpContraints=" + JSON.stringify(sdpContraints));
+                            console.debug("WebRTCommCall:open():sdpConstraints=" + JSON.stringify(sdpConstraints));
                             this.peerConnection.createOffer(function(offer) {
                                 that.onRtcPeerConnectionCreateOfferSuccessEvent(offer);
                             }, function(error) {
                                 that.onRtcPeerConnectionCreateOfferErrorEvent(error);
-                            }, sdpContraints);
+                            }, sdpConstraints);
                         }
                         else if (window.mozRTCPeerConnection)
                         {
-                            var sdpContraints = {
+                            var sdpConstraints = {
                                 mandatory:
                                         {
                                             OfferToReceiveAudio: this.configuration.audioMediaFlag,
@@ -266,14 +266,14 @@ WebRTCommCall.prototype.open = function(calleePhoneNumber, configuration) {
                                 optional: []
                             };
 
-                            console.debug("WebRTCommCall:open():sdpContraints=" + JSON.stringify(sdpContraints));
+                            console.debug("WebRTCommCall:open():sdpConstraints=" + JSON.stringify(sdpConstraints));
                             this.peerConnection.createOffer(function(offer) {
                                 that.onRtcPeerConnectionCreateOfferSuccessEvent(offer);
                             }, function(error) {
                                 that.onRtcPeerConnectionCreateOfferErrorEvent(error);
-                            }, sdpContraints);
+                            }, sdpConstraints);
                         }
-                        console.debug("WebRTCommCall:open():sdpContraints=" + JSON.stringify(sdpContraints));
+                        console.debug("WebRTCommCall:open():sdpConstraints=" + JSON.stringify(sdpConstraints));
                     }
                     catch (exception) {
                         console.error("WebRTCommCall:open(): catched exception:" + exception);
@@ -926,7 +926,7 @@ WebRTCommCall.prototype.createRTCPeerConnection = function() {
 
 
     console.debug("WebRTCommCall:createPeerConnection():rtcPeerConnectionConfiguration=" + JSON.stringify(rtcPeerConnectionConfiguration));
-    console.debug("WebRTCommCall:createPeerConnection():peerConnectionContraints=" + JSON.stringify(peerConnectionContraints));
+    console.debug("WebRTCommCall:createPeerConnection():peerConnectionConstraints=" + JSON.stringify(peerConnectionConstraints));
 
     if (window.webkitRTCPeerConnection)
     {
@@ -937,24 +937,27 @@ WebRTCommCall.prototype.createRTCPeerConnection = function() {
             iceTransports = "relay";
         }
 
-        var peerConnectionContraints = {
+        var peerConnectionConstraints = {
             mandatory:
                     {
                         IceTransports: iceTransports
                     },
-            optional: [{
-                    RtpDataChannels: true
-                }, {
-                    DtlsSrtpKeyAgreement: this.webRTCommClient.configuration.RTCPeerConnection.dtlsSrtpKeyAgreement
-                }]
+            optional: []
+		//{
+		    // SCTP Channels available in Chrome 31
+                    //RtpDataChannels: true
+                //}, {
+		    // DTLS Mandatory and available in Chrome 35
+                    //DtlsSrtpKeyAgreement: this.webRTCommClient.configuration.RTCPeerConnection.dtlsSrtpKeyAgreement
+              //  }]
         };
 
-        this.peerConnection = new window.webkitRTCPeerConnection(rtcPeerConnectionConfiguration, peerConnectionContraints);
+        this.peerConnection = new window.webkitRTCPeerConnection(rtcPeerConnectionConfiguration, peerConnectionConstraints);
     }
     else if (window.mozRTCPeerConnection)
     {
         // Mozilla implementation
-        this.peerConnection = new window.mozRTCPeerConnection(rtcPeerConnectionConfiguration, peerConnectionContraints);
+        this.peerConnection = new window.mozRTCPeerConnection(rtcPeerConnectionConfiguration, peerConnectionConstraints);
     }
 
     this.peerConnection.onaddstream = function(event) {
@@ -1471,7 +1474,8 @@ WebRTCommCall.prototype.onRtcPeerConnectionCreateOfferSuccessEvent = function(sd
                 {
                     this.forceTurnMediaRelay(parsedSdpOffer);
                 }
-
+		// Allow patching of chrome ice-options for interconnect with Mobicents Media Server, commented for now but to be made configurable
+		// this.patchChromeIce(parsedSdpOffer, "ice-options");
                 console.debug("WebRTCommCall:onRtcPeerConnectionCreateOfferSuccessEvent(): parsedSdpOffer=" + parsedSdpOffer);
 
                 // Apply modified SDP Offer
@@ -1565,7 +1569,8 @@ WebRTCommCall.prototype.onRtcPeerConnectionSetLocalDescriptionSuccessEvent = fun
 
                     // Apply modified SDP Offer
                     this.connector.invite(parsedSdpOffer);
-                    this.connector.invite(this.peerConnectionLocalDescription.sdp);
+                    // results in second invite being sent when testing chrome and ff, so commented out
+		    // this.connector.invite(this.peerConnectionLocalDescription.sdp);
                     this.peerConnectionState = 'offer-sent';
                 }
                 else if (this.peerConnectionState === 'preparing-answer')
@@ -1688,7 +1693,9 @@ WebRTCommCall.prototype.onRtcPeerConnectionCreateAnswerSuccessEvent = function(s
                         console.error("WebRTCommCall:onRtcPeerConnectionCreateAnswerSuccessEvent(): configured codec filtering has failded, use inital RTCPeerConnection SDP offer");
                     }
                 }
-                
+            	// Allow patching of chrome ice-options for interconnect with Mobicents Media Server, commented for now but to be made configurable
+		// this.patchChromeIce(parsedSdpOffer, "ice-options");
+
                 sdpAnswser.sdp = parsedSdpAnswer;
                 this.peerConnectionLocalDescription = parsedSdpAnswer;
                 this.peerConnection.setLocalDescription(sdpAnswser, function() {
@@ -1780,7 +1787,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionSetRemoteDescriptionSuccessEvent = fu
                 var that = this;
                 if (window.webkitRTCPeerConnection)
                 {
-                    var sdpContraints = {
+                    var sdpConstraints = {
                         mandatory:
                                 {
                                     OfferToReceiveAudio: this.configuration.audioMediaFlag,
@@ -1792,11 +1799,11 @@ WebRTCommCall.prototype.onRtcPeerConnectionSetRemoteDescriptionSuccessEvent = fu
                         that.onRtcPeerConnectionCreateAnswerSuccessEvent(answer);
                     }, function(error) {
                         that.onRtcPeerConnectionCreateAnswerErrorEvent(error);
-                    }, sdpContraints);
+                    }, sdpConstraints);
                 }
                 else if (window.mozRTCPeerConnection)
                 {
-                    var sdpContraints = {
+                    var sdpConstraints = {
                         mandatory:
                                 {
                                     OfferToReceiveAudio: this.configuration.audioMediaFlag,
@@ -1809,7 +1816,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionSetRemoteDescriptionSuccessEvent = fu
                         that.onRtcPeerConnectionCreateAnswerSuccessEvent(answer);
                     }, function(error) {
                         that.onRtcPeerConnectionCreateAnswerErrorEvent(error);
-                    }, sdpContraints);
+                    }, sdpConstraints);
                 }
             }
             else {
@@ -2450,6 +2457,84 @@ WebRTCommCall.prototype.updateOpusMediaDescription = function(mediaDescription, 
     }
 };
 
+/**
+ * Modifiy SDP based on configured codec filter
+ * @private
+ * @param {SessionDescription} sessionDescription  JAIN (gov.nist.sdp) SDP offer object 
+ * @param {String} mediaTypeToRemove  audi/video 
+ */
+WebRTCommCall.prototype.patchChromeIce = function(sessionDescription, attributeToCheck) {
+    console.debug("WebRTCommCall:patchChromeIce()");
+    if (sessionDescription instanceof SessionDescription)
+    {
+        try
+        {
+	    var otherAttributes = sessionDescription.getAttributes(false);
+	    if (otherAttributes != null) {
+		for (var i = 0; i <  otherAttributes.length; i++) 
+		{
+		    var attributField = otherAttributes[i];
+		    if (attributField.getName() === attributeToCheck)
+		    {
+			console.debug("WebRTCommCall:patchChromeIce(), found ice-options session attribute trying to patch");
+		        try
+		        {
+		            var rtpmapValue = attributField.getValue().toLowerCase();
+		            if (rtpmapValue.indexOf("google-ice") >= 0)
+		            {
+				console.debug("WebRTCommCall:patchChromeIce(), found google-ice session attribute trying to patch");+				
+		                //attributField.setValue("trickle");
+				attributFields.remove(i);
+	                        break;
+		            }
+		        }
+		        catch (exception)
+		        {
+		            console.error("WebRTCommCall:updateMediaDescription(): rtpmap/fmtp format not supported");
+		        }
+		    }
+		}	
+	    }	    
+            var mediaDescriptions = sessionDescription.getMediaDescriptions(false);
+            for (var i = 0; i < mediaDescriptions.length; i++)
+            {
+                var attributFields = mediaDescriptions[i].getAttributes();
+		for (var j = 0; j < attributFields.length; j++)
+		{
+		    var attributField = attributFields[j];
+		    if (attributField.getName() === attributeToCheck)
+		    {
+			console.debug("WebRTCommCall:patchChromeIce(), found ice-options media attribute trying to patch");
+		        try
+		        {
+		            var rtpmapValue = attributField.getValue().toLowerCase();
+		            if (rtpmapValue.indexOf("google-ice") >= 0)
+		            {
+				console.debug("WebRTCommCall:patchChromeIce(), found google-ice mediajattribute trying to patch");+				
+		                //attributField.setValue("trickle");
+				attributFields.remove(j);
+	                        break;
+		            }
+		        }
+		        catch (exception)
+		        {
+		            console.error("WebRTCommCall:updateMediaDescription(): rtpmap/fmtp format not supported");
+		        }
+		    }
+		}
+            }
+        }
+        catch (exception)
+        {
+            console.error("WebRTCommCall:patchChromeIce(): catched exception, exception:" + exception);
+            throw exception;
+        }
+    }
+    else
+    {
+        throw "WebRTCommCall:patchChromeIce(): bad arguments"
+    }
+};
 
 /**
  * Modifiy SDP based on configured codec filter
