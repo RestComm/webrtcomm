@@ -3463,6 +3463,21 @@ WebRTCommCall.prototype.onRtcPeerConnectionOnAddStreamEvent = function(event) {
             console.debug("WebRTCommCall:onRtcPeerConnectionOnAddStreamEvent(): this.peerConnection.iceConnectionState=" + this.peerConnection.iceConnectionState);
             console.debug("WebRTCommCall:onRtcPeerConnectionOnAddStreamEvent(): this.peerConnectionState=" + this.peerConnectionState);
 	    this.remoteBundledAudioVideoMediaStream = event.stream;
+	    // https://code.google.com/p/webrtcomm/issues/detail?id=22 Make sure to call WebRTCommCall on add stream event
+            if (this.eventListener.onWebRTCommCallOpenedEvent)
+            {
+                var that = this;
+                setTimeout(function() {
+                    try {
+		        console.debug("WebRTCommCall:calling onWebRTCommCallOpenedEvent(): event=" + event);
+                        that.eventListener.onWebRTCommCallOpenedEvent(that);
+                    }
+                    catch (exception)
+                    {
+                        console.error("WebRTCommCall:onRtcPeerConnectionOnAddStreamEvent(): catched exception in listener:" + exception);
+                    }
+                }, 1);
+            }
         }
         else
         {
@@ -3946,6 +3961,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionSetRemoteDescriptionSuccessEvent = fu
             if (this.peerConnectionState === 'answer-received')
             {
                 this.peerConnectionState = 'established';
+		console.debug("WebRTCommCall:onRtcPeerConnectionSetRemoteDescriptionSuccessEvent(): this.peerConnectionState=" + this.peerConnectionState);
                 // Notify closed event to listener
                 if (this.eventListener.onWebRTCommCallOpenedEvent)
                 {
