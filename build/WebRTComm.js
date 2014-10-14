@@ -2207,6 +2207,7 @@ WebRTCommCall = function(webRTCommClient)
         this.remoteVideoMediaStream = undefined;
         this.remoteSdpOffer = undefined;
         this.messageChannel = undefined;
+	this.dtmfSender = undefined;
         // Set default listener to client listener
         this.eventListener = webRTCommClient.eventListener;
     }
@@ -2524,6 +2525,7 @@ WebRTCommCall.prototype.close = function() {
                     this.messageChannel.close();
                 this.peerConnection.close();
                 this.peerConnection = undefined;
+		this.dtmfSender = undefined;
                 // Notify asynchronously the closed event
                 var that = this;
                 setTimeout(function() {
@@ -2666,7 +2668,21 @@ WebRTCommCall.prototype.reject = function() {
     }
 };
 
-
+/**
+ * Send DTMF Tone to WebRTC communication peer over the peerconnection
+ * @public 
+ * @param {String} dtmfEvent to send (1,2,3...)
+ */
+WebRTCommCall.prototype.sendDTMF = function(dtmfEvent) {
+	var duration = 500;
+	var gap = 50;
+	if (this.dtmfSender) {
+	    console.debug('Sending Tones, duration, gap: ', dtmfEvent, duration, gap);
+	    this.dtmfSender.insertDTMF(dtmfEvent, duration, gap);
+	} else {
+	    console.debug('DTMFSender not initialized so not Sending Tones, duration, gap: ', dtmfEvent, duration, gap);	
+	}
+}
 
 
 /**
@@ -3471,6 +3487,19 @@ WebRTCommCall.prototype.onRtcPeerConnectionOnAddStreamEvent = function(event) {
                     try {
 		        console.debug("WebRTCommCall:calling onWebRTCommCallOpenedEvent(): event=" + event);
                         that.eventListener.onWebRTCommCallOpenedEvent(that);
+		        console.debug("WebRTCommCall:onRtcPeerConnectionOnAddStreamEvent(): creating DTMF Sender");
+			if (that.peerConnection.createDTMFSender) {
+	    		    if (that.configuration.localMediaStream !== null) {
+			        var localAudioTrack = that.configuration.localMediaStream.getAudioTracks()[0];
+			        that.dtmfSender = that.peerConnection.createDTMFSender(localAudioTrack);
+			        //that.dtmfSender.ontonechange = dtmfOnToneChange;
+			        console.debug('Created DTMFSender');
+			    } else {
+			        console.debug('No local stream to create DTMF Sender');
+			    }
+	  	        } else {
+	    		    console.warn('RTCPeerConnection method createDTMFSender() is not support by this browser.');
+	  	        }
                     }
                     catch (exception)
                     {
