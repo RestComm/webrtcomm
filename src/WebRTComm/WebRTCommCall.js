@@ -532,43 +532,15 @@ WebRTCommCall.prototype.sendMessage = function(text) {
                 newWebRTCommMessage.to = this.calleePhoneNumber;
             }
 
-	      // Commented out for https://code.google.com/p/webrtcomm/issues/detail?id=18 SIP MESSAGE sending is not consistent
-//            if (this.messageChannel && this.messageChannel.readyState === "open")
-//            {
-//                try
-//                {
-//                    this.messageChannel.send(newWebRTCommMessage.text);
-//                    if (this.eventListener.onWebRTCommMessageSentEvent)
-//                    {
-//                        var that = this;
-//                        setTimeout(function() {
-//                            try {
-//                                that.eventListener.onWebRTCommMessageSentEvent(newWebRTCommMessage);
-//                            }
-//                            catch (exception) {
-//                                console.error("PrivateJainSipClientConnector:processMessageSipRequestEvent(): catched exception in event listener:" + exception);
-//                            }
-//                        }, 1);
-//                    }
-//                }
-//                catch (exception)
-//                {
-//                    console.error("WebRTCommCall:sendMessage(): catched exception:" + exception);
-//                    throw "WebRTCommCall:sendMessage(): catched exception:" + exception;
-//                }
-//            }
-//            else
-//            {
-                try
-                {
-                    newWebRTCommMessage.connector.send();
-                }
-                catch (exception)
-                {
-                    console.error("WebRTCommCall:sendMessage(): catched exception:" + exception);
-                    throw "WebRTCommCall:sendMessage(): catched exception:" + exception;
-                }
-//            }
+            try
+            {
+                newWebRTCommMessage.connector.send();
+            }
+            catch (exception)
+            {
+                console.error("WebRTCommCall:sendMessage(): catched exception:" + exception);
+                throw "WebRTCommCall:sendMessage(): catched exception:" + exception;
+            }
             return newWebRTCommMessage;
         }
         else
@@ -581,6 +553,72 @@ WebRTCommCall.prototype.sendMessage = function(text) {
     {
         console.error("WebRTCommCall:sendMessage(): bad state, unauthorized action");
         throw "WebRTCommCall:sendMessage(): bad state, unauthorized action";
+    }
+};
+
+/**
+ * Send Short message to WebRTC communication peer
+ * Use WebRTC datachannel if open otherwise use transport (e.g SIP) implemented by the connector
+ * @public 
+ * @param {String} text message to send
+ * @throw {String} Exception "bad state, unauthorized action"
+ * @throw {String} Exception "internal error,check console logs"
+ * @returns {WebRTCommMessage} new created WebRTCommMessage object
+ */
+WebRTCommCall.prototype.sendDataMessage = function(text) {
+    console.debug("WebRTCommCall:sendDataMessage()");
+    if (this.webRTCommClient.isOpened())
+    {
+        if (this.isOpened())
+        {
+            var newWebRTCommDataMessage = new WebRTCommDataMessage(this.webRTCommClient, this);
+            newWebRTCommDataMessage.content = text;
+            if (this.isIncoming())
+            {
+                newWebRTCommDataMessage.to = this.callerPhoneNumber;
+            }
+            else
+            {
+                newWebRTCommDataMessage.to = this.calleePhoneNumber;
+            }
+
+            if (this.messageChannel && this.messageChannel.readyState === "open")
+            {
+                try
+                {
+                    this.messageChannel.send(newWebRTCommDataMessage.content);
+                    if (this.eventListener.onWebRTCommDataMessageSentEvent)
+                    {
+                        var that = this;
+                        setTimeout(function() {
+                            try {
+                                that.eventListener.onWebRTCommDataMessageSentEvent(newWebRTCommDataMessage);
+                            }
+                            catch (exception) {
+                                console.error("WebRTCommCall:sendDataMessage(): catched exception in event listener:" + exception);
+                            }
+                        }, 1);
+                    }
+                }
+                catch (exception)
+                {
+                    console.error("WebRTCommCall:sendDataMessage(): catched exception:" + exception);
+                    throw "WebRTCommCall:sendDataMessage(): catched exception:" + exception;
+                }
+            }
+
+            return newWebRTCommDataMessage;
+        }
+        else
+        {
+            console.error("WebRTCommCall:sendDataMessage(): bad state, unauthorized action");
+            throw "WebRTCommCall:sendDataMessage(): bad state, unauthorized action";
+        }
+    }
+    else
+    {
+        console.error("WebRTCommCall:sendDataMessage(): bad state, unauthorized action");
+        throw "WebRTCommCall:sendDataMessage(): bad state, unauthorized action";
     }
 };
 
@@ -2208,15 +2246,15 @@ WebRTCommCall.prototype.onRtcPeerConnectionMessageChannelOnMessageEvent = functi
         {
             console.debug("WebRTCommCall:onRtcPeerConnectionMessageChannelOnMessageEvent(): this.messageChannel.readyState=" + this.messageChannel.readyState);
             console.debug("WebRTCommCall:onRtcPeerConnectionMessageChannelOnMessageEvent(): this.messageChannel.binaryType=" + this.messageChannel.bufferedAmmount);
-            if (this.eventListener.onWebRTCommMessageReceivedEvent)
+            if (this.eventListener.onWebRTCommDataMessageReceivedEvent)
             {
                 // Build WebRTCommMessage
-                var newWebRTCommMessage = new WebRTCommMessage(this.webRTCommClient, this);
-                newWebRTCommMessage.text=event.data;
+                var newWebRTCommDataMessage = new WebRTCommDataMessage(this.webRTCommClient, this);
+                newWebRTCommDataMessage.content=event.data;
                 var that = this;
                 setTimeout(function() {
                     try {
-                        that.eventListener.onWebRTCommMessageReceivedEvent(newWebRTCommMessage);
+                        that.eventListener.onWebRTCommDataMessageReceivedEvent(newWebRTCommDataMessage);
                     }
                     catch (exception)
                     {
