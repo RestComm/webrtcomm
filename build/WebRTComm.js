@@ -2439,9 +2439,9 @@ WebRTCommCall.prototype.open = function(calleePhoneNumber, configuration) {
                             var sdpConstraints = {
                                 mandatory:
                                         {
-                                            OfferToReceiveAudio: this.configuration.audioMediaFlag,
-                                            OfferToReceiveVideo: this.configuration.videoMediaFlag,
-                                            MozDontOfferDataChannel: !this.configuration.messageMediaFlag
+                                            offerToReceiveAudio: this.configuration.audioMediaFlag,
+                                            offerToReceiveVideo: this.configuration.videoMediaFlag,
+                                            mozDontOfferDataChannel: !this.configuration.messageMediaFlag
                                         },
                                 optional: []
                             };
@@ -3606,19 +3606,10 @@ WebRTCommCall.prototype.onRtcPeerConnectionIceCandidateEvent = function(rtcIceCa
             {
                 if (this.peerConnection.iceGatheringState === 'complete')
                 {
-                    if (window.webkitRTCPeerConnection)
-                    {
                         if (this.peerConnectionState === 'preparing-offer')
                         {
                             var sdpOfferString = this.peerConnection.localDescription.sdp;
-                            var sdpParser = new SDPParser();
-                            var parsedSdpOffer = sdpParser.parse(sdpOfferString);
-
-                            // Check if offer is ok with the requested RTCPeerConnection constraints
-                            if (this.webRTCommClient.configuration.RTCPeerConnection.forceTurnMediaRelay === true)
-                            {
-                                this.forceTurnMediaRelay(parsedSdpOffer);
-                            }
+                            var parsedSdpOffer = this.setRtcPeerConnectionLocalDescription(this.peerConnection.localDescription);
 
                             // Apply modified SDP Offer
                             this.connector.invite(parsedSdpOffer);
@@ -3627,14 +3618,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionIceCandidateEvent = function(rtcIceCa
                         else if (this.peerConnectionState === 'preparing-answer')
                         {
                             var sdpAnswerString = this.peerConnection.localDescription.sdp;
-                            var sdpParser = new SDPParser();
-                            var parsedSdpAnswer = sdpParser.parse(sdpAnswerString);
-
-                            // Check if offer is ok with the requested RTCPeerConnection constraints
-                            if (this.webRTCommClient.configuration.RTCPeerConnection.forceTurnMediaRelay === true)
-                            {
-                                this.forceTurnMediaRelay(parsedSdpAnswer);
-                            }
+                            var parsedSdpAnswer = this.setRtcPeerConnectionLocalDescription(this.peerConnection.localDescription);
 
                             this.connector.accept(parsedSdpAnswer);
                             this.peerConnectionState = 'established';
@@ -3659,9 +3643,8 @@ WebRTCommCall.prototype.onRtcPeerConnectionIceCandidateEvent = function(rtcIceCa
                         }
                         else
                         {
-                            console.error("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): RTCPeerConnection bad state!");
+                            console.error("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): RTCPeerConnection bad state!" + this.peerConnectionState);
                         }
-                    }
                 }
             }
             else
@@ -3702,46 +3685,10 @@ WebRTCommCall.prototype.onRtcPeerConnectionCreateOfferSuccessEvent = function(sd
                 // Preparing offer.
                 var that = this;
                 this.peerConnectionState = 'preparing-offer';
-                var sdpOfferString = sdpOffer.sdp;
-                var sdpParser = new SDPParser();
-                var parsedSdpOffer = sdpParser.parse(sdpOfferString);
-
-                // Check if offer is ok with the requested media constraints
-                if (this.configuration.videoMediaFlag === false)
-                {
-                    this.removeMediaDescription(parsedSdpOffer, "video");
-                }
-
-                if (this.configuration.audioMediaFlag === false)
-                {
-                    this.removeMediaDescription(parsedSdpOffer, "audio");
-                }
-
-                if (this.configuration.audioCodecsFilter || this.configuration.videoCodecsFilter || this.configuration.opusFmtpCodecsParameters)
-                {
-                    try
-                    {
-                        // Apply audio/video codecs filter to RTCPeerConnection SDP offer to
-                        this.applyConfiguredCodecFilterOnSessionDescription(parsedSdpOffer);
-                    }
-                    catch (exception)
-                    {
-                        console.error("WebRTCommCall:onRtcPeerConnectionCreateOfferSuccessEvent(): configured codec filtering has failded, use inital RTCPeerConnection SDP offer");
-                    }
-                }
+		if (window.webkitRTCPeerConnection) {
+			this.setRtcPeerConnectionLocalDescription(sdpOffer);
+		}
                 
-                // Check if offer is ok with the requested RTCPeerConnection constraints
-                if (this.webRTCommClient.configuration.RTCPeerConnection.forceTurnMediaRelay === true)
-                {
-                    this.forceTurnMediaRelay(parsedSdpOffer);
-                }
-		// Allow patching of chrome ice-options for interconnect with Mobicents Media Server, commented for now but to be made configurable
-		// this.patchChromeIce(parsedSdpOffer, "ice-options");
-                console.debug("WebRTCommCall:onRtcPeerConnectionCreateOfferSuccessEvent(): parsedSdpOffer=" + parsedSdpOffer);
-
-                // Apply modified SDP Offer
-                sdpOffer.sdp = parsedSdpOffer;
-                this.peerConnectionLocalDescription = sdpOffer;
                 this.peerConnection.setLocalDescription(sdpOffer, function() {
                     that.onRtcPeerConnectionSetLocalDescriptionSuccessEvent();
                 }, function(error) {
@@ -3764,6 +3711,53 @@ WebRTCommCall.prototype.onRtcPeerConnectionCreateOfferSuccessEvent = function(sd
         this.onRtcPeerConnectionErrorEvent();
     }
 };
+
+WebRTCommCall.prototype.setRtcPeerConnectionLocalDescription = function(sdpOffer) {
+	var sdpOfferString = sdpOffer.sdp;
+	var sdpParser = new SDPParser();
+	var parsedSdpOffer = sdpParser.parse(sdpOfferString);
+
+	// Check if offer is ok with the requested media constraints
+	if (window.webkitRTCPeerConnection) {
+		if (this.configuration.videoMediaFlag === false)
+		{
+		    this.removeMediaDescription(parsedSdpOffer, "video");
+		}
+
+		if (this.configuration.audioMediaFlag === false)
+		{
+		    this.removeMediaDescription(parsedSdpOffer, "audio");
+		}
+	}
+
+	if (this.configuration.audioCodecsFilter || this.configuration.videoCodecsFilter || this.configuration.opusFmtpCodecsParameters)
+	{
+	    try
+	    {
+		// Apply audio/video codecs filter to RTCPeerConnection SDP offer to
+		this.applyConfiguredCodecFilterOnSessionDescription(parsedSdpOffer);
+	    }
+	    catch (exception)
+	    {
+		console.error("WebRTCommCall:onRtcPeerConnectionCreateOfferSuccessEvent(): configured codec filtering has failded, use inital RTCPeerConnection SDP offer");
+	    }
+	}
+
+	// Check if offer is ok with the requested RTCPeerConnection constraints
+	if (this.webRTCommClient.configuration.RTCPeerConnection.forceTurnMediaRelay === true)
+	{
+	    this.forceTurnMediaRelay(parsedSdpOffer);
+	}
+	// Allow patching of chrome ice-options for interconnect with Mobicents Media Server, commented for now but to be made configurable
+	// this.patchChromeIce(parsedSdpOffer, "ice-options");
+	console.debug("WebRTCommCall:onRtcPeerConnectionCreateOfferSuccessEvent(): parsedSdpOffer=" + parsedSdpOffer);
+
+	// Apply modified SDP Offer
+	sdpOffer.sdp = parsedSdpOffer;
+	this.peerConnectionLocalDescription = sdpOffer;
+
+	return parsedSdpOffer;
+}
 
 /**
  * Implementation of the RTCPeerConnection listener interface: handle RTCPeerConnection state machine
@@ -3808,70 +3802,6 @@ WebRTCommCall.prototype.onRtcPeerConnectionSetLocalDescriptionSuccessEvent = fun
             console.debug("WebRTCommCall:onRtcPeerConnectionSetLocalDescriptionSuccessEvent(): this.peerConnection.iceGatheringState=" + this.peerConnection.iceGatheringState);
             console.debug("WebRTCommCall:onRtcPeerConnectionSetLocalDescriptionSuccessEvent(): this.peerConnection.iceConnectionState=" + this.peerConnection.iceConnectionState);
             console.debug("WebRTCommCall:onRtcPeerConnectionSetLocalDescriptionSuccessEvent(): this.peerConnectionState=" + this.peerConnectionState);
-
-            if (window.mozRTCPeerConnection)
-            {
-                var sdpOfferString = undefined;
-                if (this.peerConnection.localDescription)
-                    sdpOfferString = this.peerConnection.localDescription.sdp;
-                else
-                    sdpOfferString = this.peerConnectionLocalDescription.sdp;
-
-                if (this.peerConnectionState === 'preparing-offer')
-                {
-                    var sdpParser = new SDPParser();
-                    var parsedSdpOffer = sdpParser.parse(sdpOfferString);
-
-                    // Check if offer is ok with the requested RTCPeerConnection constraints
-                    if (this.webRTCommClient.configuration.RTCPeerConnection.forceTurnMediaRelay === true)
-                    {
-                        this.forceTurnMediaRelay(parsedSdpOffer);
-                    }
-
-                    // Apply modified SDP Offer
-                    this.connector.invite(parsedSdpOffer);
-                    // results in second invite being sent when testing chrome and ff, so commented out
-		    // this.connector.invite(this.peerConnectionLocalDescription.sdp);
-                    this.peerConnectionState = 'offer-sent';
-                }
-                else if (this.peerConnectionState === 'preparing-answer')
-                {
-                    var sdpAnswerString = this.peerConnection.localDescription.sdp;
-                    var sdpParser = new SDPParser();
-                    var parsedSdpAnswer = sdpParser.parse(sdpAnswerString);
-
-                    // Check if offer is ok with the requested RTCPeerConnection constraints
-                    if (this.webRTCommClient.configuration.RTCPeerConnection.forceTurnMediaRelay === true)
-                    {
-                        this.forceTurnMediaRelay(parsedSdpAnswer);
-                    }
-
-                    this.connector.accept(parsedSdpAnswer);
-                    this.peerConnectionState = 'established';
-                    // Notify opened event to listener
-                    if (this.eventListener.onWebRTCommCallOpenedEvent)
-                    {
-                        var that = this;
-                        setTimeout(function() {
-                            try {
-                                that.eventListener.onWebRTCommCallOpenedEvent(that);
-                            }
-                            catch (exception)
-                            {
-                                console.error("WebRTCommCall:onRtcPeerConnectionSetLocalDescriptionSuccessEvent(): catched exception in listener:" + exception);
-                            }
-                        }, 1);
-                    }
-                }
-                else if (this.peerConnectionState === 'established')
-                {
-                    // Why this last ice candidate event?
-                }
-                else
-                {
-                    console.error("WebRTCommCall:onRtcPeerConnectionSetLocalDescriptionSuccessEvent(): RTCPeerConnection bad state!");
-                }
-            }
         }
         else
         {
@@ -4057,6 +3987,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionSetRemoteDescriptionSuccessEvent = fu
                                 },
                         optional: []
                     };
+		    console.debug("WebRTCommCall:onRtcPeerConnectionSetRemoteDescriptionSuccessEvent():sdpConstraints=" + JSON.stringify(sdpConstraints));
                     this.peerConnection.createAnswer(function(answer) {
                         that.onRtcPeerConnectionCreateAnswerSuccessEvent(answer);
                     }, function(error) {
@@ -4068,12 +3999,13 @@ WebRTCommCall.prototype.onRtcPeerConnectionSetRemoteDescriptionSuccessEvent = fu
                     var sdpConstraints = {
                         mandatory:
                                 {
-                                    OfferToReceiveAudio: this.configuration.audioMediaFlag,
-                                    OfferToReceiveVideo: this.configuration.videoMediaFlag,
-                                    MozDontOfferDataChannel: !this.configuration.messageMediaFlag
+                                    offerToReceiveAudio: this.configuration.audioMediaFlag,
+                                    offerToReceiveVideo: this.configuration.videoMediaFlag,
+                                    mozDontOfferDataChannel: !this.configuration.messageMediaFlag
                                 },
                         optional: []
                     };
+		    console.debug("WebRTCommCall:onRtcPeerConnectionSetRemoteDescriptionSuccessEvent():sdpConstraints=" + JSON.stringify(sdpConstraints));
                     this.peerConnection.createAnswer(function(answer) {
                         that.onRtcPeerConnectionCreateAnswerSuccessEvent(answer);
                     }, function(error) {
@@ -4206,36 +4138,19 @@ WebRTCommCall.prototype.onRtcPeerConnectionGatheringChangeEvent = function(event
         {
             if (this.peerConnection.iceGatheringState === "complete")
             {
-                if (window.webkitRTCPeerConnection)
-                {
                     if (this.peerConnectionState === 'preparing-offer')
                     {
                         var sdpOfferString = this.peerConnection.localDescription.sdp;
-                        var sdpParser = new SDPParser();
-                        var parsedSdpOffer = sdpParser.parse(sdpOfferString);
-
-                        // Check if offer is ok with the requested RTCPeerConnection constraints
-                        if (this.webRTCommClient.configuration.RTCPeerConnection.forceTurnMediaRelay === true)
-                        {
-                            this.forceTurnMediaRelay(parsedSdpOffer);
-                        }
+                        var parsedSdpOffer = this.setRtcPeerConnectionLocalDescription(this.peerConnection.localDescription);
 
                         // Apply modified SDP Offer
                         this.connector.invite(parsedSdpOffer);
-                        this.connector.invite(this.peerConnection.localDescription.sdp);
                         this.peerConnectionState = 'offer-sent';
                     }
                     else if (this.peerConnectionState === 'preparing-answer')
                     {
                         var sdpAnswerString = this.peerConnection.localDescription.sdp;
-                        var sdpParser = new SDPParser();
-                        var parsedSdpAnswer = sdpParser.parse(sdpAnswerString);
-
-                        // Check if offer is ok with the requested RTCPeerConnection constraints
-                        if (this.webRTCommClient.configuration.RTCPeerConnection.forceTurnMediaRelay === true)
-                        {
-                            this.forceTurnMediaRelay(parsedSdpAnswer);
-                        }
+                        var parsedSdpAnswer = this.setRtcPeerConnectionLocalDescription(this.peerConnection.localDescription);
 
                         this.connector.accept(parsedSdpAnswer);
                         this.peerConnectionState = 'established';
@@ -4262,7 +4177,6 @@ WebRTCommCall.prototype.onRtcPeerConnectionGatheringChangeEvent = function(event
                     {
                         console.error("WebRTCommCall:onRtcPeerConnectionGatheringChangeEvent(): RTCPeerConnection bad state!");
                     }
-                }
             }
         }
         else
@@ -4822,6 +4736,27 @@ WebRTCommCall.prototype.removeMediaDescription = function(sessionDescription, me
                     break;
                 }
             }
+
+	    if (window.mozRTCPeerConnection) {
+		    var attributes = sessionDescription.getAttributes(false);
+		    for (var i = 0; i < attributes.length; i++)
+		    {
+			var attribute = attributes[i];
+			var attributeValue = attribute.getValue();
+			if("BUNDLE sdparta_0 sdparta_1" === attributeValue) {
+				if ("video" === mediaTypeToRemove)
+				{
+				    attribute.setValue("BUNDLE sdparta_0");
+				    break;
+				}
+				if ("audio" === mediaTypeToRemove)
+				{
+				    attribute.setValue("BUNDLE sdparta_1");
+				    break;
+				}
+			}
+		    }
+	    }
         }
         catch (exception)
         {
