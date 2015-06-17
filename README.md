@@ -9,7 +9,7 @@ It leverage under the covers the popular JAIN SIP JS (a full Javascript SIP Stac
 
 Documentation
 ========
-Check the Documentation at https://webrtcomm.googlecode.com/git/doc/WebRTComm/index.html
+Check the Documentation at http://mobicents.github.io/webrtcomm/index.html
 
 Want to Contribute ? 
 ========
