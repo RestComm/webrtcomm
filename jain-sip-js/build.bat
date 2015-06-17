@@ -200,3 +200,6 @@ copy /b .\build\jain-sip.debug.js+.\src\main\javascript\jain-sip\gov\nist\sip\Si
 more .\build\jain-sip.debug.js | find /v "logger.debug"   >  .\build\jain-sip.js
 %JAVA_HOME%\bin\java -jar yuicompressor-2.4.7.jar  .\build\jain-sip.js -o .\build\jain-sip.min.js
 
+copy .\build\jain-sip.debug.js ..\lib\jain-sip.debug.js
+copy .\build\jain-sip.min.js ..\lib\jain-sip.min.js
+copy .\build\jain-sip.js ..\lib\jain-sip.js

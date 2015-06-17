@@ -202,3 +202,6 @@ cat ./src/main/javascript/jain-sip/gov/nist/sip/SipFactory.js >> ./build/jain-si
 grep -v "logger.debug" ./build/jain-sip.debug.js  >  ./build/jain-sip.js
 java -jar yuicompressor-2.4.7.jar  ./build/jain-sip.js -o ./build/jain-sip.min.js
 
+cp -fv ./build/jain-sip.debug.js ../lib/jain-sip.debug.js
+cp -fv ./build/jain-sip.min.js ../lib/jain-sip.min.js
+cp -fv ./build/jain-sip.js ../lib/jain-sip.js
