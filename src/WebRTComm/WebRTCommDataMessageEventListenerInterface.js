@@ -35,3 +35,27 @@ WebRTCommMessageEventListenerInterface.prototype.onWebRTCommDataMessageSentEvent
 WebRTCommMessageEventListenerInterface.prototype.onWebRTCommDataMessageSendErrorEvent = function(message, error) {
     throw "WebRTCommMessageEventListenerInterface:onWebRTCommDataMessageSendErrorEvent(): not implemented;";
 };
+
+/**
+ * Data channel was established, ready to send messages
+ * @public
+ */
+WebRTCommMessageEventListenerInterface.prototype.onWebRTCommDataMessageChannelOnOpenEvent = function() {
+    throw "WebRTCommMessageEventListenerInterface:onWebRTCommDataMessageChannelOnOpenEvent(): not implemented;";
+};
+
+/**
+ * Data channel was suddenly closed
+ * @public
+ */
+WebRTCommMessageEventListenerInterface.prototype.onWebRTCommDataMessageChannelOnCloseEvent = function() {
+    throw "WebRTCommMessageEventListenerInterface:onWebRTCommDataMessageChannelOnCloseEvent(): not implemented;";
+};
+
+/**
+ * There was a failure establishing the Data channel
+ * @public
+ */
+WebRTCommMessageEventListenerInterface.prototype.onWebRTCommDataMessageChannelOnErrorEvent = function() {
+    throw "WebRTCommMessageEventListenerInterface:onWebRTCommDataMessageChannelOnErrorEvent(): not implemented;";
+};

@@ -204,7 +204,9 @@ WebRTCommCall.prototype.open = function(calleePhoneNumber, configuration) {
 
                         // Setup RTCPeerConnection first
                         this.createRTCPeerConnection();
-                        this.peerConnection.addStream(this.configuration.localMediaStream);
+                        if (configuration.audioMediaFlag || configuration.videoMediaFlag) {
+                            this.peerConnection.addStream(this.configuration.localMediaStream);
+                        }
                         if (this.configuration.messageMediaFlag)
                         {
                             if (this.peerConnection.createDataChannel)
@@ -393,7 +395,9 @@ WebRTCommCall.prototype.accept = function(configuration) {
                     try
                     {
                         this.createRTCPeerConnection();
-                        this.peerConnection.addStream(this.configuration.localMediaStream);
+                        if(configuration.audioMediaFlag || configuration.videoMediaFlag) {
+                            this.peerConnection.addStream(this.configuration.localMediaStream);
+                        }
                         var sdpOffer = undefined;
                         if (window.webkitRTCPeerConnection)
                         {
@@ -914,12 +918,6 @@ WebRTCommCall.prototype.checkConfiguration = function(configuration) {
     var check = true;
     // displayName, audioCodecsFilter, videoCodecsFilter NOT mandatoty in configuration
 
-    if (configuration.localMediaStream === undefined)
-    {
-        check = false;
-        console.error("WebRTCommCall:checkConfiguration(): missing localMediaStream");
-    }
-
     if (configuration.audioMediaFlag === undefined || (typeof(configuration.audioMediaFlag) !== 'boolean'))
     {
         check = false;
@@ -931,6 +929,12 @@ WebRTCommCall.prototype.checkConfiguration = function(configuration) {
         check = false;
         console.error("WebRTCommCall:checkConfiguration(): missing video media flag");
     }
+
+    if ((configuration.audioMediaFlag || configuration.videoMediaFlag) && configuration.localMediaStream === undefined)
+    {
+        check = false;
+        console.error("WebRTCommCall:checkConfiguration(): missing localMediaStream");
+    }      
 
     if (configuration.messageMediaFlag === undefined || (typeof(configuration.messageMediaFlag) !== 'boolean'))
     {
@@ -2093,6 +2097,18 @@ WebRTCommCall.prototype.onRtcPeerConnectionMessageChannelOnOpenEvent = function(
         {
             console.debug("WebRTCommCall:onRtcPeerConnectionMessageChannelOnOpenEvent(): this.messageChannel.readyState=" + this.messageChannel.readyState);
             console.debug("WebRTCommCall:onRtcPeerConnectionMessageChannelOnOpenEvent(): this.messageChannel.binaryType=" + this.messageChannel.bufferedAmmount);
+            if (this.eventListener.onWebRTCommDataMessageChannelOnOpenEvent)
+            {
+                var that = this;
+                setTimeout(function() {
+                    try {
+                        that.eventListener.onWebRTCommDataMessageChannelOnOpenEvent();
+                    }
+                    catch (exception) {
+                        console.error("WebRTCommCall:onWebRTCommDataMessageChannelOnOpenEvent(): catched exception in event listener:" + exception);
+                    }
+                }, 1);
+            }             
         }
     }
     else
@@ -2113,6 +2129,18 @@ WebRTCommCall.prototype.onRtcPeerConnectionMessageChannelOnClose = function(even
         {
             console.debug("WebRTCommCall:onRtcPeerConnectionMessageChannelOnClose(): this.messageChannel.readyState=" + this.messageChannel.readyState);
             console.debug("WebRTCommCall:onRtcPeerConnectionMessageChannelOnClose(): this.messageChannel.binaryType=" + this.messageChannel.bufferedAmmount);
+            if (this.eventListener.onWebRTCommDataMessageChannelOnCloseEvent)
+            {
+                var that = this;
+                setTimeout(function() {
+                    try {
+                        that.eventListener.onWebRTCommDataMessageChannelOnCloseEvent();
+                    }
+                    catch (exception) {
+                        console.error("WebRTCommCall:onWebRTCommDataMessageChannelOnCloseEvent(): catched exception in event listener:" + exception);
+                    }
+                }, 1);
+            }              
         }
     }
     else
@@ -2133,6 +2161,18 @@ WebRTCommCall.prototype.onRtcPeerConnectionMessageChannelOnErrorEvent = function
         {
             console.debug("WebRTCommCall:onRtcPeerConnectionMessageChannelOnErrorEvent(): this.messageChannel.readyState=" + this.messageChannel.readyState);
             console.debug("WebRTCommCall:onRtcPeerConnectionMessageChannelOnErrorEvent(): this.messageChannel.binaryType=" + this.messageChannel.bufferedAmmount);
+            if (this.eventListener.onWebRTCommDataMessageChannelOnErrorEvent)
+            {
+                var that = this;
+                setTimeout(function() {
+                    try {
+                        that.eventListener.onWebRTCommDataMessageChannelOnErrorEvent();
+                    }
+                    catch (exception) {
+                        console.error("WebRTCommCall:onWebRTCommDataMessageChannelOnErrorEvent(): catched exception in event listener:" + exception);
+                    }
+                }, 1);
+            }            
         }
     }
     else
