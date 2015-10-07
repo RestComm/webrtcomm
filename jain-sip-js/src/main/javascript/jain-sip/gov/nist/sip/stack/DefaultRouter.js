@@ -80,12 +80,12 @@ DefaultRouter.prototype.getNextHop =function(request){
         hop = this.createHop(requestURI,request);
         return hop;
     } 
-    else if (this.defaultRoute != null) {
-        return this.defaultRoute;
-    } 
     else if (requestURI.isSipURI()) {
         hop = this.createHop(requestURI,request);
         return hop;
+    }
+    else if (this.defaultRoute != null) {
+        return this.defaultRoute;
     } 
     else {
         return null;
