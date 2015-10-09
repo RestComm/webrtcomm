@@ -300,7 +300,7 @@ SIPClientTransaction.prototype.processResponseargu3 =function(transactionRespons
     if(logger!=undefined) logger.debug("SIPClientTransaction:inviteClientTransaction():transactionResponse="+transactionResponse);
     if(logger!=undefined) logger.debug("SIPClientTransaction:inviteClientTransaction():sourceChannel="+sourceChannel);
     if(logger!=undefined) logger.debug("SIPClientTransaction:inviteClientTransaction():sipDialog="+dialog);
-    if(logger!=undefined) logger..debug("processResponse() ctx state: "+ this.getState()); 
+    if(logger!=undefined) logger.debug("processResponse() ctx state: "+ this.getState()); 
 
     if (this.getState() == null)
     {

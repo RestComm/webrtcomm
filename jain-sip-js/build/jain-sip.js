@@ -28063,7 +28063,6 @@ SIPClientTransaction.prototype.processResponseargu2 =function(sipResponse,incomi
 }
 
 SIPClientTransaction.prototype.processResponseargu3 =function(transactionResponse,sourceChannel,dialog){
-    if(logger!=undefined) logger..debug("processResponse() ctx state: "+ this.getState()); 
 
     if (this.getState() == null)
     {
