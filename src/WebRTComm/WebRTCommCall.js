@@ -1709,6 +1709,24 @@ WebRTCommCall.prototype.onRtcPeerConnectionCreateAnswerSuccessEvent = function(s
             	// Allow patching of chrome ice-options for interconnect with Mobicents Media Server, commented for now but to be made configurable
 		// this.patchChromeIce(parsedSdpOffer, "ice-options");
 
+                // call was answered without video, disable it
+                if (!this.configuration.videoMediaFlag) {
+                    // to disable it, first need to remove video from the bundle (check https://tools.ietf.org/html/draft-ietf-mmusic-sdp-bundle-negotiation-23#section-8.3.5)
+                    var groupAttribute = parsedSdpAnswer.getAttribute("group").replace(/ *video/, "");
+                    parsedSdpAnswer.setAttribute("group", groupAttribute);
+                    // then, to set the port for the video stream to 0
+                    var mediaDescriptions = parsedSdpAnswer.getMediaDescriptions(false);
+                    for (var i = 0; i < mediaDescriptions.length; i++)
+                    {
+                        var mediaDescription = mediaDescriptions[i];
+                        if (mediaDescription.getMedia().getType() === "video")
+                        {
+                            mediaDescription.mediaField.port = 0;                                                         
+                            break;
+                        }
+                    }
+                }
+
                 sdpAnswser.sdp = parsedSdpAnswer;
                 this.peerConnectionLocalDescription = parsedSdpAnswer;
                 this.peerConnection.setLocalDescription(sdpAnswser, function() {
@@ -2578,19 +2596,6 @@ WebRTCommCall.prototype.removeMediaDescription = function(sessionDescription, me
     {
         try
         {
-            var mediaDescriptions = sessionDescription.getMediaDescriptions(false);
-            for (var i = 0; i < mediaDescriptions.length; i++)
-            {
-                var mediaDescription = mediaDescriptions[i];
-                var mediaField = mediaDescription.getMedia();
-                var mediaType = mediaField.getType();
-                if (mediaType === mediaTypeToRemove)
-                {
-                    mediaDescriptions.remove(i);
-                    break;
-                }
-            }
-
 	    if (window.mozRTCPeerConnection) {
 		    var attributes = sessionDescription.getAttributes(false);
 		    for (var i = 0; i < attributes.length; i++)
