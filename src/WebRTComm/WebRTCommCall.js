@@ -1442,6 +1442,14 @@ WebRTCommCall.prototype.onRtcPeerConnectionIceCandidateEvent = function(rtcIceCa
                             var sdpAnswerString = this.peerConnection.localDescription.sdp;
                             var parsedSdpAnswer = this.setRtcPeerConnectionLocalDescription(this.peerConnection.localDescription);
 
+									 /*
+                            var sdpAnswer = new RTCSessionDescription({
+                                type: 'answer',
+                                sdp: this.peerConnectionLocalDescription.toString()
+                            });
+                            var parsedSdpAnswer = this.setRtcPeerConnectionLocalDescription(sdpAnswer);
+									 */
+
                             this.connector.accept(parsedSdpAnswer);
                             this.peerConnectionState = 'established';
                             // Notify opened event to listener
@@ -1538,6 +1546,8 @@ WebRTCommCall.prototype.setRtcPeerConnectionLocalDescription = function(sdpOffer
 	var sdpOfferString = sdpOffer.sdp;
 	var sdpParser = new SDPParser();
 	var parsedSdpOffer = sdpParser.parse(sdpOfferString);
+
+	this.removeEmptyIceUfragPwdAttributes(parsedSdpOffer);
 
 	// Check if offer is ok with the requested media constraints
 	if (window.webkitRTCPeerConnection) {
@@ -2567,6 +2577,31 @@ WebRTCommCall.prototype.patchChromeIce = function(sessionDescription, attributeT
 };
 
 /**
+ * If SDP attributes ice-ufrag and or ice-pwd exist in the SDP but are empty, they need to be removed
+ * @private
+ * @param {SessionDescription} sessionDescription JAIN (gov.nist.sdp) SDP offer object 
+ */
+WebRTCommCall.prototype.removeEmptyIceUfragPwdAttributes = function(sessionDescription ) {
+   // Check if ice-ufrag and pwd are empty and if so remove
+	var mediaDescriptions = sessionDescription.getMediaDescriptions(false);
+	for (var i = 0; i < mediaDescriptions.length; i++) {
+		var newAttributeFieldArray = new Array();
+		var attributeFields = mediaDescriptions[i].getAttributes();
+		for (var k = 0; k < attributeFields.length; k++) {
+			var attributeField = attributeFields[k];
+			if ((attributeField.getName() === "ice-ufrag" && !attributeField.getValue()) ||
+						(attributeField.getName() === "ice-pwd" && !attributeField.getValue())) {
+            console.warn("WebRTCommCall:setRtcPeerConnectionLocalDescription(): found empty ice-ufrag/ice-pwd; removing them");
+			}
+			else {
+				newAttributeFieldArray.push(attributeField);
+			}
+		}
+		mediaDescriptions[i].setAttributes(newAttributeFieldArray);
+	}
+}
+
+/**
  * Modifiy SDP based on configured codec filter
  * @private
  * @param {SessionDescription} sessionDescription  JAIN (gov.nist.sdp) SDP offer object 
@@ -2578,6 +2613,7 @@ WebRTCommCall.prototype.removeMediaDescription = function(sessionDescription, me
     {
         try
         {
+	    /*
             var mediaDescriptions = sessionDescription.getMediaDescriptions(false);
             for (var i = 0; i < mediaDescriptions.length; i++)
             {
@@ -2590,6 +2626,7 @@ WebRTCommCall.prototype.removeMediaDescription = function(sessionDescription, me
                     break;
                 }
             }
+            */
 
 	    if (window.mozRTCPeerConnection) {
 		    var attributes = sessionDescription.getAttributes(false);
