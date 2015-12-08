@@ -1442,14 +1442,6 @@ WebRTCommCall.prototype.onRtcPeerConnectionIceCandidateEvent = function(rtcIceCa
                             var sdpAnswerString = this.peerConnection.localDescription.sdp;
                             var parsedSdpAnswer = this.setRtcPeerConnectionLocalDescription(this.peerConnection.localDescription);
 
-									 /*
-                            var sdpAnswer = new RTCSessionDescription({
-                                type: 'answer',
-                                sdp: this.peerConnectionLocalDescription.toString()
-                            });
-                            var parsedSdpAnswer = this.setRtcPeerConnectionLocalDescription(sdpAnswer);
-									 */
-
                             this.connector.accept(parsedSdpAnswer);
                             this.peerConnectionState = 'established';
                             // Notify opened event to listener
