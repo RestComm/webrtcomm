@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta name="keywords" content="JavaScript, WebRTC" />
+<meta name="description" content="WebRTC codelab" />
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+<title>WebRTC codelab: step 3</title>
+
+<style>
+</style>
+
+    <script src='js/lib/adapter.js'></script>
+    <script src='js/lib/jain-sip.js'></script>
+    <script src='js/lib/WebRTComm.js'></script>
+
+</head>
+
+<body>
+
+  <video id="localVideo" autoplay muted></video>
+  <video id="remoteVideo" autoplay muted></video>
+
+  <div>
+    <button id="startButton">Start</button>
+    <button id="callButton">Call</button>
+    <button id="hangupButton">Hang Up</button>
+  </div>
+
+<script>
+
+var localStream, localPeerConnection, remotePeerConnection;
+
+var wrtcClient;
+var wrtcEventListener = undefined;
+var inCall = false;
+var videoEnabled = true;
+
+var localVideo = document.getElementById("localVideo");
+var remoteVideo = document.getElementById("remoteVideo");
+var startButton = document.getElementById("startButton");
+var callButton = document.getElementById("callButton");
+var hangupButton = document.getElementById("hangupButton");
+
+startButton.disabled = false;
+callButton.disabled = true;
+hangupButton.disabled = true;
+
+startButton.onclick = start;
+callButton.onclick = call;
+hangupButton.onclick = hangup;
+
+// *** WebRTComm callbacks (i.e. WrtcEventListener callbacks)
+WrtcEventListener = function () 
+{
+    trace("WrtcEventListener constructor");
+};
+
+
+// General events (WebRTCommClient listener)
+WrtcEventListener.prototype.onWebRTCommClientOpenedEvent = function() 
+{
+    trace("onWebRTCommClientOpenedEvent");
+};
+
+WrtcEventListener.prototype.onWebRTCommClientOpenErrorEvent = function(error) 
+{
+    trace("onWebRTCommClientOpenErrorEvent");
+};
+
+WrtcEventListener.prototype.onWebRTCommClientClosedEvent = function() 
+{
+	trace("onWebRTCommClientClosedEvent");
+};
+
+WrtcEventListener.prototype.onGetUserMediaErrorEventHandler = function(error) 
+{
+	console.debug('MobicentsWebRTCPhoneController:onGetUserMediaErrorEventHandler(): error='+error);
+};
+
+// Call related listeners (WebRTCommCall listener)
+WrtcEventListener.prototype.onWebRTCommCallRingingEvent = function(webRTCommCall) 
+{
+	trace("WrtcEventListener::onWebRTCommCallRingingEvent");
+};
+
+WrtcEventListener.prototype.onWebRTCommCallInProgressEvent = function(webRTCommCall) 
+{
+	trace("WrtcEventListener::onWebRTCommCallInProgressEvent");
+};
+
+WrtcEventListener.prototype.onWebRTCommCallRingingBackEvent = function(webRTCommCall) 
+{
+	trace("WrtcEventListener::onWebRTCommCallRingingBackEvent");
+	currentCall = webRTCommCall;
+};
+
+WrtcEventListener.prototype.onWebRTCommCallOpenErrorEvent = function(webRTCommCall, error) 
+{
+	trace("WrtcEventListener::onWebRTCommCallOpenErrorEvent");
+};
+
+WrtcEventListener.prototype.onWebRTCommCallClosedEvent = function(webRTCommCall) 
+{
+	trace("WrtcEventListener::onWebRTCommCallClosedEvent");
+	hangupButton.disabled = true;
+	callButton.disabled = false;
+};
+
+WrtcEventListener.prototype.onWebRTCommCallOpenedEvent = function(webRTCommCall) 
+{
+	trace("WrtcEventListener::onWebRTCommCallOpenedEvent: received remote stream");
+	currentCall = webRTCommCall;
+
+	// add remote media to the remoteVideo html element
+	remoteVideo.src = URL.createObjectURL(webRTCommCall.getRemoteBundledAudioVideoMediaStream() ||
+				webRTCommCall.getRemoteVideoMediaStream() ||
+				webRTCommCall.getRemoteAudioMediaStream());
+};
+
+WrtcEventListener.prototype.onWebRTCommCallHangupEvent = function(webRTCommCall) 
+{
+	trace("WrtcEventListener::onWebRTCommCallHangupEvent");
+	currentCall = undefined;
+};
+
+
+function trace(text) 
+{
+	console.log((performance.now() / 1000).toFixed(3) + ": " + text);
+}
+
+function gotStream(stream)
+{
+	// got local stream as result of getUserMedia() -add it to localVideo html element
+	trace("Received local stream");
+	localVideo.src = URL.createObjectURL(stream);
+	localStream = stream;
+	callButton.disabled = false;
+}
+
+// Get user media and initialized webrtcomm facilities
+function start() 
+{
+	trace("Requesting local stream");
+
+	// webrtc getUserMedia
+	getUserMedia({audio:true, video:videoEnabled}, gotStream,
+			function(error) {
+				trace("getUserMedia error: ", error);
+			});
+
+	// setup WebRTClient
+	var wrtcConfiguration = {
+		communicationMode: WebRTCommClient.prototype.SIP,
+		sip: {
+			sipUserAgent: 'TelScale RTM Olympus/1.0.0',
+			sipRegisterMode: true,
+			sipOutboundProxy: 'wss://cloud.restcomm.com:5063',  // CHANGEME: setup your restcomm instance domain/ip and port
+			sipDomain: 'cloud.restcomm.com',  // CHANGEME: setup your restcomm instance domain/ip
+			sipDisplayName: 'Bob',
+			sipUserName: 'bob',
+			sipLogin: 'bob',
+			sipPassword: '1234',
+		},
+		RTCPeerConnection: {
+			iceServers: undefined,
+			stunServer: 'stun.l.google.com:19302',
+			turnServer: undefined,
+			turnLogin: undefined,
+			turnPassword: undefined,
+		}
+	};
+
+	// create listener to retrieve webrtcomm events
+   wrtcEventListener = new WrtcEventListener();
+
+	// initialize webrtcomm facilities through WebRTCommClient and register with RestComm
+	wrtcClient = new WebRTCommClient(wrtcEventListener);
+	wrtcClient.open(wrtcConfiguration);
+
+	startButton.disabled = true;
+}
+
+// Make a call to a specific SIP destination
+function call() 
+{
+	trace("Starting Call");
+
+	// update the contact to any RestComm application you want to reach (by default we use the 1235 application which is the demo 'Say App'
+	var contact = "sip:+1235@cloud.restcomm.com";
+
+	var callConfiguration = {
+				 displayName: '+1235',
+				 localMediaStream: localStream,
+				 audioMediaFlag: true,
+				 videoMediaFlag: videoEnabled,
+				 messageMediaFlag: false,
+				 audioCodecsFilter: '',
+				 videoCodecsFilter: ''
+	};
+
+	currentCall = wrtcClient.call(contact, callConfiguration);
+	inCall = true; 
+
+	callButton.disabled = true;
+	hangupButton.disabled = false;
+
+	if (localStream.getVideoTracks().length > 0) {
+		trace('Using video device: ' + localStream.getVideoTracks()[0].label);
+	}
+	if (localStream.getAudioTracks().length > 0) {
+		trace('Using audio device: ' + localStream.getAudioTracks()[0].label);
+	}
+}
+
+// Hangup ongoing call
+function hangup()
+{
+	trace("Ending call");
+	if (inCall) {
+		currentCall.close();
+		inCall = false;
+	}
+
+	hangupButton.disabled = true;
+	callButton.disabled = false;
+}
+
+
+function handleError() 
+{ 
+
+}
+
+</script>
+
+</body>
+</html>

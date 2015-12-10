@@ -1,0 +1,363 @@
+<html>
+    <head>
+        <title>testJavaScript</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script type='text/javascript'>	
+            logger=console;
+        </script>
+        <script src="../../build/jain-sip.debug.js"></script>
+        <script type='text/javascript'>	          
+            try
+            {
+                //v=0
+                //o=- 139364301 2 IN IP4 127.0.0.1
+                //s=-
+                //t=0 0
+                //a=group:BUNDLE audio video              
+                var sessionDescription = new SessionDescription();
+            
+                var versionField = new VersionField();
+                var clonedVersionField = versionField.clone(); 
+                sessionDescription.setVersion(clonedVersionField)
+            
+                var originField = new OriginField();
+                originField.setUserName("-");
+                originField.setSessionId(139364301);
+                originField.setSessionVersion(2);
+                originField.setNetworkType(SDPField.prototype.IN);
+                originField.setAddressType(SDPField.prototype.IPV4);
+                originField.setHost(new Host("127.0.0.1"));
+                var clonedOriginField = originField.clone();
+                sessionDescription.setOrigin(clonedOriginField);
+            
+                var sessionNameField = new SessionNameField();
+                sessionNameField.setSessionName("-");
+                var clonedSessionNameField = sessionNameField.clone();
+                sessionDescription.setSessionName(clonedSessionNameField)
+            
+                var informationField = new InformationField();
+                informationField.setInformation("test");
+                var clonedInformationField = informationField.clone();
+                sessionDescription.setInfo(clonedInformationField)
+            
+                var uriField = new URIField();
+                uriField.setURI("http://www.orange.com");
+                var clonedUriField = uriField.clone();
+                sessionDescription.setURI(clonedUriField);
+            
+                var emailField = new EmailField();
+                emailField.setDisplayName("Laurent Strullu");
+                emailField.setEmail("laurent.strullu@orange.com");
+                sessionDescription.setEmails([emailField]);
+            
+                var phoneField = new PhoneField();
+                phoneField.setName("Laurent Strullu");
+                phoneField.setPhoneNumber("+33XXXXXXXXX");
+                sessionDescription.setPhones([phoneField]);
+            
+                var timeField = new TimeField();
+                sessionDescription.setTimes([timeField]);
+            
+                var connectionField = new ConnectionField();
+                connectionField.setAddress("10.193.7.29");
+                sessionDescription.setConnection(connectionField);
+            
+                var bandwidthField = new BandwidthField();
+                bandwidthField.setBandwidth(14400);
+                sessionDescription.setBandwidths([bandwidthField]);
+                sessionDescription.setBandwidth("AS",1200);
+
+                var keyField = new KeyField();
+                keyField.setMethod(SDPField.prototype.BASE64);
+                keyField.setKey("EncryptionKey");
+                sessionDescription.setKey(keyField);
+              
+                var bundleGroupAttributField = new AttributeField();
+                bundleGroupAttributField.setName("group");
+                bundleGroupAttributField.setValue("BUNDLE audio video");
+                sessionDescription.setAttributes([bundleGroupAttributField]);
+              
+                var mediaDescriptionAudio = new MediaDescription();
+                
+                //m=audio 3231 RTP/SAVPF
+                //c=IN IP4 10.193.7.29
+                //a=rtcp:1 IN IP4 0.0.0.0
+                //a=candidate:2455199458 1 udp 2113937151 10.193.7.29 3231 typ host generation 0
+                //a=ice-ufrag:5wEns/jHV0LQ+8jl
+                //a=ice-pwd:i6zFJqU4LcZ92YBQefX6nH2n
+                //a=sendrecv
+                //a=mid:audio
+                //a=rtcp-mux
+                //a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:dAsgtk7D6FWjWjf8uE/h3I7wZ3kUt+UobUCVY2p8
+                //a=rtpmap:103 ISAC/16000
+                //a=rtpmap:104 ISAC/32000
+                //a=rtpmap:0 PCMU/8000
+                //a=rtpmap:8 PCMA/8000
+                //a=rtpmap:106 CN/32000
+                //a=rtpmap:105 CN/16000
+                //a=rtpmap:13 CN/8000
+                //a=rtpmap:126 telephone-event/8000
+                //a=ssrc:51607741 cname:kBo5hmkVpU/Czdyg
+                //a=ssrc:51607741 msid:aoyjA7ciJnbMAUOHzMMyI0n0cHWEIXQn2LDe a0
+                //a=ssrc:51607741 mslabel:aoyjA7ciJnbMAUOHzMMyI0n0cHWEIXQn2LDe
+                //a=ssrc:51607741 label:aoyjA7ciJnbMAUOHzMMyI0n0cHWEIXQn2LDea0
+                
+                var audioMediaField = new MediaField();
+                audioMediaField.setType("audio");
+                audioMediaField.setPort(3231);
+                audioMediaField.setProtocol("RTP/SAVPF");
+                audioMediaField.setFormats([ 103,104,0,8,106,105,13,126]);
+                mediaDescriptionAudio.setMedia(audioMediaField);
+                var connectionField = new ConnectionField();
+                connectionField.setAddress("10.193.7.29");
+                mediaDescriptionAudio.setConnection(connectionField);
+                var rtcpAttributField = new AttributeField();
+                rtcpAttributField.setName("rtcp");
+                rtcpAttributField.setValue("1 IN IP4 0.0.0.0");
+                mediaDescriptionAudio.setAttributes([rtcpAttributField]);
+                mediaDescriptionAudio.setAttribute("ice-ufrag","5wEns/jHV0LQ+8jl");
+                mediaDescriptionAudio.setAttribute("candidate","2455199458 1 udp 2113937151 10.193.7.29 3231 typ host generation 0");
+                mediaDescriptionAudio.setDuplexity("sendrecv");
+                mediaDescriptionAudio.setAttribute("mid","audio");
+                mediaDescriptionAudio.setAttribute("rtcp-mux",null);
+                mediaDescriptionAudio.setAttribute("crypto", "1 AES_CM_128_HMAC_SHA1_80 inline:dAsgtk7D6FWjWjf8uE/h3I7wZ3kUt+UobUCVY2p8");
+                mediaDescriptionAudio.setAttribute("rtpmap","103 ISAC/16000");
+                mediaDescriptionAudio.setAttribute("rtpmap","104 ISAC/32000");
+                mediaDescriptionAudio.setAttribute("rtpmap","0 PCMU/8000");
+                mediaDescriptionAudio.setAttribute("rtpmap","8 PCMA/8000");
+                mediaDescriptionAudio.setAttribute("rtpmap","106 CN/32000");
+                mediaDescriptionAudio.setAttribute("rtpmap","105 CN/16000");
+                mediaDescriptionAudio.setAttribute("rtpmap","13 CN/8000");
+                mediaDescriptionAudio.setAttribute("rtpmap","126 telephone-event/8000");
+                mediaDescriptionAudio.setAttribute("ssrc","51607741 cname:kBo5hmkVpU/Czdyg"); 
+                mediaDescriptionAudio.setAttribute("ssrc","51607741 msid:aoyjA7ciJnbMAUOHzMMyI0n0cHWEIXQn2LDe a0");   
+                mediaDescriptionAudio.setAttribute("ssrc","51607741 mslabel:aoyjA7ciJnbMAUOHzMMyI0n0cHWEIXQn2LDe");  
+                mediaDescriptionAudio.setAttribute("ssrc","label:aoyjA7ciJnbMAUOHzMMyI0n0cHWEIXQn2LDea0");                 
+                sessionDescription.setMediaDescriptions([mediaDescriptionAudio]);
+               
+               
+                var mediaDescriptionVideo = new MediaDescription();
+                //m=video 3231 RTP/SAVPF 100 116 117
+                //c=IN IP4 10.193.7.29
+                //a=rtcp:1 IN IP4 0.0.0.0
+                //a=candidate:2455199458 1 udp 2113937151 10.193.7.29 3231 typ host generation 0
+                //a=ice-ufrag:5wEns/jHV0LQ+8jl
+                //a=ice-pwd:i6zFJqU4LcZ92YBQefX6nH2n
+                //a=sendrecv
+                //a=mid:video
+                //a=rtcp-mux
+                //a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:dAsgtk7D6FWjWjf8uE/h3I7wZ3kUt+UobUCVY2p8
+                //a=rtpmap:100 VP8/90000
+                //a=rtpmap:116 red/90000
+                //a=rtpmap:117 ulpfec/90000
+                //a=ssrc:3424281302 cname:kBo5hmkVpU/Czdyg
+                //a=ssrc:3424281302 msid:aoyjA7ciJnbMAUOHzMMyI0n0cHWEIXQn2LDe v0
+                //a=ssrc:3424281302 mslabel:aoyjA7ciJnbMAUOHzMMyI0n0cHWEIXQn2LDe
+                //a=ssrc:3424281302 label:aoyjA7ciJnbMAUOHzMMyI0n0cHWEIXQn2LDev0
+                
+                var videoMediaField = new MediaField();
+                videoMediaField.setType("video");
+                videoMediaField.setPort(3231);
+                videoMediaField.setProtocol("RTP/SAVPF");
+                videoMediaField.setFormats([100,116,117]);
+                mediaDescriptionVideo.setMedia(videoMediaField);
+                var connectionField = new ConnectionField();
+                connectionField.setAddress("10.193.7.29");
+                mediaDescriptionVideo.setConnection(connectionField);
+                var rtcpAttributField = new AttributeField();
+                rtcpAttributField.setName("rtcp");
+                rtcpAttributField.setValue("1 IN IP4 0.0.0.0");
+                mediaDescriptionVideo.setAttributes([rtcpAttributField]);
+                mediaDescriptionVideo.setAttribute("candidate","2455199458 1 udp 2113937151 10.193.7.29 3231 typ host generation 0");
+                mediaDescriptionVideo.setAttribute("ice-ufrag","5wEns/jHV0LQ+8jl");
+                mediaDescriptionVideo.setDuplexity("sendrecv");
+                mediaDescriptionVideo.setAttribute("mid","video");
+                mediaDescriptionVideo.setAttribute("rtcp-mux",null);
+                mediaDescriptionVideo.setAttribute("crypto", "1 AES_CM_128_HMAC_SHA1_80 inline:dAsgtk7D6FWjWjf8uE/h3I7wZ3kUt+UobUCVY2p8");
+                mediaDescriptionVideo.setAttribute("rtpmap","100 VP8/900000");
+                mediaDescriptionVideo.setAttribute("rtpmap","116 red/90000");
+                mediaDescriptionVideo.setAttribute("rtpmap","ulpfec/90000");;
+                mediaDescriptionVideo.setAttribute("ssrc","51607741 cname:kBo5hmkVpU/Czdyg"); 
+                mediaDescriptionVideo.setAttribute("ssrc","51607741 msid:aoyjA7ciJnbMAUOHzMMyI0n0cHWEIXQn2LDe a0");   
+                mediaDescriptionVideo.setAttribute("ssrc","51607741 mslabel:aoyjA7ciJnbMAUOHzMMyI0n0cHWEIXQn2LDe");  
+                mediaDescriptionVideo.setAttribute("ssrc","label:aoyjA7ciJnbMAUOHzMMyI0n0cHWEIXQn2LDea0");                 
+                sessionDescription.setMediaDescriptions([mediaDescriptionAudio,mediaDescriptionVideo]);
+                
+                console.debug("sessionDescription="+sessionDescription.toString());
+                var bandwidthFieldParser= new BandwidthFieldParser();
+                var parsedBandwidthField= bandwidthFieldParser.parse("b =AS: 12000 \r\n");
+                console.debug("bandwidthField="+parsedBandwidthField);
+                
+                var versionFieldParser= new VersionFieldParser();
+                var parsedVersionField= versionFieldParser.parse("v=0\r\n");
+                console.debug("parsedVersionField="+parsedVersionField);
+                
+                var sessionNameFieldParser= new SessionNameFieldParser();
+                var parsedSessionNameField= sessionNameFieldParser.parse("s=-\r\n");
+                console.debug("parsedSessionNameField="+parsedSessionNameField);
+                
+                var timeFieldParser= new TimeFieldParser();
+                var parsedTimeField= timeFieldParser.parse("t=0 0\r\n");
+                console.debug("parsedTimeField="+parsedTimeField);
+                
+                var attributeFieldParser= new AttributeFieldParser();
+                var parsedAttributeField= attributeFieldParser.parse("a = ssrc:label:aoyjA7ciJnbMAUOHzMMyI0n0cHWEIXQn2LDea0  \r\n");
+                console.debug("parsedAttributeField="+parsedAttributeField);
+                
+                var connectionFieldParser= new ConnectionFieldParser();
+                var parsedConnectionField= connectionFieldParser.parse("c=  IN   IP4   10.193.7.29  \r\n");
+                console.debug("parsedConnectionField="+parsedConnectionField);
+                
+                var emailFieldParser= new EmailFieldParser();
+                var parsedEmailField= emailFieldParser.parse("e=mjh@isi.edu (Mark Handley)\r\n");
+                console.debug("parsedEmailField="+parsedEmailField);
+                
+                var informationFieldParser= new InformationFieldParser();
+                var parsedInformationField= informationFieldParser.parse("i=test\r\n");
+                console.debug("parsedInformationField="+parsedInformationField);
+                
+                var keyFieldParser= new KeyFieldParser();
+                var parsedKeyField= keyFieldParser.parse("k=base64:12\r\n");
+                console.debug("parsedKeyField="+parsedKeyField);
+                
+                var origin = [ "o=- 45ec4ba1.1 45ec4ba1 in ip4 10.1.80.200\r\n"
+                    ,"o=- 4322650003578 0 IN IP4 192.53.18.122\r\n"
+                    ,"o=4855 12345678901234567890 12345678901234567890 IN IP4 166.35.224.216\r\n"
+                    ,"o=mh/andley 2890844526 2890842807 IN IP4 126.16.64.4\n"
+                    ,"o=UserB 2890844527 2890844527 IN IP4 everywhere.com\n"
+                    ,"o=UserA 2890844526 2890844526 IN IP4 here.com\n"
+                    ,"o=IFAXTERMINAL01 2890844527 2890844527 IN IP4 ift.here.com\n"
+                    ,"o=GATEWAY1 2890844527 2890844527 IN IP4 gatewayone.wcom.com\n"
+                    ,"o=- 2890844527 2890844527 IN IP4 gatewayone.wcom.com\n" ];
+
+                for (var i = 0; i < origin.length; i++) {
+                    var originFieldParser = new OriginFieldParser();
+                    var parsedOriginField = originFieldParser.parse(origin[i]);
+                    console.debug("origin[i]:" + origin[i]);
+                    console.debug("originField.encode(): " + parsedOriginField.encode());
+                }
+                
+                var phone = [
+                    "p=+44-171-380-7777 (Mark Handley)\n",
+                    "p=Mark Handley <+1 617 253 6011>\n",
+                    "p= <+44-171-380-7777>\n",
+                    "p=+44-171-380-7777\n"
+                ];
+
+                for (var i = 0; i < phone.length; i++) {
+                    var phoneFieldParser=new PhoneFieldParser();
+                    var parsedPhoneField=phoneFieldParser.parse(phone[i]);
+                    console.debug("phone[i]: " + phone[i]);
+                    console.debug("parsedPhoneFields.encode(): " +parsedPhoneField.encode());
+                }
+                
+                var uri = [
+                    "u=http://www.cs.ucl.ac.uk/staff/M.Handley/sdp.03.ps\n",
+                    "u=sip:j.doe@big.com\n",
+                    "u=sip:j.doe:secret@big.com;transport=tcp\n",
+                    "u=sip:j.doe@big.com?subject=project\n",
+                    "u=sip:+1-212-555-1212:1234@gateway.com;user=phone\n"
+                ];
+
+                for (var i = 0; i < uri.length; i++) {
+                    var uriFieldParser=new URIFieldParser();
+                    var parsedUriField=uriFieldParser.parse(uri[i]);
+                    console.debug("uri[i]: " +uri[i]);
+                    console.debug("parsedUriField.encode(): " +parsedUriField.encode());
+                }
+                
+                var repeat = [
+                    "r=604800s 3600s 0s 90000s\n",
+                    "r=7d 1h 0 25h\n",
+                    "r=7 6 5 4 3 2 1 0 \n"
+                ];
+
+                for (var i = 0; i < repeat.length; i++) {
+                    var repeatFieldParser=new RepeatFieldParser();
+                    var parsedRepeatField=repeatFieldParser.parse(repeat[i]);
+                    console.debug("repeat[i]: " +repeat[i]);
+                    console.debug("repeatFields.encode(): " +parsedRepeatField.encode());
+                }
+                
+                var  media = [
+                    "m=audio 50006 RTP/AVP 0 8 4 18\r\n",
+                    "m=video 49170/2 RTP/AVP 31\n",
+                    "m=video 49232 RTP/AVP 0\n",
+                    "m=audio 49230 RTP/AVP 96 97 98\n",
+                    "m=application 32416 udp wb\n",
+                    "m=control 49234 H323 mc\n",
+                    "m=audio 50012 RTP/AVP 0 8 4 18\n",
+                    "m=image 49172 udptl t38\n"
+                ];
+
+                for (var i = 0; i < media.length; i++) {
+                    var  mediaFieldParser=new MediaFieldParser();
+                    var  parsedMediaField=mediaFieldParser.parse( media[i]);
+                     console.debug("toParse: " + media[i]);   
+                     console.debug("parsedMediaField.encoded(): " +parsedMediaField.encode());
+                }
+                
+                
+                var sdpString = "v=0\r\n"+
+                                "o=- 139364301 2 IN IP4 127.0.0.1\r\n"+
+                                "s=-\r\n"+
+                                "t=0 0\r\n"+
+                                "a=group:BUNDLE audio video\r\n"+
+                                "m=audio 3231 RTP/SAVPF\r\n"+
+                                "c=IN IP4 10.193.7.29\r\n"+
+                                "a=rtcp:1 IN IP4 0.0.0.0\r\n"+
+                                "a=candidate:2455199458 1 udp 2113937151 10.193.7.29 3231 typ host generation 0\r\n"+
+                                "a=ice-ufrag:5wEns/jHV0LQ+8jl\r\n"+
+                                "a=ice-pwd:i6zFJqU4LcZ92YBQefX6nH2n\r\n"+
+                                "a=sendrecv\r\n"+
+                                "a=mid:audio\r\n"+
+                                "a=rtcp-mux\r\n"+
+                                "a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:dAsgtk7D6FWjWjf8uE/h3I7wZ3kUt+UobUCVY2p8\r\n"+
+                                "a=rtpmap:103 ISAC/16000\r\n"+
+                                "a=rtpmap:104 ISAC/32000\r\n"+
+                                "a=rtpmap:0 PCMU/8000\r\n"+
+                                "a=rtpmap:8 PCMA/8000\r\n"+
+                                "a=rtpmap:106 CN/32000\r\n"+
+                                "a=rtpmap:105 CN/16000\r\n"+
+                                "a=rtpmap:13 CN/8000\r\n"+
+                                "a=rtpmap:126 telephone-event/8000\r\n"+
+                                "a=ssrc:51607741 cname:kBo5hmkVpU/Czdyg\r\n"+
+                                "a=ssrc:51607741 msid:aoyjA7ciJnbMAUOHzMMyI0n0cHWEIXQn2LDe a0\r\n"+
+                                "a=ssrc:51607741 mslabel:aoyjA7ciJnbMAUOHzMMyI0n0cHWEIXQn2LDe\r\n"+
+                                "a=ssrc:51607741 label:aoyjA7ciJnbMAUOHzMMyI0n0cHWEIXQn2LDea0\r\n"+
+                                "m=video 3231 RTP/SAVPF 100 116 117\r\n"+
+                                "c=IN IP4 10.193.7.29\r\n"+
+                                "a=rtcp:1 IN IP4 0.0.0.0\r\n"+
+                                "a=candidate:2455199458 1 udp 2113937151 10.193.7.29 3231 typ host generation 0\r\n"+
+                                "a=ice-ufrag:5wEns/jHV0LQ+8jl\r\n"+
+                                "a=ice-pwd:i6zFJqU4LcZ92YBQefX6nH2n\r\n"+
+                                "a=sendrecv\r\n"+
+                                "a=mid:video\r\n"+
+                                "a=rtcp-mux\r\n"+
+                                "a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:dAsgtk7D6FWjWjf8uE/h3I7wZ3kUt+UobUCVY2p8\r\n"+
+                                "a=rtpmap:100 VP8/90000\r\n"+
+                                "a=rtpmap:116 red/90000\r\n"+
+                                "a=rtpmap:117 ulpfec/90000\r\n"+
+                                 "a=ssrc:3424281302 cname:kBo5hmkVpU/Czdyg\r\n"+
+                                "a=ssrc:3424281302 msid:aoyjA7ciJnbMAUOHzMMyI0n0cHWEIXQn2LDe v0\r\n"+
+                                "a=ssrc:3424281302 mslabel:aoyjA7ciJnbMAUOHzMMyI0n0cHWEIXQn2LDe\r\n"+
+                                "a=ssrc:3424281302 label:aoyjA7ciJnbMAUOHzMMyI0n0cHWEIXQn2LDev0\r\n";
+                
+                var startTimestamp=+new Date().getTime();
+                var sdpParser = new SDPParser();
+                var parsedSdpSessionDescription =  sdpParser.parse(sdpString);
+                console.debug("parsedSdpSessionDescription.encoded(): " +parsedSdpSessionDescription.encode());
+                var stopTimestamp=new Date().getTime();
+                var  duration = stopTimestamp-startTimestamp
+                console.debug("parsedSdpSessionDescription.encoded(): duration="+duration);
+                
+            }
+            catch(sdpException)
+            {
+                console.error("catched SdpException: "+sdpException.getMessage())  
+            }
+        </script>
+    </head>
+    <body>
+    </body>
+</html>
