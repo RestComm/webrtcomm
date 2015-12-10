@@ -158,19 +158,19 @@ function start()
 		sip: {
 			sipUserAgent: 'TelScale RTM Olympus/1.0.0',
 			sipRegisterMode: true,
-			sipOutboundProxy: 'wss://192.168.2.32:5083',   //'wss://staging.restcomm.com:5063',  //'ws://54.166.34.191:5082',  //$scope.outboundProxy.address,
-			sipDomain: '192.168.2.32', //'staging.restcomm.com',  //'54.166.34.191',  //$scope.sip.domain,
-			sipDisplayName: 'Antonis',  //'Alice',  //$scope.sip.displayName,
-			sipUserName: 'antonis',  //'alice',  //$scope.sip.username,
-			sipLogin: 'antonis',  //'alice',  //$scope.sip.login,
-			sipPassword: '1234',  //$scope.sip.password
+			sipOutboundProxy: 'wss://cloud.restcomm.com:5063',  // CHANGEME: setup your restcomm instance domain/ip and port
+			sipDomain: 'cloud.restcomm.com',  // CHANGEME: setup your restcomm instance domain/ip
+			sipDisplayName: 'Bob',
+			sipUserName: 'bob',
+			sipLogin: 'bob',
+			sipPassword: '1234',
 		},
 		RTCPeerConnection: {
-			iceServers: undefined,  //$scope.iceServers,
-			stunServer: 'stun.l.google.com:19302',  //$scope.stun.address,
-			turnServer: undefined,  //$scope.turn.address,
-			turnLogin: undefined,  //$scope.turn.login,
-			turnPassword: undefined,  //$scope.turn.password
+			iceServers: undefined,
+			stunServer: 'stun.l.google.com:19302',
+			turnServer: undefined,
+			turnLogin: undefined,
+			turnPassword: undefined,
 		}
 	};
 
@@ -189,12 +189,11 @@ function call()
 {
 	trace("Starting Call");
 
+	// update the contact to any RestComm application you want to reach (by default we use the 1235 application which is the demo 'Say App'
 	var contact = "sip:+1235@cloud.restcomm.com";
-	//var contact = "+1235";
-	//var contact = "bob";
 
 	var callConfiguration = {
-				 displayName: 'Antonis',
+				 displayName: '+1235',
 				 localMediaStream: localStream,
 				 audioMediaFlag: true,
 				 videoMediaFlag: videoEnabled,
