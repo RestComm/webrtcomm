@@ -1,1 +1,1 @@
-jsdoc -d ./WebRTComm ../build/WebRTComm.js
+jsdoc -d . ../build/WebRTComm.js README.md
