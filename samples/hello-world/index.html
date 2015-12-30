@@ -189,8 +189,8 @@ function call()
 {
 	trace("Starting Call");
 
-	// update the contact to any RestComm application you want to reach (by default we use the 1235 application which is the demo 'Say App'
-	var contact = "sip:+1235@cloud.restcomm.com";
+	// update the contact to any RestComm application you want to reach (by default we use the 1235 application which is the demo 'Say App' (don't prepend the 'sip:' part cause it is added internally)
+	var contact = "+1235@cloud.restcomm.com";
 
 	var callConfiguration = {
 				 displayName: '+1235',
