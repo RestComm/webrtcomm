@@ -1144,6 +1144,7 @@ PrivateJainSipCallConnector.prototype.processInvitedSipRequestEvent = function(r
 
                 // Update SIP call state
                 this.sipCallState = this.SIP_INVITED_CANCELLED_STATE;
+                this.webRTCommCall.onPrivateCallConnectorCallCanceledEvent();
             }
             catch (exception)
             {
@@ -3472,6 +3473,29 @@ WebRTCommCall.prototype.onPrivateCallConnectorCallHangupEvent = function()
 };
 
 /**
+ * Implementation of the PrivateCallConnector listener interface: process incoming call cancel event  
+ * @private 
+ */
+WebRTCommCall.prototype.onPrivateCallConnectorCallCanceledEvent = function()
+{
+    console.debug("WebRTCommCall:onPrivateCallConnectorCallCanceledEvent()");
+    // Notify the canceled event to the listener
+    if (this.eventListener.onWebRTCommCallCanceledEvent)
+    {
+        var that = this;
+        setTimeout(function() {
+            try {
+                that.eventListener.onWebRTCommCallCanceledEvent(that);
+            }
+            catch (exception)
+            {
+                console.error("WebRTCommCall:onPrivateCallConnectorCallCanceledEvent(): catched exception in listener:" + exception);
+            }
+        }, 1);
+    }
+};
+
+/**
  * Implementation of the RTCPeerConnection listener interface: process RTCPeerConnection error event
  * @private 
  * @param {string} error internal error
@@ -5414,6 +5438,15 @@ WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallRingingBackEvent = 
  */
 WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallHangupEvent = function(webRTCommCall) {
     throw "WebRTCommCallEventListenerInterface:onWebRTCommCallHangupEvent(): not implemented;";
+};
+
+/**
+ * Incoming call Cancel event
+ * @public
+ * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
+ */
+WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallCanceledEvent = function(webRTCommCall) {
+    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallCanceledEvent(): not implemented;";
 };
 /**
  * @class WebRTCommMessageEventListenerInterface

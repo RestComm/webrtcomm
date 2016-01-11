@@ -63,3 +63,12 @@ WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallRingingBackEvent = 
 WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallHangupEvent = function(webRTCommCall) {
     throw "WebRTCommCallEventListenerInterface:onWebRTCommCallHangupEvent(): not implemented;";
 };
+
+/**
+ * Incoming call Cancel event
+ * @public
+ * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
+ */
+WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallCanceledEvent = function(webRTCommCall) {
+    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallCanceledEvent(): not implemented;";
+};

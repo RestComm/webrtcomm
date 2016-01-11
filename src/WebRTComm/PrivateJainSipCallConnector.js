@@ -768,6 +768,7 @@ PrivateJainSipCallConnector.prototype.processInvitedSipRequestEvent = function(r
 
                 // Update SIP call state
                 this.sipCallState = this.SIP_INVITED_CANCELLED_STATE;
+                this.webRTCommCall.onPrivateCallConnectorCallCanceledEvent();
             }
             catch (exception)
             {

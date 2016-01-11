@@ -1293,6 +1293,29 @@ WebRTCommCall.prototype.onPrivateCallConnectorCallHangupEvent = function()
 };
 
 /**
+ * Implementation of the PrivateCallConnector listener interface: process incoming call cancel event  
+ * @private 
+ */
+WebRTCommCall.prototype.onPrivateCallConnectorCallCanceledEvent = function()
+{
+    console.debug("WebRTCommCall:onPrivateCallConnectorCallCanceledEvent()");
+    // Notify the canceled event to the listener
+    if (this.eventListener.onWebRTCommCallCanceledEvent)
+    {
+        var that = this;
+        setTimeout(function() {
+            try {
+                that.eventListener.onWebRTCommCallCanceledEvent(that);
+            }
+            catch (exception)
+            {
+                console.error("WebRTCommCall:onPrivateCallConnectorCallCanceledEvent(): catched exception in listener:" + exception);
+            }
+        }, 1);
+    }
+};
+
+/**
  * Implementation of the RTCPeerConnection listener interface: process RTCPeerConnection error event
  * @private 
  * @param {string} error internal error
