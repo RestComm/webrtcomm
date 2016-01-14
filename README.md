@@ -7,17 +7,21 @@ WebRTCComm allows to create Real Time Video, Voice and Instant Messaging Web App
 
 It leverage under the covers the popular JAIN SIP JS (a full Javascript SIP Stack based on JAIN SIP) to interconnect with any SIP Over WebSockets Capable Server allowing to reach any SIP Endpoints or traditional Telecom infrastructure.
 
+Quick Start Guide
+========
+https://github.com/RestComm/webrtcomm/wiki/Restcomm-WebRTComm-Quick-Start
+
 Documentation
 ========
-Check the Documentation at http://mobicents.github.io/webrtcomm/index.html
+Check the Reference Documentation at http://restcomm.github.io/webrtcomm/index.html
 
 Want to Contribute ? 
 ========
-[See our Contributors Guide](https://github.com/Mobicents/RestComm/wiki/Contribute-to-RestComm)
+[See our Contributors Guide](https://github.com/RestComm/RestComm-Core/wiki/Contribute-to-RestComm)
 
 Issue Tracking and Roadmap
 ========
-[Issue Tracker](https://github.com/Mobicents/webrtcomm/issues)
+[Issue Tracker](https://github.com/RestComm/webrtcomm/issues)
 
 Questions ?
 ========
