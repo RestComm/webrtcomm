@@ -275,6 +275,37 @@ PrivateJainSipCallConnector.prototype.reject = function() {
 };
 
 /**
+ * Ignore the incoming SIP communication. This means clearing all local resources without notifying the remote party
+ * @public 
+ * @throw {String} Exception "bad state, unauthorized action"
+ * @throw {String} Exception "internal error,check console logs"
+ */
+PrivateJainSipCallConnector.prototype.ignore = function() {
+    console.debug("PrivateJainSipCallConnector:ignore()");
+    if (this.sipCallState === this.SIP_INVITED_INITIAL_STATE)
+    {
+        try
+        {
+				// SIP INVITE has not been sent yet.
+				this.resetSipContext();
+				this.clientConnector.removeSessionConnector(this.sipCallId);
+				// Notify closed event
+				this.webRTCommCall.onPrivateCallConnectorCallClosedEvent();
+        }
+        catch (exception)
+        {
+            console.error("PrivateJainSipCallConnector:ignore(): catched exception:" + exception);
+        }
+        this.close();
+    }
+    else
+    {
+        console.error("PrivateJainSipCallConnector:ignore(): bad state, unauthorized action");
+        throw "PrivateJainSipCallConnector:ignore(): bad state, unauthorized action";
+    }
+};
+
+/**
  * Check configuration 
  * @param {object} configuration SIP call configuration JSON object
  * @private

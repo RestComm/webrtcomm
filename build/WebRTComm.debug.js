@@ -651,6 +651,37 @@ PrivateJainSipCallConnector.prototype.reject = function() {
 };
 
 /**
+ * Ignore the incoming SIP communication. This means clearing all local resources without notifying the remote party
+ * @public 
+ * @throw {String} Exception "bad state, unauthorized action"
+ * @throw {String} Exception "internal error,check console logs"
+ */
+PrivateJainSipCallConnector.prototype.ignore = function() {
+    console.debug("PrivateJainSipCallConnector:ignore()");
+    if (this.sipCallState === this.SIP_INVITED_INITIAL_STATE)
+    {
+        try
+        {
+				// SIP INVITE has not been sent yet.
+				this.resetSipContext();
+				this.clientConnector.removeSessionConnector(this.sipCallId);
+				// Notify closed event
+				this.webRTCommCall.onPrivateCallConnectorCallClosedEvent();
+        }
+        catch (exception)
+        {
+            console.error("PrivateJainSipCallConnector:ignore(): catched exception:" + exception);
+        }
+        this.close();
+    }
+    else
+    {
+        console.error("PrivateJainSipCallConnector:ignore(): bad state, unauthorized action");
+        throw "PrivateJainSipCallConnector:ignore(): bad state, unauthorized action";
+    }
+};
+
+/**
  * Check configuration 
  * @param {object} configuration SIP call configuration JSON object
  * @private
@@ -2650,6 +2681,12 @@ WebRTCommCall.prototype.reject = function() {
         try
         {
             this.connector.reject();
+
+				// Notify asynchronously the closed event
+				var that = this;
+				setTimeout(function() {
+				    that.eventListener.onWebRTCommCallClosedEvent(that);
+				}, 1);
         }
         catch (exception)
         {
@@ -2666,6 +2703,44 @@ WebRTCommCall.prototype.reject = function() {
     {
         console.error("WebRTCommCall:reject(): bad state, unauthorized action");
         throw "WebRTCommCall:reject(): bad state, unauthorized action";
+    }
+};
+
+/**
+ * Ignore incoming WebRTC communication. This means that we silently close the communication without replying to the remote party
+ * @public 
+ * @throw {String} Exception "bad state, unauthorized action"
+ * @throw {String} Exception "internal error,check console logs"
+ */
+WebRTCommCall.prototype.ignore = function() {
+    console.debug("WebRTCommCall:ignore()");
+    if (this.webRTCommClient.isOpened())
+    {
+        try
+        {
+            this.connector.ignore();
+
+				// Notify asynchronously the closed event
+				var that = this;
+				setTimeout(function() {
+				    that.eventListener.onWebRTCommCallClosedEvent(that);
+				}, 1);
+        }
+        catch (exception)
+        {
+            console.error("WebRTCommCall:ignore(): catched exception:" + exception);
+            // Close properly the communication
+            try {
+                this.close();
+            } catch (e) {
+            }
+            throw exception;
+        }
+    }
+    else
+    {
+        console.error("WebRTCommCall:ignore(): bad state, unauthorized action");
+        throw "WebRTCommCall:ignore(): bad state, unauthorized action";
     }
 };
 

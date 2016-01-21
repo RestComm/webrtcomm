@@ -470,6 +470,12 @@ WebRTCommCall.prototype.reject = function() {
         try
         {
             this.connector.reject();
+
+				// Notify asynchronously the closed event
+				var that = this;
+				setTimeout(function() {
+				    that.eventListener.onWebRTCommCallClosedEvent(that);
+				}, 1);
         }
         catch (exception)
         {
@@ -486,6 +492,44 @@ WebRTCommCall.prototype.reject = function() {
     {
         console.error("WebRTCommCall:reject(): bad state, unauthorized action");
         throw "WebRTCommCall:reject(): bad state, unauthorized action";
+    }
+};
+
+/**
+ * Ignore incoming WebRTC communication. This means that we silently close the communication without replying to the remote party
+ * @public 
+ * @throw {String} Exception "bad state, unauthorized action"
+ * @throw {String} Exception "internal error,check console logs"
+ */
+WebRTCommCall.prototype.ignore = function() {
+    console.debug("WebRTCommCall:ignore()");
+    if (this.webRTCommClient.isOpened())
+    {
+        try
+        {
+            this.connector.ignore();
+
+				// Notify asynchronously the closed event
+				var that = this;
+				setTimeout(function() {
+				    that.eventListener.onWebRTCommCallClosedEvent(that);
+				}, 1);
+        }
+        catch (exception)
+        {
+            console.error("WebRTCommCall:ignore(): catched exception:" + exception);
+            // Close properly the communication
+            try {
+                this.close();
+            } catch (e) {
+            }
+            throw exception;
+        }
+    }
+    else
+    {
+        console.error("WebRTCommCall:ignore(): bad state, unauthorized action");
+        throw "WebRTCommCall:ignore(): bad state, unauthorized action";
     }
 };
 
