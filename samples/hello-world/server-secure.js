@@ -1,5 +1,5 @@
 var static = require('node-static');
-var http = require('http');
+var http = require('https');
 var fs = require('fs');
 
 var options = {
@@ -8,6 +8,6 @@ var options = {
 };
 
 var file = new(static.Server)();
-var app = http.createServer(function (req, res) {
+var app = http.createServer(options, function (req, res) {
   file.serve(req, res);
-}).listen(80);
+}).listen(8443);
