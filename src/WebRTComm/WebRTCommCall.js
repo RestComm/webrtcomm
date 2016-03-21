@@ -545,7 +545,7 @@ WebRTCommCall.prototype.sendDTMF = function(dtmfEvent) {
 	    console.debug('Sending Tones, duration, gap: ', dtmfEvent, duration, gap);
 	    this.dtmfSender.insertDTMF(dtmfEvent, duration, gap);
 	} else {
-	    console.debug('DTMFSender not initialized so not Sending Tones, duration, gap: ', dtmfEvent, duration, gap);	
+	    console.debug('DTMFSender not initialized so not Sending Tones, duration, gap: ', dtmfEvent, duration, gap);
 	}
 }
 
@@ -2583,7 +2583,7 @@ WebRTCommCall.prototype.patchChromeIce = function(sessionDescription, attributeT
 		            var rtpmapValue = attributField.getValue().toLowerCase();
 		            if (rtpmapValue.indexOf("google-ice") >= 0)
 		            {
-				console.debug("WebRTCommCall:patchChromeIce(), found google-ice session attribute trying to patch");+				
+				console.debug("WebRTCommCall:patchChromeIce(), found google-ice session attribute trying to patch");
 		                //attributField.setValue("trickle");
 				attributFields.remove(i);
 	                        break;
@@ -2611,7 +2611,7 @@ WebRTCommCall.prototype.patchChromeIce = function(sessionDescription, attributeT
 		            var rtpmapValue = attributField.getValue().toLowerCase();
 		            if (rtpmapValue.indexOf("google-ice") >= 0)
 		            {
-				console.debug("WebRTCommCall:patchChromeIce(), found google-ice mediajattribute trying to patch");+				
+				console.debug("WebRTCommCall:patchChromeIce(), found google-ice mediajattribute trying to patch");
 		                //attributField.setValue("trickle");
 				attributFields.remove(j);
 	                        break;

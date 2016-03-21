@@ -2756,7 +2756,7 @@ WebRTCommCall.prototype.sendDTMF = function(dtmfEvent) {
 	    console.debug('Sending Tones, duration, gap: ', dtmfEvent, duration, gap);
 	    this.dtmfSender.insertDTMF(dtmfEvent, duration, gap);
 	} else {
-	    console.debug('DTMFSender not initialized so not Sending Tones, duration, gap: ', dtmfEvent, duration, gap);	
+	    console.debug('DTMFSender not initialized so not Sending Tones, duration, gap: ', dtmfEvent, duration, gap);
 	}
 }
 
@@ -4299,6 +4299,10 @@ WebRTCommCall.prototype.onRtcPeerConnectionIceChangeEvent = function(event) {
         console.debug("WebRTCommCall:onRtcPeerConnectionIceChangeEvent(): this.peerConnection.iceGatheringState=" + this.peerConnection.iceGatheringState);
         console.debug("WebRTCommCall:onRtcPeerConnectionIceChangeEvent(): this.peerConnection.iceConnectionState=" + this.peerConnection.iceConnectionState);
         console.debug("WebRTCommCall:onRtcPeerConnectionIceChangeEvent(): this.peerConnectionState=" + this.peerConnectionState);
+        if (this.peerConnection.iceConnectionState == 'disconnected') {
+            console.error("WebRTCommCall:onRtcPeerConnectionIceChangeEvent(): IceConnection disconnected (i.e. no media path); hunging up the call");
+            this.close();
+        }
     }
     else
     {
@@ -4790,7 +4794,7 @@ WebRTCommCall.prototype.patchChromeIce = function(sessionDescription, attributeT
 		            var rtpmapValue = attributField.getValue().toLowerCase();
 		            if (rtpmapValue.indexOf("google-ice") >= 0)
 		            {
-				console.debug("WebRTCommCall:patchChromeIce(), found google-ice session attribute trying to patch");+				
+				console.debug("WebRTCommCall:patchChromeIce(), found google-ice session attribute trying to patch");
 		                //attributField.setValue("trickle");
 				attributFields.remove(i);
 	                        break;
@@ -4818,7 +4822,7 @@ WebRTCommCall.prototype.patchChromeIce = function(sessionDescription, attributeT
 		            var rtpmapValue = attributField.getValue().toLowerCase();
 		            if (rtpmapValue.indexOf("google-ice") >= 0)
 		            {
-				console.debug("WebRTCommCall:patchChromeIce(), found google-ice mediajattribute trying to patch");+				
+				console.debug("WebRTCommCall:patchChromeIce(), found google-ice mediajattribute trying to patch");
 		                //attributField.setValue("trickle");
 				attributFields.remove(j);
 	                        break;

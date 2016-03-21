@@ -20479,7 +20479,6 @@ WSMsgParser.prototype.parsermessage =function(sipMessage){
     if (contentLength == 0) {
         parsedSipMessage.removeContent();
     } 
-    console.info("SIP message received: "+parsedSipMessage.encode());
     this.processMessage(parsedSipMessage);
 }
 
@@ -24195,7 +24194,6 @@ SIPTransactionStack.prototype.addExtensionMethod =function(extensionMethod){
 }
 
 SIPTransactionStack.prototype.removeDialog =function(dialog){
-    console.log("SIPTransactionStack.prototype.removeDialog(): id="+dialog.getDialogId())
     var id = dialog.getDialogId();
     var earlyId = dialog.getEarlyDialogId();
     if (earlyId != null) {
@@ -25432,7 +25430,6 @@ function WSMessageChannel(messageProcessor, wsUrl) {
     else 
     {
        throw "WSMessageChannel:createWebSocket(): bad Websocket Url";
-       console.warn("WSMessageChannel:createWebSocket(): bad Websocket Url");
     }
     this.messageProcessor=messageProcessor;
     this.myAddress = this.messageProcessor.sipStack.getHostAddress();
@@ -25450,14 +25447,12 @@ WSMessageChannel.prototype.createWebSocket =function(){
     var that=this;
     this.websocket.onclose=function()
     {
-        console.warn("WSMessageChannel:createWebSocket(): the websocket is closed");
         that.messageProcessor.sipStack.sipListener.processDisconnected();
         that.websocket=null;
     }
     
     this.websocket.onopen=function()
     {
-        console.info("WSMessageChannel:createWebSocket(): the websocket is opened");
         that.messageProcessor.sipStack.sipListener.processConnected();
     }
     
@@ -25511,7 +25506,6 @@ WSMessageChannel.prototype.sendMessage = function(sipMessage){
         sipMessage=encodedSipMessage;
     }
     this.websocket.send(sipMessage);
-    console.info("SIP message sent: "+sipMessage); 
 }
 
 WSMessageChannel.prototype.getViaHeader =function(){
@@ -31677,7 +31671,6 @@ SipStackImpl.prototype.createListeningPoint =function(wsUrl){
     else 
     {
       throw "WSMessageChannel:createWebSocket(): bad Websocket Url";
-      console.warn("WSMessageChannel:createWebSocket(): bad Websocket Url");
     }
     
     var key = ListeningPointImpl.prototype.makeKey(this.stackAddress, transport);
