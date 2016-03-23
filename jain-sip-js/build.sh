@@ -199,8 +199,9 @@ cat ./src/main/javascript/jain-sip/gov/nist/sip/SipStackImpl.js >> ./build/jain-
 cat ./src/main/javascript/jain-sip/gov/nist/sip/SipListener.js >> ./build/jain-sip.debug.js
 cat ./src/main/javascript/jain-sip/gov/nist/sip/SipFactory.js >> ./build/jain-sip.debug.js
 
+grep -v "logger.debug" ./build/jain-sip.debug.js  >  ./build/jain-sip.js
 # The library uses both logger. and console. let's also filter out console.* apart from error
-grep -v "logger.debug" ./build/jain-sip.debug.js | grep -v "console\.\(info\|log\|debug\|warn\)"  >  ./build/jain-sip.js
+#grep -v "logger.debug" ./build/jain-sip.debug.js | grep -v "console\.\(info\|log\|debug\|warn\)"  >  ./build/jain-sip.js
 
 java -jar yuicompressor-2.4.7.jar  ./build/jain-sip.js -o ./build/jain-sip.min.js
 
