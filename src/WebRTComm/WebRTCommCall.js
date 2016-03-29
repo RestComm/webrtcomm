@@ -2088,8 +2088,8 @@ WebRTCommCall.prototype.onRtcPeerConnectionIceChangeEvent = function(event) {
         console.debug("WebRTCommCall:onRtcPeerConnectionIceChangeEvent(): this.peerConnection.iceGatheringState=" + this.peerConnection.iceGatheringState);
         console.debug("WebRTCommCall:onRtcPeerConnectionIceChangeEvent(): this.peerConnection.iceConnectionState=" + this.peerConnection.iceConnectionState);
         console.debug("WebRTCommCall:onRtcPeerConnectionIceChangeEvent(): this.peerConnectionState=" + this.peerConnectionState);
-        if (this.peerConnection.iceConnectionState == 'disconnected') {
-            console.error("WebRTCommCall:onRtcPeerConnectionIceChangeEvent(): IceConnection disconnected (i.e. no media path); hunging up the call");
+        if (this.peerConnection.iceConnectionState == 'failed') {
+            console.error("WebRTCommCall:onRtcPeerConnectionIceChangeEvent(): IceConnection failed (i.e. no media path); hunging up the call");
             this.close();
         }
     }
