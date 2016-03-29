@@ -4300,8 +4300,33 @@ WebRTCommCall.prototype.onRtcPeerConnectionIceChangeEvent = function(event) {
         console.debug("WebRTCommCall:onRtcPeerConnectionIceChangeEvent(): this.peerConnection.iceConnectionState=" + this.peerConnection.iceConnectionState);
         console.debug("WebRTCommCall:onRtcPeerConnectionIceChangeEvent(): this.peerConnectionState=" + this.peerConnectionState);
         if (this.peerConnection.iceConnectionState == 'failed') {
-            console.error("WebRTCommCall:onRtcPeerConnectionIceChangeEvent(): IceConnection failed (i.e. no media path); hunging up the call");
-            this.close();
+            error = 'Media path is lost due to connectivity issues; call has been hung up';
+            console.error("WebRTCommCall:onRtcPeerConnectionIceChangeEvent(): " + error);
+
+            // Error, notify the error and close properly the call
+            // Notify the error event to the listener
+            if (this.eventListener.onWebRTCommCallErrorEvent)
+            {
+               var that = this;
+               setTimeout(function() {
+                   try {
+                      that.eventListener.onWebRTCommCallErrorEvent(that, error);
+                   }
+                   catch (exception)
+                   {
+                      console.error("WebRTCommCall:onRtcPeerConnectionErrorEvent(): catched exception in listener:" + exception);
+                   }
+               }, 1);
+            }
+
+				// close the call since media has failed
+            try {
+               this.close();
+            } 
+            catch (exception) 
+            {
+               console.error("WebRTCommCall:onRtcPeerConnectionErrorEvent(): catched exception in listener:" + exception);
+            }
         }
     }
     else
@@ -5490,6 +5515,16 @@ WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallInProgressEvent = f
  */
 WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallOpenErrorEvent = function(webRTCommCall, error) {
     throw "WebRTCommCallEventListenerInterface:onWebRTCommCallOpenErrorEvent(): not implemented;";
+};
+
+/**
+ * Call error event
+ * @public
+ * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
+ * @param {String} error error message
+ */
+WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallErrorEvent = function(webRTCommCall, error) {
+    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallErrorEvent(): not implemented;";
 };
 
 /**

@@ -38,6 +38,16 @@ WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallOpenErrorEvent = fu
 };
 
 /**
+ * Call error event
+ * @public
+ * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
+ * @param {String} error error message
+ */
+WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallErrorEvent = function(webRTCommCall, error) {
+    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallErrorEvent(): not implemented;";
+};
+
+/**
  * Open error  event
  * @public
  * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
