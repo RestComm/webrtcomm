@@ -4,17 +4,16 @@
  *            required to be implented by the webapp 
  * @constructor
  * @public
- */ 
- WebRTCommDataMessageEventListenerInterface = function(){
-};
- 
+ */
+WebRTCommDataMessageEventListenerInterface = function() {};
+
 /**
  * Received message event
  * @public
  * @param {WebRTCommMessage} message object
  */
 WebRTCommMessageEventListenerInterface.prototype.onWebRTCommDataMessageReceivedEvent = function(message) {
-    throw "WebRTCommMessageEventListenerInterface:onWebRTCommDataMessageReceivedEvent(): not implemented;";
+	throw "WebRTCommMessageEventListenerInterface:onWebRTCommDataMessageReceivedEvent(): not implemented;";
 };
 
 /**
@@ -23,7 +22,7 @@ WebRTCommMessageEventListenerInterface.prototype.onWebRTCommDataMessageReceivedE
  * @param {WebRTCommMessage} message object
  */
 WebRTCommMessageEventListenerInterface.prototype.onWebRTCommDataMessageSentEvent = function(message) {
-    throw "WebRTCommMessageEventListenerInterface:onWebRTCommDataMessageSentEvent(): not implemented;";
+	throw "WebRTCommMessageEventListenerInterface:onWebRTCommDataMessageSentEvent(): not implemented;";
 };
 
 /**
@@ -33,7 +32,7 @@ WebRTCommMessageEventListenerInterface.prototype.onWebRTCommDataMessageSentEvent
  * @param {String} error code
  */
 WebRTCommMessageEventListenerInterface.prototype.onWebRTCommDataMessageSendErrorEvent = function(message, error) {
-    throw "WebRTCommMessageEventListenerInterface:onWebRTCommDataMessageSendErrorEvent(): not implemented;";
+	throw "WebRTCommMessageEventListenerInterface:onWebRTCommDataMessageSendErrorEvent(): not implemented;";
 };
 
 /**
@@ -41,7 +40,7 @@ WebRTCommMessageEventListenerInterface.prototype.onWebRTCommDataMessageSendError
  * @public
  */
 WebRTCommMessageEventListenerInterface.prototype.onWebRTCommDataMessageChannelOnOpenEvent = function() {
-    throw "WebRTCommMessageEventListenerInterface:onWebRTCommDataMessageChannelOnOpenEvent(): not implemented;";
+	throw "WebRTCommMessageEventListenerInterface:onWebRTCommDataMessageChannelOnOpenEvent(): not implemented;";
 };
 
 /**
@@ -49,7 +48,7 @@ WebRTCommMessageEventListenerInterface.prototype.onWebRTCommDataMessageChannelOn
  * @public
  */
 WebRTCommMessageEventListenerInterface.prototype.onWebRTCommDataMessageChannelOnCloseEvent = function() {
-    throw "WebRTCommMessageEventListenerInterface:onWebRTCommDataMessageChannelOnCloseEvent(): not implemented;";
+	throw "WebRTCommMessageEventListenerInterface:onWebRTCommDataMessageChannelOnCloseEvent(): not implemented;";
 };
 
 /**
@@ -57,5 +56,5 @@ WebRTCommMessageEventListenerInterface.prototype.onWebRTCommDataMessageChannelOn
  * @public
  */
 WebRTCommMessageEventListenerInterface.prototype.onWebRTCommDataMessageChannelOnErrorEvent = function() {
-    throw "WebRTCommMessageEventListenerInterface:onWebRTCommDataMessageChannelOnErrorEvent(): not implemented;";
+	throw "WebRTCommMessageEventListenerInterface:onWebRTCommDataMessageChannelOnErrorEvent(): not implemented;";
 };

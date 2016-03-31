@@ -4,16 +4,15 @@
  *            required to be implented by the webapp 
  * @constructor
  * @public
- */ 
- WebRTCommClientEventListenerInterface = function(){
-};
- 
+ */
+WebRTCommClientEventListenerInterface = function() {};
+
 /**
  * Open event
  * @public
- */ 
-WebRTCommClientEventListenerInterface.prototype.onWebRTCommClientOpenedEvent= function() {
-    throw "WebRTCommClientEventListenerInterface:onWebRTCommClientOpenedEvent(): not implemented;"; 
+ */
+WebRTCommClientEventListenerInterface.prototype.onWebRTCommClientOpenedEvent = function() {
+	throw "WebRTCommClientEventListenerInterface:onWebRTCommClientOpenedEvent(): not implemented;";
 };
 
 /**
@@ -21,8 +20,8 @@ WebRTCommClientEventListenerInterface.prototype.onWebRTCommClientOpenedEvent= fu
  * @public
  * @param {String} error open error message
  */
-WebRTCommClientEventListenerInterface.prototype.onWebRTCommClientOpenErrorEvent= function(error) {
-    throw "WebRTCommClientEventListenerInterface:onWebRTCommClientOpenErrorEvent(): not implemented;"; 
+WebRTCommClientEventListenerInterface.prototype.onWebRTCommClientOpenErrorEvent = function(error) {
+	throw "WebRTCommClientEventListenerInterface:onWebRTCommClientOpenErrorEvent(): not implemented;";
 };
 
 
@@ -30,6 +29,6 @@ WebRTCommClientEventListenerInterface.prototype.onWebRTCommClientOpenErrorEvent=
  * Close event 
  * @public
  */
-WebRTCommClientEventListenerInterface.prototype.onWebRTCommClientClosedEvent= function() {
-    throw "WebRTCommClientEventListenerInterface:onWebRTCommClientClosedEvent(): not implemented;"; 
+WebRTCommClientEventListenerInterface.prototype.onWebRTCommClientClosedEvent = function() {
+	throw "WebRTCommClientEventListenerInterface:onWebRTCommClientClosedEvent(): not implemented;";
 };

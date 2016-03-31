@@ -4,10 +4,9 @@
  *            required to be implented by the webapp 
  * @constructor
  * @public
- */ 
- WebRTCommMessageEventListenerInterface = function(){
-};
- 
+ */
+WebRTCommMessageEventListenerInterface = function() {};
+
 
 /**
  * Received message event
@@ -15,7 +14,7 @@
  * @param {WebRTCommMessage} message object
  */
 WebRTCommMessageEventListenerInterface.prototype.onWebRTCommMessageReceivedEvent = function(message) {
-    throw "WebRTCommCallEventListenerInterface:onWebRTCommMessageReceivedEvent(): not implemented;";
+	throw "WebRTCommCallEventListenerInterface:onWebRTCommMessageReceivedEvent(): not implemented;";
 };
 
 /**
@@ -24,7 +23,7 @@ WebRTCommMessageEventListenerInterface.prototype.onWebRTCommMessageReceivedEvent
  * @param {WebRTCommMessage} message object
  */
 WebRTCommMessageEventListenerInterface.prototype.onWebRTCommMessageSentEvent = function(message) {
-    throw "WebRTCommCallEventListenerInterface:onWebRTCommMessageSentEvent(): not implemented;";
+	throw "WebRTCommCallEventListenerInterface:onWebRTCommMessageSentEvent(): not implemented;";
 };
 
 /**
@@ -34,5 +33,5 @@ WebRTCommMessageEventListenerInterface.prototype.onWebRTCommMessageSentEvent = f
  * @param {String} error code
  */
 WebRTCommMessageEventListenerInterface.prototype.onWebRTCommMessageSendErrorEvent = function(message, error) {
-    throw "WebRTCommCallEventListenerInterface:onWebRTCommMessageSendErrorEvent(): not implemented;";
+	throw "WebRTCommCallEventListenerInterface:onWebRTCommMessageSendErrorEvent(): not implemented;";
 };

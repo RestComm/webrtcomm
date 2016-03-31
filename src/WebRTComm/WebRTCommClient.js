@@ -5,21 +5,17 @@
  * @public
  * @param  {object} eventListener event listener object implementing WebRTCommClient and WebRTCommCall listener interface
  */
-WebRTCommClient = function(eventListener)
-{
-    if (typeof eventListener === 'object')
-    {
-        this.id = "WebRTCommClient" + Math.floor(Math.random() * 2147483648);
-        console.debug("WebRTCommClient:WebRTCommClient():this.id=" + this.id);
-        this.eventListener = eventListener;
-        this.configuration = undefined;
-        this.connector = undefined;
-        this.closePendingFlag = false;
-    }
-    else
-    {
-        throw "WebRTCommClient:WebRTCommClient(): bad arguments"
-    }
+WebRTCommClient = function(eventListener) {
+	if (typeof eventListener === 'object') {
+		this.id = "WebRTCommClient" + Math.floor(Math.random() * 2147483648);
+		console.debug("WebRTCommClient:WebRTCommClient():this.id=" + this.id);
+		this.eventListener = eventListener;
+		this.configuration = undefined;
+		this.connector = undefined;
+		this.closePendingFlag = false;
+	} else {
+		throw "WebRTCommClient:WebRTCommClient(): bad arguments"
+	}
 };
 
 /**
@@ -36,10 +32,10 @@ WebRTCommClient.prototype.SIP = "SIP";
  * @returns {boolean} true if opened, false if closed
  */
 WebRTCommClient.prototype.isOpened = function() {
-    if (this.connector)
-        return this.connector.isOpened();
-    else
-        return false;
+	if (this.connector)
+		return this.connector.isOpened();
+	else
+		return false;
 };
 
 /**
@@ -48,7 +44,7 @@ WebRTCommClient.prototype.isOpened = function() {
  * @returns {object} configuration
  */
 WebRTCommClient.prototype.getConfiguration = function() {
-    return this.configuration;
+	return this.configuration;
 };
 
 /**
@@ -80,37 +76,27 @@ WebRTCommClient.prototype.getConfiguration = function() {
  * @throw {String} Exception [internal error]
  */
 WebRTCommClient.prototype.open = function(configuration) {
-    console.debug("WebRTCommClient:open(): configuration=" + JSON.stringify(configuration));
-    if (typeof(configuration) === 'object')
-    {
-        if (this.isOpened() === false)
-        {
-            if (this.checkConfiguration(configuration) === true)
-            {
-                this.configuration = configuration;
-                if (configuration.communicationMode === WebRTCommClient.prototype.SIP)
-                {
-                    this.connector = new PrivateJainSipClientConnector(this);
-                    this.connector.open(this.configuration.sip);
-                }
-            }
-            else
-            {
-                console.error("WebRTCommClient:open(): bad configuration");
-                throw "WebRTCommClient:open(): bad configuration";
-            }
-        }
-        else
-        {
-            console.error("WebRTCommClient:open(): bad state, unauthorized action");
-            throw "WebRTCommClient:open(): bad state, unauthorized action";
-        }
-    }
-    else
-    {
-        console.error("WebRTCommClient:open(): bad argument, check API documentation");
-        throw "WebRTCommClient:open(): bad argument, check API documentation"
-    }
+	console.debug("WebRTCommClient:open(): configuration=" + JSON.stringify(configuration));
+	if (typeof(configuration) === 'object') {
+		if (this.isOpened() === false) {
+			if (this.checkConfiguration(configuration) === true) {
+				this.configuration = configuration;
+				if (configuration.communicationMode === WebRTCommClient.prototype.SIP) {
+					this.connector = new PrivateJainSipClientConnector(this);
+					this.connector.open(this.configuration.sip);
+				}
+			} else {
+				console.error("WebRTCommClient:open(): bad configuration");
+				throw "WebRTCommClient:open(): bad configuration";
+			}
+		} else {
+			console.error("WebRTCommClient:open(): bad state, unauthorized action");
+			throw "WebRTCommClient:open(): bad state, unauthorized action";
+		}
+	} else {
+		console.error("WebRTCommClient:open(): bad argument, check API documentation");
+		throw "WebRTCommClient:open(): bad argument, check API documentation"
+	}
 };
 
 /**
@@ -121,34 +107,28 @@ WebRTCommClient.prototype.open = function(configuration) {
  * @throw {String} Exception "bad state, unauthorized action"
  */
 WebRTCommClient.prototype.close = function() {
-    console.debug("WebRTCommClient:close()");
-    if (this.isOpened())
-    {
-        try
-        {
-            this.closePendingFlag = true;
-            this.connector.close();
-        }
-        catch (exception) {
-            console.error("WebRTCommClient:close(): catched exception:" + exception);
-            // Force notification of closed event to listener
-            this.closePendingFlag = false;
-            this.connector = undefined;
-            if (this.eventListener.onWebRTCommClientClosedEvent !== undefined)
-            {
-                var that = this;
-                setTimeout(function() {
-                    try {
-                        that.eventListener.onWebRTCommClientClosedEvent(that);
-                    }
-                    catch (exception)
-                    {
-                        console.error("WebRTCommClient:onWebRTCommClientClosed(): catched exception in event listener:" + exception);
-                    }
-                }, 1);
-            }
-        }
-    }
+	console.debug("WebRTCommClient:close()");
+	if (this.isOpened()) {
+		try {
+			this.closePendingFlag = true;
+			this.connector.close();
+		} catch (exception) {
+			console.error("WebRTCommClient:close(): catched exception:" + exception);
+			// Force notification of closed event to listener
+			this.closePendingFlag = false;
+			this.connector = undefined;
+			if (this.eventListener.onWebRTCommClientClosedEvent !== undefined) {
+				var that = this;
+				setTimeout(function() {
+					try {
+						that.eventListener.onWebRTCommClientClosedEvent(that);
+					} catch (exception) {
+						console.error("WebRTCommClient:onWebRTCommClientClosed(): catched exception in event listener:" + exception);
+					}
+				}, 1);
+			}
+		}
+	}
 };
 
 
@@ -163,31 +143,24 @@ WebRTCommClient.prototype.close = function() {
  * @throw {String} Exception "bad state, unauthorized action"
  * @returns {WebRTCommMessage} new created WebRTCommMessage object
  */
-WebRTCommClient.prototype.sendMessage = function(to, text)
-{
-    try
-    {
-        console.debug("WebRTCommClient:sendMessage(): to=" + to);
-        console.debug("WebRTCommClient:sendMessage(): text=" + text);
-        if (this.isOpened())
-        {
-            var newWebRTCommMessage = new WebRTCommMessage(this,undefined);
-            newWebRTCommMessage.to = to;
-            newWebRTCommMessage.text = text;
-            newWebRTCommMessage.connector.send();
-            return newWebRTCommMessage;
-        }
-        else
-        {
-            console.error("WebRTCommClient:sendMessage(): bad state, unauthorized action");
-            throw "WebRTCommClient:sendMessage(): bad state, unauthorized action";
-        }
-    }
-    catch (exception)
-    {
-        console.error("WebRTCommClient:sendMessage(): catched exception:" + exception);
-        throw "WebRTCommClient:sendMessage(): catched exception:" + exception;
-    }
+WebRTCommClient.prototype.sendMessage = function(to, text) {
+	try {
+		console.debug("WebRTCommClient:sendMessage(): to=" + to);
+		console.debug("WebRTCommClient:sendMessage(): text=" + text);
+		if (this.isOpened()) {
+			var newWebRTCommMessage = new WebRTCommMessage(this, undefined);
+			newWebRTCommMessage.to = to;
+			newWebRTCommMessage.text = text;
+			newWebRTCommMessage.connector.send();
+			return newWebRTCommMessage;
+		} else {
+			console.error("WebRTCommClient:sendMessage(): bad state, unauthorized action");
+			throw "WebRTCommClient:sendMessage(): bad state, unauthorized action";
+		}
+	} catch (exception) {
+		console.error("WebRTCommClient:sendMessage(): catched exception:" + exception);
+		throw "WebRTCommClient:sendMessage(): catched exception:" + exception;
+	}
 };
 
 /**
@@ -213,35 +186,27 @@ WebRTCommClient.prototype.sendMessage = function(to, text)
  * @throw {String} Exception "bad state, unauthorized action"
  */
 WebRTCommClient.prototype.call = function(calleePhoneNumber, callConfiguration) {
-    console.debug("WebRTCommClient:call():calleePhoneNumber=" + calleePhoneNumber);
-    console.debug("WebRTCommClient:call():callConfiguration=" + JSON.stringify(callConfiguration));
-    try
-    {
-        if (typeof(calleePhoneNumber) === 'string' && typeof(callConfiguration) === 'object')
-        {
-            if (this.isOpened())
-            {
-                var newWebRTCommCall = new WebRTCommCall(this);
-                newWebRTCommCall.connector = this.connector.createPrivateSessionConnector(newWebRTCommCall);
-                newWebRTCommCall.open(calleePhoneNumber, callConfiguration);
-                return newWebRTCommCall;
-            }
-            else
-            {
-                console.error("WebRTCommClient:call(): bad state, unauthorized action");
-                throw "WebRTCommClient:call(): bad state, unauthorized action";
-            }
-        }
-        else
-        {
-            console.error("WebRTCommClient:call(): bad argument, check API documentation");
-            throw "WebRTCommClient:call(): bad argument, check API documentation"
-        }
-    }
-    catch (exception) {
-        console.error("WebRTCommClient:call(): catched exception:" + exception);
-        throw exception;
-    }
+	console.debug("WebRTCommClient:call():calleePhoneNumber=" + calleePhoneNumber);
+	console.debug("WebRTCommClient:call():callConfiguration=" + JSON.stringify(callConfiguration));
+	try {
+		if (typeof(calleePhoneNumber) === 'string' && typeof(callConfiguration) === 'object') {
+			if (this.isOpened()) {
+				var newWebRTCommCall = new WebRTCommCall(this);
+				newWebRTCommCall.connector = this.connector.createPrivateSessionConnector(newWebRTCommCall);
+				newWebRTCommCall.open(calleePhoneNumber, callConfiguration);
+				return newWebRTCommCall;
+			} else {
+				console.error("WebRTCommClient:call(): bad state, unauthorized action");
+				throw "WebRTCommClient:call(): bad state, unauthorized action";
+			}
+		} else {
+			console.error("WebRTCommClient:call(): bad argument, check API documentation");
+			throw "WebRTCommClient:call(): bad argument, check API documentation"
+		}
+	} catch (exception) {
+		console.error("WebRTCommClient:call(): catched exception:" + exception);
+		throw exception;
+	}
 };
 
 
@@ -272,46 +237,36 @@ WebRTCommClient.prototype.call = function(calleePhoneNumber, callConfiguration) 
  */
 WebRTCommClient.prototype.checkConfiguration = function(configuration) {
 
-    console.debug("WebRTCommClient:checkConfiguration(): configuration=" + JSON.stringify(configuration));
-    var check = true;
-    if (configuration.communicationMode !== undefined)
-    {
-        if (configuration.communicationMode === WebRTCommClient.prototype.SIP)
-        {
-        }
-        else
-        {
-            check = false;
-            console.error("WebRTCommClient:checkConfiguration(): unsupported communicationMode");
-        }
-    }
-    else
-    {
-        check = false;
-        console.error("WebRTCommClient:checkConfiguration(): missing configuration parameter communicationMode");
-    }
-    return check;
+	console.debug("WebRTCommClient:checkConfiguration(): configuration=" + JSON.stringify(configuration));
+	var check = true;
+	if (configuration.communicationMode !== undefined) {
+		if (configuration.communicationMode === WebRTCommClient.prototype.SIP) {} else {
+			check = false;
+			console.error("WebRTCommClient:checkConfiguration(): unsupported communicationMode");
+		}
+	} else {
+		check = false;
+		console.error("WebRTCommClient:checkConfiguration(): missing configuration parameter communicationMode");
+	}
+	return check;
 };
 
 /**
  * Implements PrivateClientConnector opened event listener interface
  * @private
  */
-WebRTCommClient.prototype.onPrivateClientConnectorOpenedEvent = function()
-{
-    console.debug("WebRTCommClient:onPrivateClientConnectorOpenedEvent()");
-    if (this.eventListener.onWebRTCommClientOpenedEvent !== undefined)
-    {
-        var that = this;
-        setTimeout(function() {
-            try {
-                that.eventListener.onWebRTCommClientOpenedEvent();
-            }
-            catch (exception) {
-                console.error("WebRTCommClient:onPrivateClientConnectorOpenedEvent(): catched exception in event listener:" + exception);
-            }
-        }, 1);
-    }
+WebRTCommClient.prototype.onPrivateClientConnectorOpenedEvent = function() {
+	console.debug("WebRTCommClient:onPrivateClientConnectorOpenedEvent()");
+	if (this.eventListener.onWebRTCommClientOpenedEvent !== undefined) {
+		var that = this;
+		setTimeout(function() {
+			try {
+				that.eventListener.onWebRTCommClientOpenedEvent();
+			} catch (exception) {
+				console.error("WebRTCommClient:onPrivateClientConnectorOpenedEvent(): catched exception in event listener:" + exception);
+			}
+		}, 1);
+	}
 };
 
 /**
@@ -319,27 +274,23 @@ WebRTCommClient.prototype.onPrivateClientConnectorOpenedEvent = function()
  * @private
  * @param {string} error Error message
  */
-WebRTCommClient.prototype.onPrivateClientConnectorOpenErrorEvent = function(error)
-{
-    console.debug("WebRTCommClient:onPrivateClientConnectorOpenErrorEvent():error:" + error);
-    // Force closing of the client
-    try {
-        this.close();
-    } catch (exception) {
-    }
+WebRTCommClient.prototype.onPrivateClientConnectorOpenErrorEvent = function(error) {
+	console.debug("WebRTCommClient:onPrivateClientConnectorOpenErrorEvent():error:" + error);
+	// Force closing of the client
+	try {
+		this.close();
+	} catch (exception) {}
 
-    if (this.eventListener.onWebRTCommClientOpenErrorEvent !== undefined)
-    {
-        var that = this;
-        setTimeout(function() {
-            try {
-                that.eventListener.onWebRTCommClientOpenErrorEvent(error);
-            }
-            catch (exception) {
-                console.error("WebRTCommClient:onPrivateClientConnectorOpenErrorEvent(): catched exception in event listener:" + exception);
-            }
-        }, 1);
-    }
+	if (this.eventListener.onWebRTCommClientOpenErrorEvent !== undefined) {
+		var that = this;
+		setTimeout(function() {
+			try {
+				that.eventListener.onWebRTCommClientOpenErrorEvent(error);
+			} catch (exception) {
+				console.error("WebRTCommClient:onPrivateClientConnectorOpenErrorEvent(): catched exception in event listener:" + exception);
+			}
+		}, 1);
+	}
 };
 
 /**
@@ -348,42 +299,35 @@ WebRTCommClient.prototype.onPrivateClientConnectorOpenErrorEvent = function(erro
  * @private
  */
 
-WebRTCommClient.prototype.onPrivateClientConnectorClosedEvent = function()
-{
-    console.debug("WebRTCommClient:onPrivateClientConnectorClosedEvent()");
-    var wasOpenedFlag = this.isOpened() || this.closePendingFlag;
+WebRTCommClient.prototype.onPrivateClientConnectorClosedEvent = function() {
+	console.debug("WebRTCommClient:onPrivateClientConnectorClosedEvent()");
+	var wasOpenedFlag = this.isOpened() || this.closePendingFlag;
 
-    // Close properly the client
-    try {
-        if (this.closePendingFlag === false)
-            this.close();
-        else
-            this.connector = undefined;
-    } catch (exception) {
-    }
+	// Close properly the client
+	try {
+		if (this.closePendingFlag === false)
+			this.close();
+		else
+			this.connector = undefined;
+	} catch (exception) {}
 
-    if (wasOpenedFlag && (this.eventListener.onWebRTCommClientClosedEvent !== undefined))
-    {
-        var that = this;
-        setTimeout(function() {
-            try {
-                that.eventListener.onWebRTCommClientClosedEvent();
-            }
-            catch (exception) {
-                console.error("WebRTCommClient:onPrivateClientConnectorClosedEvent(): catched exception in event listener:" + exception);
-            }
-        }, 1);
-    }
-    else if (!wasOpenedFlag && (this.eventListener.onWebRTCommClientOpenErrorEvent !== undefined))
-    {
-        var that = this;
-        setTimeout(function() {
-            try {
-                that.eventListener.onWebRTCommClientOpenErrorEvent("Connection to WebRTCommServer has failed");
-            }
-            catch (exception) {
-                console.error("WebRTCommClient:onWebRTCommClientOpenErrorEvent(): catched exception in event listener:" + exception);
-            }
-        }, 1);
-    }
+	if (wasOpenedFlag && (this.eventListener.onWebRTCommClientClosedEvent !== undefined)) {
+		var that = this;
+		setTimeout(function() {
+			try {
+				that.eventListener.onWebRTCommClientClosedEvent();
+			} catch (exception) {
+				console.error("WebRTCommClient:onPrivateClientConnectorClosedEvent(): catched exception in event listener:" + exception);
+			}
+		}, 1);
+	} else if (!wasOpenedFlag && (this.eventListener.onWebRTCommClientOpenErrorEvent !== undefined)) {
+		var that = this;
+		setTimeout(function() {
+			try {
+				that.eventListener.onWebRTCommClientOpenErrorEvent("Connection to WebRTCommServer has failed");
+			} catch (exception) {
+				console.error("WebRTCommClient:onWebRTCommClientOpenErrorEvent(): catched exception in event listener:" + exception);
+			}
+		}, 1);
+	}
 };

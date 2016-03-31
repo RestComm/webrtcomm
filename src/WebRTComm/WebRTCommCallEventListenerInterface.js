@@ -5,8 +5,7 @@
  * @constructor
  * @public
  */
-WebRTCommCallEventListenerInterface = function() {
-};
+WebRTCommCallEventListenerInterface = function() {};
 
 /**
  * Open event
@@ -14,7 +13,7 @@ WebRTCommCallEventListenerInterface = function() {
  * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
  */
 WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallOpenedEvent = function(webRTCommCall) {
-    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallOpenedEvent(): not implemented;";
+	throw "WebRTCommCallEventListenerInterface:onWebRTCommCallOpenedEvent(): not implemented;";
 };
 
 
@@ -24,7 +23,7 @@ WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallOpenedEvent = funct
  * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
  */
 WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallInProgressEvent = function(webRTCommCall) {
-    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallInProgressEvent(): not implemented;";
+	throw "WebRTCommCallEventListenerInterface:onWebRTCommCallInProgressEvent(): not implemented;";
 };
 
 /**
@@ -34,7 +33,7 @@ WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallInProgressEvent = f
  * @param {String} error error message
  */
 WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallOpenErrorEvent = function(webRTCommCall, error) {
-    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallOpenErrorEvent(): not implemented;";
+	throw "WebRTCommCallEventListenerInterface:onWebRTCommCallOpenErrorEvent(): not implemented;";
 };
 
 /**
@@ -44,7 +43,7 @@ WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallOpenErrorEvent = fu
  * @param {String} error error message
  */
 WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallErrorEvent = function(webRTCommCall, error) {
-    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallErrorEvent(): not implemented;";
+	throw "WebRTCommCallEventListenerInterface:onWebRTCommCallErrorEvent(): not implemented;";
 };
 
 /**
@@ -53,7 +52,7 @@ WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallErrorEvent = functi
  * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
  */
 WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallRingingEvent = function(webRTCommCall) {
-    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallRingingEvent(): not implemented;";
+	throw "WebRTCommCallEventListenerInterface:onWebRTCommCallRingingEvent(): not implemented;";
 };
 
 /**
@@ -62,7 +61,7 @@ WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallRingingEvent = func
  * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
  */
 WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallRingingBackEvent = function(webRTCommCall) {
-    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallRingingBackEvent(): not implemented;";
+	throw "WebRTCommCallEventListenerInterface:onWebRTCommCallRingingBackEvent(): not implemented;";
 };
 
 /**
@@ -71,7 +70,7 @@ WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallRingingBackEvent = 
  * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
  */
 WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallHangupEvent = function(webRTCommCall) {
-    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallHangupEvent(): not implemented;";
+	throw "WebRTCommCallEventListenerInterface:onWebRTCommCallHangupEvent(): not implemented;";
 };
 
 /**
@@ -80,5 +79,5 @@ WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallHangupEvent = funct
  * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
  */
 WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallCanceledEvent = function(webRTCommCall) {
-    throw "WebRTCommCallEventListenerInterface:onWebRTCommCallCanceledEvent(): not implemented;";
+	throw "WebRTCommCallEventListenerInterface:onWebRTCommCallCanceledEvent(): not implemented;";
 };
