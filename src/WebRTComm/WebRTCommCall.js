@@ -319,6 +319,174 @@ WebRTCommCall.prototype.open = function(calleePhoneNumber, configuration) {
     }
 };
 
+/*
+WebRTCommCall.prototype.gotStats = function(response) {
+	if (window.webkitRTCPeerConnection) 
+	{
+		// Chrome
+		if (0) {
+			// chrome-only
+			reports = response.result();
+			for (var i = 0; i < reports.length; i++) {
+				data = reports[i];
+				console.debug("PeerConnection.getStats(): -- report.id: " + data.id + ", report.type: " + data.type);
+				names = data.names();
+				for (var j = 0; j < names.length; j++) {
+					console.debug("PeerConnection.getStats(): name: " + names[j] + ", value: " + data.stat(names[j]));
+				}
+			}
+		}
+
+		for (var i in response.result()) {
+			var report = response.result()[i];
+			if (report.id === 'bweforvideo') {
+				//this.bweStats.add(Date.parse(report.timestamp), parseInt(report.stat('googAvailableSendBandwidth')));
+			} else if (report.type === 'ssrc') {
+				//this.rttStats.add(Date.parse(report.timestamp), parseInt(report.stat('googRtt')));
+				// Grab the last stats.
+				//this.videoStats[0] = report.stat('googFrameWidthSent');
+				//this.videoStats[1] = report.stat('googFrameHeightSent');
+				//this.packetsLost = report.stat('packetsLost');
+				console.debug("PeerConnection.getStats(): name: packetsLost, value: " + report.stat('packetsLost'));
+			}
+		}
+	}
+	else if (window.mozRTCPeerConnection)
+	{
+		console.debug("PeerConnection.getStats Firefox()");
+		console.debug("PeerConnection.getStats Firefox()" + JSON.stringify(response));
+		// Firefox
+		for (var j in response) {
+			var stats = response[j];
+			console.debug('PeerConnection.getStats(): id: ' + stats.id + ', value: ' + stats.type);
+			if (stats.id === 'outbound_rtcp_video_0') {
+				//this.rttStats.add(Date.parse(stats.timestamp), parseInt(stats.mozRtt));
+				// Grab the last stats.
+				//this.jitter = stats.jitter;
+				//this.packetsLost = stats.packetsLost;
+				console.debug("PeerConnection.getStats(): name: jitter, value: " + stats.jitter);
+				console.debug("PeerConnection.getStats(): name: packetLost, value: " + stats.packetsLost);
+			} else if (stats.id === 'outbound_rtp_video_0') {
+				// TODO: Get dimensions from getStats when supported in FF.
+				//this.videoStats[0] = 'Not supported on Firefox';
+				//this.videoStats[1] = 'Not supported on Firefox';
+				//this.bitrateMean = stats.bitrateMean;
+				//this.bitrateStdDev = stats.bitrateStdDev;
+				//this.framerateMean = stats.framerateMean;
+			}
+		}
+	}
+	else {
+		console.error('Only Firefox and Chrome getStats implementations are supported.');
+	}
+}
+*/
+
+	 //this.peerConnection.getStats(null)
+	 //this.peerConnection.getStats(this.peerConnection.getRemoteStreams()[0].getAudioTracks()[0])
+	 /*
+	 this.peerConnection.getStats(this.gotStats)
+		 .then(this.gotStats.bind(this))
+		 .catch(function(error) {
+				 console.error('Failed to getStats: ' + error);
+				 }.bind(this));
+	  */
+		 //this.peerConnection.getStats(null).then(function (response) {
+			/*
+			// chrome handling
+			for (var i in response.result()) {
+			  var report = response.result()[i];
+			  if (report.id === 'bweforvideo') {
+				 //this.bweStats.add(Date.parse(report.timestamp), parseInt(report.stat('googAvailableSendBandwidth')));
+			  } else if (report.type === 'ssrc') {
+				 //this.rttStats.add(Date.parse(report.timestamp), parseInt(report.stat('googRtt')));
+				 // Grab the last stats.
+				 //this.videoStats[0] = report.stat('googFrameWidthSent');
+				 //this.videoStats[1] = report.stat('googFrameHeightSent');
+				 //this.packetsLost = report.stat('packetsLost');
+				 console.debug("PeerConnection.getStats(): name: packetsLost, value: " + report.stat('packetsLost'));
+			  }
+			}
+			*/
+
+WebRTCommCall.prototype.gotStats = function(response) {
+	console.debug("PeerConnection.getStats Firefox()");
+	console.debug("PeerConnection.getStats Firefox()" + JSON.stringify(response));
+	// Firefox
+	for (var j in response) {
+		var stats = response[j];
+		console.debug('PeerConnection.getStats(): id: ' + stats.id + ', value: ' + stats.type);
+		if (stats.id === 'outbound_rtcp_video_0') {
+			//this.rttStats.add(Date.parse(stats.timestamp), parseInt(stats.mozRtt));
+			// Grab the last stats.
+			//this.jitter = stats.jitter;
+			//this.packetsLost = stats.packetsLost;
+			console.debug("PeerConnection.getStats(): name: jitter, value: " + stats.jitter);
+			console.debug("PeerConnection.getStats(): name: packetLost, value: " + stats.packetsLost);
+		} else if (stats.id === 'outbound_rtp_video_0') {
+			// TODO: Get dimensions from getStats when supported in FF.
+			//this.videoStats[0] = 'Not supported on Firefox';
+			//this.videoStats[1] = 'Not supported on Firefox';
+			//this.bitrateMean = stats.bitrateMean;
+			//this.bitrateStdDev = stats.bitrateStdDev;
+			//this.framerateMean = stats.framerateMean;
+		}
+	}
+}
+
+// make it work on chrome and firefox
+WebRTCommCall.prototype.setupStats = function() {
+    var origGetStats = this.peerConnection.getStats.bind(this.peerConnection);
+    this.peerConnection.getStats = function(selector, successCallback, errorCallback) { // jshint ignore: line
+      var self = this;
+      var args = arguments;
+
+      // If selector is a function then we are in the old style stats so just
+      // pass back the original getStats format to avoid breaking old users.
+      if (arguments.length > 0 && typeof selector === 'function') {
+        return origGetStats(selector, successCallback);
+      }
+
+      var fixChromeStats = function(response) {
+        var standardReport = {};
+        var reports = response.result();
+        reports.forEach(function(report) {
+          var standardStats = {
+            id: report.id,
+            timestamp: report.timestamp,
+            type: report.type
+          };
+          report.names().forEach(function(name) {
+            standardStats[name] = report.stat(name);
+          });
+          standardReport[standardStats.id] = standardStats;
+        });
+
+        return standardReport;
+      };
+
+      if (arguments.length >= 2) {
+        var successCallbackWrapper = function(response) {
+          args[1](fixChromeStats(response));
+        };
+
+        return origGetStats.apply(this, [successCallbackWrapper, arguments[0]]);
+      }
+
+      // promise-support
+      return new Promise(function(resolve, reject) {
+        if (args.length === 1 && selector === null) {
+          origGetStats.apply(self, [
+              function(response) {
+                resolve.apply(null, [fixChromeStats(response)]);
+              }, reject]);
+        } else {
+          origGetStats.apply(self, [resolve, reject]);
+        }
+      });
+    };
+}
+
 
 /**
  * Close WebRTC communication, asynchronous action, closed event are notified to the WebRTCommClient eventListener
@@ -327,6 +495,103 @@ WebRTCommCall.prototype.open = function(calleePhoneNumber, configuration) {
  */
 WebRTCommCall.prototype.close = function() {
     console.debug("WebRTCommCall:close()");
+	 this.setupStats();
+
+    this.peerConnection.getStats(null, function(results) {
+		console.debug("WebRTCommCall:getStats() 1");
+      Object.keys(results).forEach(function(result) {
+        var report = results[result];
+			
+		  console.debug("PeerConnection.getStats() 2" + JSON.stringify(report));
+		  /*
+        var now = report.timestamp;
+    
+        var bitrate;
+        if (report.type === 'inboundrtp' && report.mediaType === 'video') {
+          // firefox calculates the bitrate for us
+          // https://bugzilla.mozilla.org/show_bug.cgi?id=951496
+          bitrate = Math.floor(report.bitrateMean / 1024);
+        } else if (report.type === 'ssrc' && report.bytesReceived &&
+             report.googFrameHeightReceived) {
+          // chrome does not so we need to do it ourselves
+          var bytes = report.bytesReceived;
+          if (timestampPrev) {
+            bitrate = 8 * (bytes - bytesPrev) / (now - timestampPrev);
+            bitrate = Math.floor(bitrate);
+          }
+          bytesPrev = bytes;
+          timestampPrev = now;
+        }
+        if (bitrate) {
+          bitrate += ' kbits/sec';
+          bitrateDiv.innerHTML = '<strong>Bitrate:</strong> ' + bitrate;
+        }
+		  */
+      });
+
+    }, function(err) {
+      console.log(err);
+    });
+
+	/*
+	if (window.webkitRTCPeerConnection) 
+	{
+		console.debug("PeerConnection.getStats Chrome()");
+		this.peerConnection.getStats(function(response) {
+			// Chrome
+			reports = response.result();
+			for (var i = 0; i < reports.length; i++) {
+				data = reports[i];
+				console.debug("PeerConnection.getStats(): -- report.id: " + data.id + ", report.type: " + data.type);
+				names = data.names();
+				for (var j = 0; j < names.length; j++) {
+					console.debug("PeerConnection.getStats(): name: " + names[j] + ", value: " + data.stat(names[j]));
+				}
+			}
+		}, function(error) {
+			console.error('Failed to getStats(): ' + error);
+		});
+	}
+	else if (window.mozRTCPeerConnection)
+	{
+		console.debug("PeerConnection.getStats Firefox()");
+		// Firefox
+		//this.peerConnection.getStats(null, function(response) {
+
+		//this.peerConnection.getStats(null).then(this.gotStats.bind(this)).catch(function(error) {
+		//		this.test.reportError('Failed to getStats: ' + error);
+		//}.bind(this));
+
+		this.peerConnection.getStats(null).then(function(response) {
+			console.debug("PeerConnection.getStats() Firefox 2: " + JSON.stringify(response));
+			for (var j in response) {
+				var stats = response[j];
+				console.debug('PeerConnection.getStats(): id: ' + stats.id + ', value: ' + stats.type);
+				if (stats.id === 'outbound_rtcp_video_0') {
+					//this.rttStats.add(Date.parse(stats.timestamp), parseInt(stats.mozRtt));
+					// Grab the last stats.
+					//this.jitter = stats.jitter;
+					//this.packetsLost = stats.packetsLost;
+					console.debug("PeerConnection.getStats(): name: jitter, value: " + stats.jitter);
+					console.debug("PeerConnection.getStats(): name: packetLost, value: " + stats.packetsLost);
+				} else if (stats.id === 'outbound_rtp_video_0') {
+					// TODO: Get dimensions from getStats when supported in FF.
+					//this.videoStats[0] = 'Not supported on Firefox';
+					//this.videoStats[1] = 'Not supported on Firefox';
+					//this.bitrateMean = stats.bitrateMean;
+					//this.bitrateStdDev = stats.bitrateStdDev;
+					//this.framerateMean = stats.framerateMean;
+				}
+			}
+		}, function(error) {
+			console.error('Failed to getStats(): ' + error);
+		});
+	}
+	else {
+		console.error('Only Firefox and Chrome getStats implementations are supported.');
+	}
+	*/
+
     if (this.webRTCommClient.isOpened())
     {
         try
