@@ -287,12 +287,103 @@ WebRTCommCall.prototype.open = function(calleePhoneNumber, configuration) {
 };
 
 
+// Dumping a stats variable as a string.
+// might be named toString?
+function dumpStats(results) {
+  var statsString = '';
+  Object.keys(results).forEach(function(key, index) {
+    var res = results[key];
+    statsString += '<h3>Report ';
+    statsString += index;
+    statsString += '</h3>\n';
+    statsString += 'time ' + res.timestamp + '<br>\n';
+    statsString += 'type ' + res.type + '<br>\n';
+    Object.keys(res).forEach(function(k) {
+      if (k !== 'timestamp' && k !== 'type') {
+        statsString += k + ': ' + res[k] + '<br>\n';
+      }
+    });
+  });
+  return statsString;
+}
+
+/**
+ * Return PeerConnection stats
+ * @public 
+ * @throw {String} Exception "bad state, unauthorized action"
+ */
+WebRTCommCall.prototype.getStats = function() {
+	this.peerConnection.getStats(null, function(results) {
+		var statsString = dumpStats(results);
+		console.debug("WebRTCommCall:getStats(): " + statsString);
+		/*
+		//receiverStatsDiv.innerHTML = '<h2>Receiver stats</h2>' + statsString;
+		// calculate video bitrate
+		Object.keys(results).forEach(function(result) {
+			var report = results[result];
+			var now = report.timestamp;
+
+			var bitrate;
+			if (report.type === 'inboundrtp' && report.mediaType === 'video') {
+				// firefox calculates the bitrate for us
+				// https://bugzilla.mozilla.org/show_bug.cgi?id=951496
+				bitrate = Math.floor(report.bitrateMean / 1024);
+			} else if (report.type === 'ssrc' && report.bytesReceived &&
+				report.googFrameHeightReceived) {
+				// chrome does not so we need to do it ourselves
+				var bytes = report.bytesReceived;
+				if (timestampPrev) {
+					bitrate = 8 * (bytes - bytesPrev) / (now - timestampPrev);
+					bitrate = Math.floor(bitrate);
+
+				}
+				bytesPrev = bytes;
+				timestampPrev = now;
+			}
+			if (bitrate) {
+				bitrate += ' kbits/sec';
+				//bitrateDiv.innerHTML = '<strong>Bitrate:</strong> ' + bitrate;
+			}
+		});
+
+		// figure out the peer's ip
+		var activeCandidatePair = null;
+		var remoteCandidate = null;
+
+		// search for the candidate pair
+		Object.keys(results).forEach(function(result) {
+			var report = results[result];
+			if (report.type === 'candidatepair' && report.selected ||
+				report.type === 'googCandidatePair' &&
+				report.googActiveConnection === 'true') {
+				activeCandidatePair = report;
+			}
+		});
+		if (activeCandidatePair && activeCandidatePair.remoteCandidateId) {
+			Object.keys(results).forEach(function(result) {
+				var report = results[result];
+				if (report.type === 'remotecandidate' &&
+					report.id === activeCandidatePair.remoteCandidateId) {
+					remoteCandidate = report;
+				}
+			});
+		}
+		if (remoteCandidate && remoteCandidate.ipAddress && remoteCandidate.portNumber) {
+			//peerDiv.innerHTML = '<strong>Connected to:</strong> ' + remoteCandidate.ipAddress + ':' + remoteCandidate.portNumber;
+		}
+		*/
+	}, function(err) {
+		console.log(err);
+	});
+}
+
 /**
  * Close WebRTC communication, asynchronous action, closed event are notified to the WebRTCommClient eventListener
  * @public 
  * @throw {String} Exception "bad state, unauthorized action"
  */
 WebRTCommCall.prototype.close = function() {
+	this.getStats();
 	console.debug("WebRTCommCall:close()");
 	if (this.webRTCommClient.isOpened()) {
 		try {
@@ -354,17 +445,19 @@ WebRTCommCall.prototype.accept = function(configuration) {
 							this.peerConnection.addStream(this.configuration.localMediaStream);
 						}
 						var sdpOffer = undefined;
-						if (window.webkitRTCPeerConnection) {
-							sdpOffer = new RTCSessionDescription({
-								type: 'offer',
-								sdp: this.remoteSdpOffer
-							});
+						//if (window.webkitRTCPeerConnection) {
+						sdpOffer = new RTCSessionDescription({
+							type: 'offer',
+							sdp: this.remoteSdpOffer
+						});
+						/*
 						} else if (window.mozRTCPeerConnection) {
 							sdpOffer = new mozRTCSessionDescription({
 								type: 'offer',
 								sdp: this.remoteSdpOffer
 							});
 						}
+						*/
 						var that = this;
 						this.peerConnectionState = 'offer-received';
 						this.peerConnection.setRemoteDescription(sdpOffer, function() {
@@ -864,6 +957,7 @@ WebRTCommCall.prototype.createRTCPeerConnection = function() {
 	console.debug("WebRTCommCall:createPeerConnection():rtcPeerConnectionConfiguration=" + JSON.stringify(rtcPeerConnectionConfiguration));
 	console.debug("WebRTCommCall:createPeerConnection():peerConnectionConstraints=" + JSON.stringify(peerConnectionConstraints));
 
+	// TODO: check if these are still needed (i.e. now that we are using adapter.js)
 	if (window.webkitRTCPeerConnection) {
 		// Google implementation
 		var iceTransports = "all";
@@ -885,10 +979,10 @@ WebRTCommCall.prototype.createRTCPeerConnection = function() {
 				//  }]
 		};
 
-		this.peerConnection = new window.webkitRTCPeerConnection(rtcPeerConnectionConfiguration, peerConnectionConstraints);
+		this.peerConnection = new RTCPeerConnection(rtcPeerConnectionConfiguration, peerConnectionConstraints);
 	} else if (window.mozRTCPeerConnection) {
 		// Mozilla implementation
-		this.peerConnection = new window.mozRTCPeerConnection(rtcPeerConnectionConfiguration, peerConnectionConstraints);
+		this.peerConnection = new RTCPeerConnection(rtcPeerConnectionConfiguration, peerConnectionConstraints);
 	}
 
 	this.peerConnection.onaddstream = function(event) {
@@ -973,17 +1067,19 @@ WebRTCommCall.prototype.onPrivateCallConnectorRemoteSdpAnswerEvent = function(re
 	console.debug("WebRTCommCall:onPrivateCallConnectorRemoteSdpAnswerEvent()");
 	try {
 		var sdpAnswer = undefined;
-		if (window.webkitRTCPeerConnection) {
-			sdpAnswer = new RTCSessionDescription({
-				type: 'answer',
-				sdp: remoteSdpAnswer
-			});
+		//if (window.webkitRTCPeerConnection) {
+		sdpAnswer = new RTCSessionDescription({
+			type: 'answer',
+			sdp: remoteSdpAnswer
+		});
+		/*
 		} else if (window.mozRTCPeerConnection) {
 			sdpAnswer = new mozRTCSessionDescription({
 				type: 'answer',
 				sdp: remoteSdpAnswer
 			});
 		}
+		*/
 
 		var that = this;
 		this.peerConnectionState = 'answer-received';
