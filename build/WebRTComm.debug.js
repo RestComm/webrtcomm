@@ -1869,6 +1869,9 @@ WebRTCommCall = function(webRTCommClient) {
 		this.dtmfSender = undefined;
 		// Set default listener to client listener
 		this.eventListener = webRTCommClient.eventListener;
+		this.statsAlreadyRequested = false;
+		// webrtc media stats (i.e. coming from PeerConnection.getStats())
+		this.stats = undefined;
 	} else {
 		throw "WebRTCommCall:WebRTCommCall(): bad arguments"
 	}
@@ -2032,6 +2035,8 @@ WebRTCommCall.prototype.open = function(calleePhoneNumber, configuration) {
 
 						// Setup RTCPeerConnection first
 						this.createRTCPeerConnection();
+						////////////
+						//this.get_stats();
 						if (configuration.audioMediaFlag || configuration.videoMediaFlag) {
 							this.peerConnection.addStream(this.configuration.localMediaStream);
 						}
@@ -2104,7 +2109,7 @@ WebRTCommCall.prototype.open = function(calleePhoneNumber, configuration) {
 						// Close properly the communication
 						try {
 
-							this.close();
+							this.close(false);
 						} catch (e) {}
 						throw exception;
 					}
@@ -2128,12 +2133,36 @@ WebRTCommCall.prototype.open = function(calleePhoneNumber, configuration) {
 
 
 /**
+ * Return PeerConnection stats
+ * @public 
+ * @throw {String} Exception "bad state, unauthorized action"
+ */
+/*
+WebRTCommCall.prototype.get_stats = function() {
+	var that = this;
+	//setInterval(function() {
+		if (that.peerConnection != null) {
+			that.peerConnection.getStats(null, function(results) {
+				var statsString = dumpStats(results);
+				console.debug("WebRTCommCall:getStats(): " + statsString);
+			}, function(err) {
+				console.log(err);
+			});
+		}
+		else {
+			console.debug("WebRTCommCall:getStats(): peerConnection is null");
+		}
+	//}, 1000);
+}
+*/
+
+/**
  * Close WebRTC communication, asynchronous action, closed event are notified to the WebRTCommClient eventListener
  * @public 
  * @throw {String} Exception "bad state, unauthorized action"
  */
-WebRTCommCall.prototype.close = function() {
-	console.debug("WebRTCommCall:close()");
+WebRTCommCall.prototype.hangup = function() {
+	console.debug("WebRTCommCall:hangup()");
 	if (this.webRTCommClient.isOpened()) {
 		try {
 			// Close private Call Connector
@@ -2152,6 +2181,12 @@ WebRTCommCall.prototype.close = function() {
 				var that = this;
 				setTimeout(function() {
 					that.eventListener.onWebRTCommCallClosedEvent(that);
+					// notify the webrtcomm listener of the stats
+					/*
+					if (this.eventListener.onWebRTCommCallStatsEvent) {
+						that.eventListener.onWebRTCommCallStatsEvent(that, statsString);
+					}
+					*/
 				}, 1);
 			}
 		} catch (exception) {
@@ -2160,6 +2195,136 @@ WebRTCommCall.prototype.close = function() {
 	} else {
 		console.error("WebRTCommCall:close(): bad state, unauthorized action");
 		throw "WebRTCommCall:close(): bad state, unauthorized action";
+	}
+}
+
+// Dumping a stats variable as a string.
+// might be named toString?
+/*
+function dumpStats(results) {
+	var statsString = '';
+	Object.keys(results).forEach(function(key, index) {
+		var res = results[key];
+		statsString += 'Report ';
+		statsString += index;
+		statsString += ': time ' + res.timestamp;
+		statsString += ', type ' + res.type + '<br>\n';
+		Object.keys(res).forEach(function(k) {
+			if (k !== 'timestamp' && k !== 'type') {
+				statsString += k + ': ' + res[k] + '<br>\n';
+			}
+		});
+		statsString += '<br>\n';
+	});
+	return statsString;
+}
+*/
+
+/**
+ * Take as input getStats() outcome and convert to specific metrics that we are mostly interested. Also in the process normalize mozilla & chrome format
+ * @public 
+ * @param {shouldGetStats} should we collect webrtc media stats? Boolean, default true
+ * @throw {String} Exception "bad state, unauthorized action"
+ */
+WebRTCommCall.prototype.normalizeStats = function(stats) {
+	// mediaType: audio/video (ff only)
+	// direction: inbound/outbound
+	// bitrate: 250 kbit/sec (ff only)
+	// packetsLost: 10 
+	// bytesTransfered: 11000 (received or sent depending on ssrc)
+	// packetsTransfered: 100 (received or sent depending on ssrc)
+	// jitter: 0
+	// ssrc: 2501954246
+	
+	// array of objects
+	var normalizedStats = [];
+	// calculate video bitrate
+	Object.keys(stats).forEach(function(result) {
+		var report = stats[result];
+		//var now = report.timestamp;
+
+		// object to represent stats for a single media type (i.e. audio/video) and a single direction (i.e. inbound/outbound)
+		normalizedStat = {};
+		if (/boundrtp$/.test(report.type)) {  
+			// firefox
+			if (report.type === 'inboundrtp') {
+				normalizedStat['direction'] = 'inbound';
+				normalizedStat['bytes-transfered'] = report.bytesReceived;
+				normalizedStat['packets-transfered'] = report.packetsReceived;
+			}
+			if (report.type === 'outboundrtp') {
+				normalizedStat['direction'] = 'outbound';
+				normalizedStat['bytes-transfered'] = report.bytesSent;
+				normalizedStat['packets-transfered'] = report.packetsSent;
+			}
+			normalizedStat['media-type'] = report.mediaType;
+			if (report.bitrateMean) {
+				normalizedStat['bitrate'] = Math.floor(report.bitrateMean / 1024);
+			}
+			normalizedStat['packets-lost'] = report.packetsLost;
+			normalizedStat['jitter'] = report.jitter;
+			normalizedStat['ssrc'] = report.ssrc;
+
+			normalizedStats.push(normalizedStat);
+		}
+		else if (report.type === 'ssrc') {
+			// chrome
+			if (/_recv$/.test(report.id)) {
+				normalizedStat['direction'] = 'inbound';
+				normalizedStat['bytes-transfered'] = report.bytesReceived;
+				normalizedStat['packets-transfered'] = report.packetsReceived;
+			}
+			if (/_send$/.test(report.id)) {
+				normalizedStat['direction'] = 'outbound';
+				normalizedStat['bytes-transfered'] = report.bytesSent;
+				normalizedStat['packets-transfered'] = report.packetsSent;
+			}
+			normalizedStat['codec-name'] = report.googCodecName;
+			//normalizedStat['bitrate'] = Math.floor(report.bitrateMean / 1024);
+			normalizedStat['packets-lost'] = report.packetsLost;
+			//normalizedStat['jitter'] = report.jitter;
+			normalizedStat['ssrc'] = report.ssrc;
+
+			normalizedStats.push(normalizedStat);
+		}
+	});
+
+	return normalizedStats;
+}
+
+/**
+ * Close WebRTC communication, asynchronous action, closed event are notified to the WebRTCommClient eventListener. Notice that the actual close happens in this.hangup(), reason for separating those is that we need to close after we have received the webrtc stats (that is if they have been requested), cause otherwise getStats() might fail
+ * @public 
+ * @param {shouldGetStats} should we collect webrtc media stats? Boolean, default true
+ * @throw {String} Exception "bad state, unauthorized action"
+ */
+WebRTCommCall.prototype.close = function(shouldGetStats) {
+	// user requested to hangup the call, let's gather media stats before doing so if  user asked for it
+	if (typeof shouldGetStats === 'undefined') {
+		shouldGetStats = true;
+	}
+	//shouldGetStats = false; 
+
+	if (shouldGetStats === true) {
+		if (this.peerConnection != null && this.statsAlreadyRequested === false) {
+			var that = this;
+			this.statsAlreadyRequested = true;
+			this.peerConnection.getStats(null, function(results) {
+				console.debug("WebRTCommCall:close(), received media stats");
+				// do actual hangup now that we got the stats
+				that.hangup();
+
+				// TODO: normalize the stats
+				//var statsString = dumpStats(results);
+				that.stats = that.normalizeStats(results);
+				//console.debug("WebRTCommCall:getStats(): " + statsString);
+			}, function(err) {
+				console.log(err);
+			});
+		}
+	} else {
+		console.debug("WebRTCommCall:close(), with no media stats");
+		this.hangup();
 	}
 };
 
@@ -2194,17 +2359,19 @@ WebRTCommCall.prototype.accept = function(configuration) {
 							this.peerConnection.addStream(this.configuration.localMediaStream);
 						}
 						var sdpOffer = undefined;
-						if (window.webkitRTCPeerConnection) {
-							sdpOffer = new RTCSessionDescription({
-								type: 'offer',
-								sdp: this.remoteSdpOffer
-							});
+						//if (window.webkitRTCPeerConnection) {
+						sdpOffer = new RTCSessionDescription({
+							type: 'offer',
+							sdp: this.remoteSdpOffer
+						});
+						/*
 						} else if (window.mozRTCPeerConnection) {
 							sdpOffer = new mozRTCSessionDescription({
 								type: 'offer',
 								sdp: this.remoteSdpOffer
 							});
 						}
+						*/
 						var that = this;
 						this.peerConnectionState = 'offer-received';
 						this.peerConnection.setRemoteDescription(sdpOffer, function() {
@@ -2216,7 +2383,7 @@ WebRTCommCall.prototype.accept = function(configuration) {
 						console.error("WebRTCommCall:accept(): catched exception:" + exception);
 						// Close properly the communication
 						try {
-							this.close();
+							this.close(false);
 						} catch (e) {}
 						throw exception;
 					}
@@ -2260,7 +2427,7 @@ WebRTCommCall.prototype.reject = function() {
 			console.error("WebRTCommCall:reject(): catched exception:" + exception);
 			// Close properly the communication
 			try {
-				this.close();
+				this.close(false);
 			} catch (e) {}
 			throw exception;
 		}
@@ -2291,7 +2458,7 @@ WebRTCommCall.prototype.ignore = function() {
 			console.error("WebRTCommCall:ignore(): catched exception:" + exception);
 			// Close properly the communication
 			try {
-				this.close();
+				this.close(false);
 			} catch (e) {}
 			throw exception;
 		}
@@ -2704,6 +2871,7 @@ WebRTCommCall.prototype.createRTCPeerConnection = function() {
 	console.debug("WebRTCommCall:createPeerConnection():rtcPeerConnectionConfiguration=" + JSON.stringify(rtcPeerConnectionConfiguration));
 	console.debug("WebRTCommCall:createPeerConnection():peerConnectionConstraints=" + JSON.stringify(peerConnectionConstraints));
 
+	// TODO: check if these are still needed (i.e. now that we are using adapter.js)
 	if (window.webkitRTCPeerConnection) {
 		// Google implementation
 		var iceTransports = "all";
@@ -2725,10 +2893,10 @@ WebRTCommCall.prototype.createRTCPeerConnection = function() {
 				//  }]
 		};
 
-		this.peerConnection = new window.webkitRTCPeerConnection(rtcPeerConnectionConfiguration, peerConnectionConstraints);
+		this.peerConnection = new RTCPeerConnection(rtcPeerConnectionConfiguration, peerConnectionConstraints);
 	} else if (window.mozRTCPeerConnection) {
 		// Mozilla implementation
-		this.peerConnection = new window.mozRTCPeerConnection(rtcPeerConnectionConfiguration, peerConnectionConstraints);
+		this.peerConnection = new RTCPeerConnection(rtcPeerConnectionConfiguration, peerConnectionConstraints);
 	}
 
 	this.peerConnection.onaddstream = function(event) {
@@ -2813,17 +2981,19 @@ WebRTCommCall.prototype.onPrivateCallConnectorRemoteSdpAnswerEvent = function(re
 	console.debug("WebRTCommCall:onPrivateCallConnectorRemoteSdpAnswerEvent()");
 	try {
 		var sdpAnswer = undefined;
-		if (window.webkitRTCPeerConnection) {
-			sdpAnswer = new RTCSessionDescription({
-				type: 'answer',
-				sdp: remoteSdpAnswer
-			});
+		//if (window.webkitRTCPeerConnection) {
+		sdpAnswer = new RTCSessionDescription({
+			type: 'answer',
+			sdp: remoteSdpAnswer
+		});
+		/*
 		} else if (window.mozRTCPeerConnection) {
 			sdpAnswer = new mozRTCSessionDescription({
 				type: 'answer',
 				sdp: remoteSdpAnswer
 			});
 		}
+		*/
 
 		var that = this;
 		this.peerConnectionState = 'answer-received';
@@ -2949,7 +3119,7 @@ WebRTCommCall.prototype.onPrivateCallConnectorCallClosedEvent = function() {
 	this.connector = undefined;
 	// Force communication close 
 	try {
-		this.close();
+		this.close(true);
 	} catch (exception) {}
 };
 
@@ -3013,7 +3183,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionErrorEvent = function(error) {
 	}
 
 	try {
-		this.close();
+		this.close(true);
 	} catch (exception) {}
 };
 
@@ -3598,7 +3768,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionIceChangeEvent = function(event) {
 
 			// close the call since media has failed
 			try {
-				this.close();
+				this.close(true);
 			} catch (exception) {
 				console.error("WebRTCommCall:onRtcPeerConnectionErrorEvent(): catched exception in listener:" + exception);
 			}
@@ -4124,7 +4294,8 @@ WebRTCommCall.prototype.forceTurnMediaRelay = function(sessionDescription) {
 	} else {
 		throw "WebRTCommCall:forceTurnMediaRelay(): bad arguments"
 	}
-};/**
+};
+/**
  * @class WebRTCommMessage
  * @classdesc Implements WebRTComm message  
  * @constructor
@@ -4606,7 +4777,7 @@ WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallErrorEvent = functi
 };
 
 /**
- * Open error  event
+ * Ringing event
  * @public
  * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
  */
@@ -4615,7 +4786,7 @@ WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallRingingEvent = func
 };
 
 /**
- * Open error  event
+ * Ringback event
  * @public
  * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
  */
@@ -4624,12 +4795,22 @@ WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallRingingBackEvent = 
 };
 
 /**
- * Open error  event
+ * Hangup event
  * @public
  * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
  */
 WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallHangupEvent = function(webRTCommCall) {
 	throw "WebRTCommCallEventListenerInterface:onWebRTCommCallHangupEvent(): not implemented;";
+};
+
+/**
+ * Webrtc stats event
+ * @public
+ * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
+ * @param {stats} stats for the Webrtc call
+ */
+WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallStatsEvent = function(webRTCommCall, stats) {
+	throw "WebRTCommCallEventListenerInterface:onWebRTCommCallStatsEvent(): not implemented;";
 };
 
 /**

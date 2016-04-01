@@ -47,7 +47,7 @@ WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallErrorEvent = functi
 };
 
 /**
- * Open error  event
+ * Ringing event
  * @public
  * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
  */
@@ -56,7 +56,7 @@ WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallRingingEvent = func
 };
 
 /**
- * Open error  event
+ * Ringback event
  * @public
  * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
  */
@@ -65,12 +65,22 @@ WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallRingingBackEvent = 
 };
 
 /**
- * Open error  event
+ * Hangup event
  * @public
  * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
  */
 WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallHangupEvent = function(webRTCommCall) {
 	throw "WebRTCommCallEventListenerInterface:onWebRTCommCallHangupEvent(): not implemented;";
+};
+
+/**
+ * Webrtc stats event
+ * @public
+ * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
+ * @param {stats} stats for the Webrtc call
+ */
+WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallStatsEvent = function(webRTCommCall, stats) {
+	throw "WebRTCommCallEventListenerInterface:onWebRTCommCallStatsEvent(): not implemented;";
 };
 
 /**
