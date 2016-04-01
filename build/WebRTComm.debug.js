@@ -2225,17 +2225,21 @@ function dumpStats(results) {
  * @public 
  * @param {shouldGetStats} should we collect webrtc media stats? Boolean, default true
  * @throw {String} Exception "bad state, unauthorized action"
+ * @returns {Array of objects} Each object corresponds to a
+ * media-type/direction pair. So if we have audio & video call we would have an
+ * array of 4 objects: 1. audio/inbound, audio/outbound, video/inbound,
+ * video/outbound. Each object has the following keys:
+ *
+ * media-type: audio/video (ff only, until we figure it out for chrome)
+ * direction: inbound/outbound
+ * bitrate: bitrate in kbit/sec, like 250 kbit/sec (ff only)
+ * packetsLost: lost packet count
+ * bytesTransfered: bytes sent/received
+ * packetsTransfered: packets sent/received
+ * jitter: jitter for incoming packets
+ * ssrc: synchronization source for this stream, like 501954246
  */
 WebRTCommCall.prototype.normalizeStats = function(stats) {
-	// mediaType: audio/video (ff only)
-	// direction: inbound/outbound
-	// bitrate: 250 kbit/sec (ff only)
-	// packetsLost: 10 
-	// bytesTransfered: 11000 (received or sent depending on ssrc)
-	// packetsTransfered: 100 (received or sent depending on ssrc)
-	// jitter: 0
-	// ssrc: 2501954246
-	
 	// array of objects
 	var normalizedStats = [];
 	// calculate video bitrate
@@ -2280,10 +2284,10 @@ WebRTCommCall.prototype.normalizeStats = function(stats) {
 				normalizedStat['packets-transfered'] = report.packetsSent;
 			}
 			normalizedStat['codec-name'] = report.googCodecName;
-			//normalizedStat['bitrate'] = Math.floor(report.bitrateMean / 1024);
 			normalizedStat['packets-lost'] = report.packetsLost;
-			//normalizedStat['jitter'] = report.jitter;
+			normalizedStat['jitter'] = report.googJitterReceived;
 			normalizedStat['ssrc'] = report.ssrc;
+			// TODO: need to find a way to figure out the media-type for chrome
 
 			normalizedStats.push(normalizedStat);
 		}
@@ -2293,7 +2297,7 @@ WebRTCommCall.prototype.normalizeStats = function(stats) {
 }
 
 /**
- * Close WebRTC communication, asynchronous action, closed event are notified to the WebRTCommClient eventListener. Notice that the actual close happens in this.hangup(), reason for separating those is that we need to close after we have received the webrtc stats (that is if they have been requested), cause otherwise getStats() might fail
+ * Close WebRTC communication, asynchronous action, closed event are notified to the WebRTCommClient eventListener. Notice that the actual close happens in this.hangup(), reason for separating those is that we need to close after we have received the webrtc stats (that is if they have been requested), cause otherwise getStats() might fail, since PeerConnection might be freed first
  * @public 
  * @param {shouldGetStats} should we collect webrtc media stats? Boolean, default true
  * @throw {String} Exception "bad state, unauthorized action"
@@ -2303,7 +2307,6 @@ WebRTCommCall.prototype.close = function(shouldGetStats) {
 	if (typeof shouldGetStats === 'undefined') {
 		shouldGetStats = true;
 	}
-	//shouldGetStats = false; 
 
 	if (shouldGetStats === true) {
 		if (this.peerConnection != null && this.statsAlreadyRequested === false) {
@@ -2314,10 +2317,9 @@ WebRTCommCall.prototype.close = function(shouldGetStats) {
 				// do actual hangup now that we got the stats
 				that.hangup();
 
-				// TODO: normalize the stats
 				//var statsString = dumpStats(results);
+				// normalize the stats
 				that.stats = that.normalizeStats(results);
-				//console.debug("WebRTCommCall:getStats(): " + statsString);
 			}, function(err) {
 				console.log(err);
 			});
