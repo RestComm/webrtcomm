@@ -2133,30 +2133,6 @@ WebRTCommCall.prototype.open = function(calleePhoneNumber, configuration) {
 
 
 /**
- * Return PeerConnection stats
- * @public 
- * @throw {String} Exception "bad state, unauthorized action"
- */
-/*
-WebRTCommCall.prototype.get_stats = function() {
-	var that = this;
-	//setInterval(function() {
-		if (that.peerConnection != null) {
-			that.peerConnection.getStats(null, function(results) {
-				var statsString = dumpStats(results);
-				console.debug("WebRTCommCall:getStats(): " + statsString);
-			}, function(err) {
-				console.log(err);
-			});
-		}
-		else {
-			console.debug("WebRTCommCall:getStats(): peerConnection is null");
-		}
-	//}, 1000);
-}
-*/
-
-/**
  * Close WebRTC communication, asynchronous action, closed event are notified to the WebRTCommClient eventListener
  * @public 
  * @throw {String} Exception "bad state, unauthorized action"
@@ -2180,13 +2156,10 @@ WebRTCommCall.prototype.hangup = function() {
 				// Notify asynchronously the closed event
 				var that = this;
 				setTimeout(function() {
+					// stats are delivered as part of 'that'
 					that.eventListener.onWebRTCommCallClosedEvent(that);
-					// notify the webrtcomm listener of the stats
-					/*
-					if (this.eventListener.onWebRTCommCallStatsEvent) {
-						that.eventListener.onWebRTCommCallStatsEvent(that, statsString);
-					}
-					*/
+					// stats delivered, let's reset the flag
+					this.statsAlreadyRequested = false;
 				}, 1);
 			}
 		} catch (exception) {
@@ -2200,7 +2173,6 @@ WebRTCommCall.prototype.hangup = function() {
 
 // Dumping a stats variable as a string.
 // might be named toString?
-/*
 function dumpStats(results) {
 	var statsString = '';
 	Object.keys(results).forEach(function(key, index) {
@@ -2218,7 +2190,6 @@ function dumpStats(results) {
 	});
 	return statsString;
 }
-*/
 
 /**
  * Take as input getStats() outcome and convert to specific metrics that we are mostly interested. Also in the process normalize mozilla & chrome format
@@ -2240,6 +2211,9 @@ function dumpStats(results) {
  * ssrc: synchronization source for this stream, like 501954246
  */
 WebRTCommCall.prototype.normalizeStats = function(stats) {
+	//var statsString = dumpStats(stats);
+	//console.error('--------: ' + JSON.stringify(statsString));
+
 	// array of objects
 	var normalizedStats = [];
 	// calculate video bitrate
@@ -2277,17 +2251,36 @@ WebRTCommCall.prototype.normalizeStats = function(stats) {
 				normalizedStat['direction'] = 'inbound';
 				normalizedStat['bytes-transfered'] = report.bytesReceived;
 				normalizedStat['packets-transfered'] = report.packetsReceived;
+				if (report.audioOutputLevel) {
+					// only applies to audio, so let's use it as indication for media-type
+					normalizedStat['output-level'] = report.audioOutputLevel;
+					normalizedStat['media-type'] = 'audio';
+				}
+				if (report.googFrameHeightReceived) {
+					// only applies to video, so let's use it as indication for media-type
+					normalizedStat['media-type'] = 'video';
+				}
 			}
 			if (/_send$/.test(report.id)) {
 				normalizedStat['direction'] = 'outbound';
 				normalizedStat['bytes-transfered'] = report.bytesSent;
 				normalizedStat['packets-transfered'] = report.packetsSent;
+				if (report.audioInputLevel) {
+					// only applies to audio, so let's use it as indication for media-type
+					normalizedStat['input-level'] = report.audioInputLevel;
+					normalizedStat['media-type'] = 'audio';
+				}
+				if (report.googFrameHeightSent) {
+					// only applies to video, so let's use it as indication for media-type
+					normalizedStat['media-type'] = 'video';
+				}
 			}
 			normalizedStat['codec-name'] = report.googCodecName;
 			normalizedStat['packets-lost'] = report.packetsLost;
 			normalizedStat['jitter'] = report.googJitterReceived;
 			normalizedStat['ssrc'] = report.ssrc;
 			// TODO: need to find a way to figure out the media-type for chrome
+
 
 			normalizedStats.push(normalizedStat);
 		}
@@ -2317,7 +2310,6 @@ WebRTCommCall.prototype.close = function(shouldGetStats) {
 				// do actual hangup now that we got the stats
 				that.hangup();
 
-				//var statsString = dumpStats(results);
 				// normalize the stats
 				that.stats = that.normalizeStats(results);
 			}, function(err) {
@@ -2329,6 +2321,81 @@ WebRTCommCall.prototype.close = function(shouldGetStats) {
 		this.hangup();
 	}
 };
+
+/**
+ * Return PeerConnection stats on Demand
+ * @public 
+ * @throw {String} Exception "bad state, unauthorized action"
+ */
+WebRTCommCall.prototype.getStats = function() {
+	console.debug("WebRTCommCall:getStats()");
+	if (this.peerConnection != null && this.statsAlreadyRequested === false) {
+		var that = this;
+		this.statsAlreadyRequested = true;
+		this.peerConnection.getStats(null, function(results) {
+			that.statsAlreadyRequested = false;
+			console.debug("WebRTCommCall:getStats(), received media stats");
+
+			// normalize the stats
+			var stats = that.normalizeStats(results);
+
+			// notify the webrtcomm listener of the stats
+			if (that.eventListener.onWebRTCommCallStatsEvent) {
+				console.debug("WebRTCommCall:getStats(), notifying caller");
+				that.eventListener.onWebRTCommCallStatsEvent(that, stats);
+			}
+		}, function(err) {
+			console.log(err);
+		});
+	}
+}
+
+/**
+ * Return PeerConnection stats on Demand
+ * @public 
+ * @throw {String} Exception "bad state, unauthorized action"
+ */
+/*
+WebRTCommCall.prototype.getStats = function() {
+	if (this.peerConnection != null && this.statsAlreadyRequested === false) {
+		var that = this;
+		this.statsAlreadyRequested = true;
+		this.peerConnection.getStats(null, function(results) {
+			console.debug("WebRTCommCall:getStats(), received media stats");
+
+			// normalize the stats
+			that.stats = that.normalizeStats(results);
+
+			setTimeout(function() {
+				that.peerConnection.getStats(null, function(results) {
+					console.debug("WebRTCommCall:getStats(), received media stats after delay");
+
+					// normalize the stats
+					newStats = that.normalizeStats(results);
+
+					// calculate bitrate from old and new stats
+					bitrate = 8 * (bytes - bytesPrev) / (now - timestampPrev);
+					bitrate = Math.floor(bitrate);
+
+					// notify the webrtcomm listener of the stats
+					if (that.eventListener.onWebRTCommCallStatsEvent) {
+						console.debug("WebRTCommCall:getStats(), notifying caller");
+						that.eventListener.onWebRTCommCallStatsEvent(that, newStats);
+					}
+					that.statsAlreadyRequested = false;
+				}, function(err) {
+					console.log(err);
+					that.statsAlreadyRequested = false;
+				});
+
+				// notify the webrtcomm listener of the stats
+			}, 1000);
+		}, function(err) {
+			console.log(err);
+		});
+	}
+}
+*/
 
 /**
  * Accept incoming WebRTC communication
