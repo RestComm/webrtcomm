@@ -320,6 +320,38 @@ PrivateJainSipCallConnector.prototype.accept = function(sdpAnswer) {
 
 
 /**
+ * Send DTMF digit over SIP INFO
+ * @public 
+ * @param {String} dtmfDigit DTMF digit to send
+ */
+PrivateJainSipCallConnector.prototype.sendSipDtmf = function(dtmfDigit) {
+	console.debug("PrivateJainSipCallConnector:sendSipDtmf()");
+
+	var dialog = null;
+	if (this.sipCallState === this.SIP_INVITED_ACCEPTED_STATE) {
+		dialog = this.jainSipInvitedDialog;
+	}
+	if (this.sipCallState === this.SIP_INVITING_ACCEPTED_STATE) {
+		dialog = this.jainSipInvitingDialog;
+	}
+	if (dialog) {
+		try {
+			var request = dialog.createRequest("INFO");
+			request.setContent("Signal=" + dtmfDigit + "\r\nDuration=100\r\n",
+					this.clientConnector.jainSipHeaderFactory.createContentTypeHeader("application", "dtmf-relay"));
+			var clientTransaction = this.clientConnector.jainSipProvider.getNewClientTransaction(request);
+			dialog.sendRequest(clientTransaction);
+		} catch (exception) {
+			console.error("PrivateJainSipCallConnector:sendSipDtmf(): catched exception exception:" + exception);
+		} 
+	}
+	else {
+		console.error("PrivateJainSipCallConnector:sendSipDtmf(): couldn't retrieve SIP dialog");
+	}
+};
+
+
+/**
  * PrivateJainSipClientConnector interface implementation: handle SIP Request event
  * @public 
  * @param {RequestEvent} requestEvent 
@@ -601,7 +633,7 @@ PrivateJainSipCallConnector.prototype.processInvitingSipResponseEvent = function
 	} else if (this.sipCallState === this.SIP_INVITING_ERROR_STATE) {
 		console.error("PrivateJainSipCallConnector:processInvitingSipResponseEvent(): bad state, SIP response ignored");
 	} else if (this.sipCallState === this.SIP_INVITING_ACCEPTED_STATE) {
-		console.error("PrivateJainSipCallConnector:processInvitingSipResponseEvent(): bad state, SIP response ignored");
+		console.debug("PrivateJainSipCallConnector:processInvitingSipResponseEvent(): Got reponse status: " + jainSipResponse.getStatusCode());
 	} else if (this.sipCallState === this.SIP_INVITING_LOCAL_HANGINGUP_STATE) {
 		if (statusCode === 407) {
 			try {
@@ -731,7 +763,7 @@ PrivateJainSipCallConnector.prototype.processInvitedSipResponseEvent = function(
 	if (this.sipCallState === this.SIP_INVITED_STATE) {
 		console.error("PrivateJainSipCallConnector:processInvitedSipResponseEvent(): bad state, SIP response ignored");
 	} else if (this.sipCallState === this.SIP_INVITED_ACCEPTED_STATE) {
-		console.error("PrivateJainSipCallConnector:processInvitedSipResponseEvent(): bad state, SIP response ignored");
+		console.debug("PrivateJainSipCallConnector:processInvitedSipResponseEvent(): Got reponse status: " + jainSipResponse.getStatusCode());
 	} else if (this.sipCallState === this.SIP_INVITED_LOCAL_HANGINGUP_STATE) {
 		if (statusCode === 407) {
 			try {

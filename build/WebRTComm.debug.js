@@ -647,6 +647,38 @@ PrivateJainSipCallConnector.prototype.accept = function(sdpAnswer) {
 
 
 /**
+ * Send DTMF digit over SIP INFO
+ * @public 
+ * @param {String} dtmfDigit DTMF digit to send
+ */
+PrivateJainSipCallConnector.prototype.sendSipDtmf = function(dtmfDigit) {
+	console.debug("PrivateJainSipCallConnector:sendSipDtmf()");
+
+	var dialog = null;
+	if (this.sipCallState === this.SIP_INVITED_ACCEPTED_STATE) {
+		dialog = this.jainSipInvitedDialog;
+	}
+	if (this.sipCallState === this.SIP_INVITING_ACCEPTED_STATE) {
+		dialog = this.jainSipInvitingDialog;
+	}
+	if (dialog) {
+		try {
+			var request = dialog.createRequest("INFO");
+			request.setContent("Signal=" + dtmfDigit + "\r\nDuration=100\r\n",
+					this.clientConnector.jainSipHeaderFactory.createContentTypeHeader("application", "dtmf-relay"));
+			var clientTransaction = this.clientConnector.jainSipProvider.getNewClientTransaction(request);
+			dialog.sendRequest(clientTransaction);
+		} catch (exception) {
+			console.error("PrivateJainSipCallConnector:sendSipDtmf(): catched exception exception:" + exception);
+		} 
+	}
+	else {
+		console.error("PrivateJainSipCallConnector:sendSipDtmf(): couldn't retrieve SIP dialog");
+	}
+};
+
+
+/**
  * PrivateJainSipClientConnector interface implementation: handle SIP Request event
  * @public 
  * @param {RequestEvent} requestEvent 
@@ -928,7 +960,7 @@ PrivateJainSipCallConnector.prototype.processInvitingSipResponseEvent = function
 	} else if (this.sipCallState === this.SIP_INVITING_ERROR_STATE) {
 		console.error("PrivateJainSipCallConnector:processInvitingSipResponseEvent(): bad state, SIP response ignored");
 	} else if (this.sipCallState === this.SIP_INVITING_ACCEPTED_STATE) {
-		console.error("PrivateJainSipCallConnector:processInvitingSipResponseEvent(): bad state, SIP response ignored");
+		console.debug("PrivateJainSipCallConnector:processInvitingSipResponseEvent(): Got reponse status: " + jainSipResponse.getStatusCode());
 	} else if (this.sipCallState === this.SIP_INVITING_LOCAL_HANGINGUP_STATE) {
 		if (statusCode === 407) {
 			try {
@@ -1058,7 +1090,7 @@ PrivateJainSipCallConnector.prototype.processInvitedSipResponseEvent = function(
 	if (this.sipCallState === this.SIP_INVITED_STATE) {
 		console.error("PrivateJainSipCallConnector:processInvitedSipResponseEvent(): bad state, SIP response ignored");
 	} else if (this.sipCallState === this.SIP_INVITED_ACCEPTED_STATE) {
-		console.error("PrivateJainSipCallConnector:processInvitedSipResponseEvent(): bad state, SIP response ignored");
+		console.debug("PrivateJainSipCallConnector:processInvitedSipResponseEvent(): Got reponse status: " + jainSipResponse.getStatusCode());
 	} else if (this.sipCallState === this.SIP_INVITED_LOCAL_HANGINGUP_STATE) {
 		if (statusCode === 407) {
 			try {
@@ -1085,7 +1117,8 @@ PrivateJainSipCallConnector.prototype.processInvitedSipResponseEvent = function(
 	} else {
 		console.error("PrivateJainSipCallConnector:processInvitedSipResponseEvent(): bad state, SIP request ignored");
 	}
-};/**
+};
+/**
  * @class PrivateJainSipClientConnector
  * @classdesc Private framework class handling  SIP client/user agent control 
  * @constructor 
@@ -2549,7 +2582,8 @@ WebRTCommCall.prototype.sendDTMF = function(dtmfEvent) {
 		console.debug('Sending Tones, duration, gap: ', dtmfEvent, duration, gap);
 		this.dtmfSender.insertDTMF(dtmfEvent, duration, gap);
 	} else {
-		console.debug('DTMFSender not initialized so not Sending Tones, duration, gap: ', dtmfEvent, duration, gap);
+		console.debug('DTMFSender not initialized, falling back to SIP INFO DTMF, Sending tones, duration, gap: ', dtmfEvent, duration, gap);
+		this.connector.sendSipDtmf(dtmfEvent);
 	}
 }
 
@@ -3290,7 +3324,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionOnAddStreamEvent = function(event) {
 								console.debug('No local stream to create DTMF Sender');
 							}
 						} else {
-							console.warn('RTCPeerConnection method createDTMFSender() is not support by this browser.');
+							console.warn('RTCPeerConnection method createDTMFSender() is not support by this browser, will fallback to SIP INFO DTMF.');
 						}
 					} catch (exception) {
 						console.error("WebRTCommCall:onRtcPeerConnectionOnAddStreamEvent(): catched exception in listener:" + exception);

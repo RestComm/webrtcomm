@@ -709,7 +709,8 @@ WebRTCommCall.prototype.sendDTMF = function(dtmfEvent) {
 		console.debug('Sending Tones, duration, gap: ', dtmfEvent, duration, gap);
 		this.dtmfSender.insertDTMF(dtmfEvent, duration, gap);
 	} else {
-		console.debug('DTMFSender not initialized so not Sending Tones, duration, gap: ', dtmfEvent, duration, gap);
+		console.debug('DTMFSender not initialized, falling back to SIP INFO DTMF, Sending tones, duration, gap: ', dtmfEvent, duration, gap);
+		this.connector.sendSipDtmf(dtmfEvent);
 	}
 }
 
@@ -1450,7 +1451,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionOnAddStreamEvent = function(event) {
 								console.debug('No local stream to create DTMF Sender');
 							}
 						} else {
-							console.warn('RTCPeerConnection method createDTMFSender() is not support by this browser.');
+							console.warn('RTCPeerConnection method createDTMFSender() is not support by this browser, will fallback to SIP INFO DTMF.');
 						}
 					} catch (exception) {
 						console.error("WebRTCommCall:onRtcPeerConnectionOnAddStreamEvent(): catched exception in listener:" + exception);
