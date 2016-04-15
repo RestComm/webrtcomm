@@ -577,7 +577,7 @@ PrivateJainSipClientConnector.prototype.processTimeout = function(timeoutEvent) 
 		if (sessionConnector) {
 			sessionConnector.onJainSipClientConnectorSipTimeoutEvent(timeoutEvent);
 		} else if (this.jainSipRegisterRequest.getCallId().getCallId() === sipCallId) {
-			console.error("PrivateJainSipClientConnector:processTimeout(): SIP registration failed, request timeout, no response from SIP server");
+			console.error("PrivateJainSipClientConnector:processTimeout(): SIP registration failed, request timeout, no response from SIP server, Call-Id: " + sipCallId);
 			this.reset();
 			this.webRTCommClient.onPrivateClientConnectorOpenErrorEvent("Request Timeout");
 		} else {
