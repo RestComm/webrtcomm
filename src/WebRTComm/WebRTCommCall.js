@@ -1097,37 +1097,32 @@ WebRTCommCall.prototype.createRTCPeerConnection = function() {
 		}
 	}
 
-
 	console.debug("WebRTCommCall:createPeerConnection():rtcPeerConnectionConfiguration=" + JSON.stringify(rtcPeerConnectionConfiguration));
-	console.debug("WebRTCommCall:createPeerConnection():peerConnectionConstraints=" + JSON.stringify(peerConnectionConstraints));
 
-	// TODO: check if these are still needed (i.e. now that we are using adapter.js)
-	if (window.webkitRTCPeerConnection) {
-		// Google implementation
-		var iceTransports = "all";
-		if (this.webRTCommClient.configuration.RTCPeerConnection.forceTurnMediaRelay) {
-			iceTransports = "relay";
-		}
-
-		var peerConnectionConstraints = {
-			mandatory: {
-				IceTransports: iceTransports
-			},
-			optional: []
-				//{
-				// SCTP Channels available in Chrome 31
-				//RtpDataChannels: true
-				//}, {
-				// DTLS Mandatory and available in Chrome 35
-				//DtlsSrtpKeyAgreement: this.webRTCommClient.configuration.RTCPeerConnection.dtlsSrtpKeyAgreement
-				//  }]
-		};
-
-		this.peerConnection = new RTCPeerConnection(rtcPeerConnectionConfiguration, peerConnectionConstraints);
-	} else if (window.mozRTCPeerConnection) {
-		// Mozilla implementation
-		this.peerConnection = new RTCPeerConnection(rtcPeerConnectionConfiguration, peerConnectionConstraints);
+	var iceTransports = "all";
+	if (this.webRTCommClient.configuration.RTCPeerConnection.forceTurnMediaRelay) {
+		iceTransports = "relay";
 	}
+
+	rtcPeerConnectionConfiguration.iceTransportPolicy = iceTransports;
+
+	/* Old constraints that aren't used anymore. Let's keep them around in case we need to revisit in the future
+	var peerConnectionConstraints = {
+		mandatory: {
+			//IceTransports: iceTransports
+		},
+		optional: []
+			//{
+			// SCTP Channels available in Chrome 31
+			//RtpDataChannels: true
+			//}, {
+			// DTLS Mandatory and available in Chrome 35
+			//DtlsSrtpKeyAgreement: this.webRTCommClient.configuration.RTCPeerConnection.dtlsSrtpKeyAgreement
+			//  }]
+	};
+	*/
+
+	this.peerConnection = new RTCPeerConnection(rtcPeerConnectionConfiguration, null);
 
 	this.peerConnection.onaddstream = function(event) {
 		that.onRtcPeerConnectionOnAddStreamEvent(event);
