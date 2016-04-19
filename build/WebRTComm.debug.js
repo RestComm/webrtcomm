@@ -4922,7 +4922,7 @@ WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallErrorEvent = functi
 /**
  * Ringing event
  * @public
- * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object
+ * @param {WebRTCommCall} webRTCommCall source WebRTCommCall object. Interesting webRTCommCall members are 'callerPhoneNumber', like '+30210...' , 'callerDisplayName', like 'bob', 'customHeaders' which is a dictonary holding any custom SIP headers, like: { "X-RestComm-ApiVersion": "2012-04-24", "X-RestComm-AccountSid": "ACae6e420f425248d6a26948c17a9e2acf", "X-RestComm-CallSid": "CAe90d9084e282493799612f2e9a586c24" }
  */
 WebRTCommCallEventListenerInterface.prototype.onWebRTCommCallRingingEvent = function(webRTCommCall) {
 	throw "WebRTCommCallEventListenerInterface:onWebRTCommCallRingingEvent(): not implemented;";
