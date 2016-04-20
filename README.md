@@ -13,7 +13,7 @@ https://github.com/RestComm/webrtcomm/wiki/Restcomm-WebRTComm-Quick-Start
 
 Documentation
 ========
-Check the Reference Documentation at http://restcomm.github.io/webrtcomm/doc/
+Check the Reference Documentation at http://restcomm.github.io/webrtcomm/doc/index.html
 
 Want to Contribute ? 
 ========
