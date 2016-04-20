@@ -689,11 +689,21 @@ PrivateJainSipCallConnector.prototype.processInvitedSipRequestEvent = function(r
 
 			//  Notify remote SDP offer to WebRTCommCall
 			this.webRTCommCall.onPrivateCallConnectorRemoteSdpOfferEvent(this.jainSipInvitedRequest.getContent());
+			
+			// See if there are any custom SIP headers and expose them. Custom headers are headers starting with 'X-'
+			var customHeaders = {};
+			var headerList = jainSipRequest.getHeaders();
+			for (var i = 0; i < headerList.length; i++) {
+				var header = headerList[i];
+				if (header.getName().match(/^X-/)) {
+					customHeaders[header.getName()] = header.getValue();
+				}
+			}
 
 			// Notify incoming communication
 			var callerPhoneNumber = headerFrom.getAddress().getURI().getUser();
 			var callerDisplayName = headerFrom.getAddress().getDisplayName();
-			this.webRTCommCall.onPrivateCallConnectorCallRingingEvent(callerPhoneNumber, callerDisplayName);
+			this.webRTCommCall.onPrivateCallConnectorCallRingingEvent(callerPhoneNumber, callerDisplayName, customHeaders);
 		} else if (requestMethod === "CANCEL") {
 			try {
 				// Send 200OK CANCEL

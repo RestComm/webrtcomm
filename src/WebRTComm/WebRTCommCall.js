@@ -16,6 +16,7 @@ WebRTCommCall = function(webRTCommClient) {
 		this.calleePhoneNumber = undefined;
 		this.callerPhoneNumber = undefined;
 		this.callerDisplayName = undefined;
+		this.customHeaders = undefined;
 		this.incomingCallFlag = false;
 		this.configuration = undefined;
 		this.connector = undefined;
@@ -1297,12 +1298,15 @@ WebRTCommCall.prototype.onPrivateCallConnectorCallOpenErrorEvent = function(erro
  * @param {string} callerPhoneNumber  caller contact identifier (e.g. bob@sip.net)
  * @param {string} callerDisplayName  caller contact identifier (e.g. bob@sip.net)
  */
-WebRTCommCall.prototype.onPrivateCallConnectorCallRingingEvent = function(callerPhoneNumber, callerDisplayName) {
+WebRTCommCall.prototype.onPrivateCallConnectorCallRingingEvent = function(callerPhoneNumber, callerDisplayName, customHeaders) {
 	console.debug("WebRTCommCall:onPrivateCallConnectorCallRingingEvent():callerPhoneNumber=" + callerPhoneNumber);
 	console.debug("WebRTCommCall:onPrivateCallConnectorCallRingingEvent():callerDisplayName=" + callerDisplayName);
+	console.debug("WebRTCommCall:onPrivateCallConnectorCallRingingEvent():customHeaders=" + JSON.stringify(customHeaders));
+
 	// Notify the closed event to the listener
 	this.callerPhoneNumber = callerPhoneNumber;
 	this.callerDisplayName = callerDisplayName;
+	this.customHeaders = customHeaders;
 	if (this.eventListener.onWebRTCommCallRingingEvent) {
 		var that = this;
 		setTimeout(function() {
