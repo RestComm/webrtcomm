@@ -158,6 +158,21 @@ WebRTCommCall.prototype.setEventListener = function(eventListener) {
 	this.eventListener = eventListener;
 };
 
+// Internal helper to setup a listener for when the tab closes
+function setupTabCloseListener(call) {
+	//var that = this;
+	console.debug("WebRTCommClient:setupTabCloseListener(): Setting up auto-unregister on tab close");
+	window.onunload = function (event) {
+		console.debug("WebRTCommClient:onPrivateClientConnectorOpenedEvent(): Tab closing, tearing down call");
+		call.close();
+	};
+}
+
+function removeTabCloseListener(call) {
+	console.debug("WebRTCommClient:removeTabCloseListener(): Removing listener");
+	window.onunload = null;
+}
+
 /**
  * Open WebRTC communication,  asynchronous action, opened or error event are notified to the WebRTCommClient eventListener
  * @public 
@@ -193,6 +208,7 @@ WebRTCommCall.prototype.open = function(calleePhoneNumber, configuration) {
 						this.calleePhoneNumber = calleePhoneNumber;
 						this.configuration = configuration;
 						this.connector.open(configuration);
+						setupTabCloseListener(this);
 
 						// Setup RTCPeerConnection first
 						this.createRTCPeerConnection();
@@ -462,6 +478,7 @@ WebRTCommCall.prototype.close = function(shouldGetStats) {
 		shouldGetStats = true;
 	}
 
+	removeTabCloseListener();
 	if (shouldGetStats === true) {
 		if (this.peerConnection != null && this.statsAlreadyRequested === false) {
 			var that = this;
@@ -602,6 +619,7 @@ WebRTCommCall.prototype.accept = function(configuration) {
 							});
 						}
 						*/
+						setupTabCloseListener(this);
 						var that = this;
 						this.peerConnectionState = 'offer-received';
 						this.peerConnection.setRemoteDescription(sdpOffer, function() {
