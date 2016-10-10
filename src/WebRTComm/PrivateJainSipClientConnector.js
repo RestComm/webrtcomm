@@ -28,7 +28,8 @@ PrivateJainSipClientConnector.prototype.SIP_REGISTERING_401_STATE = "SIP_REGISTE
 PrivateJainSipClientConnector.prototype.SIP_REGISTERED_STATE = "SIP_REGISTERED_STATE";
 PrivateJainSipClientConnector.prototype.SIP_UNREGISTERING_401_STATE = "SIP_UNREGISTERING_401_STATE";
 PrivateJainSipClientConnector.prototype.SIP_UNREGISTERING_STATE = "SIP_UNREGISTERING_STATE";
-PrivateJainSipClientConnector.prototype.SIP_SESSION_EXPIRATION_TIMER = 3600;
+PrivateJainSipClientConnector.prototype.SIP_SESSION_EXPIRATION_TIMER = 60;
+PrivateJainSipClientConnector.prototype.SIP_REGISTER_REFRESH_TIMER = 50;
 
 /**
  * Get SIP client/user agent opened/closed status 
@@ -658,7 +659,7 @@ PrivateJainSipClientConnector.prototype.processSipRegisterResponse = function(re
 					clearTimeout(this.sipRegisterRefreshTimer);
 				this.sipRegisterRefreshTimer = setTimeout(function() {
 					that.onSipRegisterTimeout();
-				}, 40000);
+				}, this.SIP_REGISTER_REFRESH_TIMER * 1000);
 			}
 		} else {
 			console.error("PrivateJainSipClientConnector:processSipRegisterResponse(): SIP registration failed:" + jainSipResponse.getStatusCode() + "  " + jainSipResponse.getStatusLine());
@@ -691,7 +692,7 @@ PrivateJainSipClientConnector.prototype.processSipRegisterResponse = function(re
 					clearTimeout(this.sipRegisterRefreshTimer);
 				this.sipRegisterRefreshTimer = setTimeout(function() {
 					that.onSipRegisterTimeout();
-				}, 40000);
+				}, this.SIP_REGISTER_REFRESH_TIMER * 1000);
 			}
 		} else {
 			console.error("PrivateJainSipClientConnector:processSipRegisterResponse(): SIP registration failed:" + jainSipResponse.getStatusCode() + "  " + jainSipResponse.getStatusLine());
