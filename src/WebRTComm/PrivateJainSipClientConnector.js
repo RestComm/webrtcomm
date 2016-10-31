@@ -312,7 +312,6 @@ PrivateJainSipClientConnector.prototype.checkConfiguration = function(configurat
 		console.debug("PrivateJainSipClientConnector:checkConfiguration(): configuration.sipDomain:" + configuration.sipDomain);
 		console.debug("PrivateJainSipClientConnector:checkConfiguration(): configuration.sipUserName:" + configuration.sipUserName);
 		console.debug("PrivateJainSipClientConnector:checkConfiguration(): configuration.sipLogin:" + configuration.sipLogin);
-		console.debug("PrivateJainSipClientConnector:checkConfiguration(): configuration.sipPassword: " + configuration.sipPassword);
 		console.debug("PrivateJainSipClientConnector:checkConfiguration(): configuration.sipRegisterMode:" + configuration.sipRegisterMode);
 		return check;
 	} catch (exception) {

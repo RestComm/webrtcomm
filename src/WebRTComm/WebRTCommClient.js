@@ -76,7 +76,6 @@ WebRTCommClient.prototype.getConfiguration = function() {
  * @throw {String} Exception [internal error]
  */
 WebRTCommClient.prototype.open = function(configuration) {
-	console.debug("WebRTCommClient:open(): configuration=" + JSON.stringify(configuration));
 	if (typeof(configuration) === 'object') {
 		if (this.isOpened() === false) {
 			if (this.checkConfiguration(configuration) === true) {
@@ -236,8 +235,13 @@ WebRTCommClient.prototype.call = function(calleePhoneNumber, callConfiguration) 
  * @returns {boolean} true valid false unvalid
  */
 WebRTCommClient.prototype.checkConfiguration = function(configuration) {
+	// don't want the password part of the configuration logged, so let's make a deep copy of 'configuration' and then delete the password key/value
+	var passwordSafeConfiguration = JSON.parse(JSON.stringify(configuration));
+	if (configuration.sip.sipPassword != null) {
+		delete passwordSafeConfiguration.sip.sipPassword;
+	}
 
-	console.debug("WebRTCommClient:checkConfiguration(): configuration=" + JSON.stringify(configuration));
+	console.debug("WebRTCommClient:checkConfiguration(): configuration=" + JSON.stringify(passwordSafeConfiguration));
 	var check = true;
 	if (configuration.communicationMode !== undefined) {
 		if (configuration.communicationMode === WebRTCommClient.prototype.SIP) {} else {
