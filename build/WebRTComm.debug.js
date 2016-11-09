@@ -1158,7 +1158,8 @@ PrivateJainSipClientConnector.prototype.SIP_REGISTERING_401_STATE = "SIP_REGISTE
 PrivateJainSipClientConnector.prototype.SIP_REGISTERED_STATE = "SIP_REGISTERED_STATE";
 PrivateJainSipClientConnector.prototype.SIP_UNREGISTERING_401_STATE = "SIP_UNREGISTERING_401_STATE";
 PrivateJainSipClientConnector.prototype.SIP_UNREGISTERING_STATE = "SIP_UNREGISTERING_STATE";
-PrivateJainSipClientConnector.prototype.SIP_SESSION_EXPIRATION_TIMER = 3600;
+PrivateJainSipClientConnector.prototype.SIP_SESSION_EXPIRATION_TIMER = 60;
+PrivateJainSipClientConnector.prototype.SIP_REGISTER_REFRESH_TIMER = 50;
 
 /**
  * Get SIP client/user agent opened/closed status 
@@ -1441,7 +1442,6 @@ PrivateJainSipClientConnector.prototype.checkConfiguration = function(configurat
 		console.debug("PrivateJainSipClientConnector:checkConfiguration(): configuration.sipDomain:" + configuration.sipDomain);
 		console.debug("PrivateJainSipClientConnector:checkConfiguration(): configuration.sipUserName:" + configuration.sipUserName);
 		console.debug("PrivateJainSipClientConnector:checkConfiguration(): configuration.sipLogin:" + configuration.sipLogin);
-		console.debug("PrivateJainSipClientConnector:checkConfiguration(): configuration.sipPassword: " + configuration.sipPassword);
 		console.debug("PrivateJainSipClientConnector:checkConfiguration(): configuration.sipRegisterMode:" + configuration.sipRegisterMode);
 		return check;
 	} catch (exception) {
@@ -1788,7 +1788,7 @@ PrivateJainSipClientConnector.prototype.processSipRegisterResponse = function(re
 					clearTimeout(this.sipRegisterRefreshTimer);
 				this.sipRegisterRefreshTimer = setTimeout(function() {
 					that.onSipRegisterTimeout();
-				}, 40000);
+				}, this.SIP_REGISTER_REFRESH_TIMER * 1000);
 			}
 		} else {
 			console.error("PrivateJainSipClientConnector:processSipRegisterResponse(): SIP registration failed:" + jainSipResponse.getStatusCode() + "  " + jainSipResponse.getStatusLine());
@@ -1821,7 +1821,7 @@ PrivateJainSipClientConnector.prototype.processSipRegisterResponse = function(re
 					clearTimeout(this.sipRegisterRefreshTimer);
 				this.sipRegisterRefreshTimer = setTimeout(function() {
 					that.onSipRegisterTimeout();
-				}, 40000);
+				}, this.SIP_REGISTER_REFRESH_TIMER * 1000);
 			}
 		} else {
 			console.error("PrivateJainSipClientConnector:processSipRegisterResponse(): SIP registration failed:" + jainSipResponse.getStatusCode() + "  " + jainSipResponse.getStatusLine());
@@ -1881,7 +1881,8 @@ PrivateJainSipClientConnector.prototype.processSipOptionRequest = function(reque
 	jainSip200OKResponse.removeHeader("P-Charging-Function-Addresses");
 	jainSip200OKResponse.removeHeader("P-Called-Party-ID");
 	requestEvent.getServerTransaction().sendResponse(jainSip200OKResponse);
-};/**
+};
+/**
  * @class WebRTCommCall
  * @classdesc Main class of the WebRTComm Framework providing high level communication management: 
  *            ringing, ringing back, accept, reject, cancel, bye 
@@ -4584,7 +4585,6 @@ WebRTCommClient.prototype.getConfiguration = function() {
  * @throw {String} Exception [internal error]
  */
 WebRTCommClient.prototype.open = function(configuration) {
-	console.debug("WebRTCommClient:open(): configuration=" + JSON.stringify(configuration));
 	if (typeof(configuration) === 'object') {
 		if (this.isOpened() === false) {
 			if (this.checkConfiguration(configuration) === true) {
@@ -4744,8 +4744,13 @@ WebRTCommClient.prototype.call = function(calleePhoneNumber, callConfiguration) 
  * @returns {boolean} true valid false unvalid
  */
 WebRTCommClient.prototype.checkConfiguration = function(configuration) {
+	// don't want the password part of the configuration logged, so let's make a deep copy of 'configuration' and then delete the password key/value
+	var passwordSafeConfiguration = JSON.parse(JSON.stringify(configuration));
+	if (configuration.sip.sipPassword != null) {
+		delete passwordSafeConfiguration.sip.sipPassword;
+	}
 
-	console.debug("WebRTCommClient:checkConfiguration(): configuration=" + JSON.stringify(configuration));
+	console.debug("WebRTCommClient:checkConfiguration(): configuration=" + JSON.stringify(passwordSafeConfiguration));
 	var check = true;
 	if (configuration.communicationMode !== undefined) {
 		if (configuration.communicationMode === WebRTCommClient.prototype.SIP) {} else {
@@ -4838,7 +4843,111 @@ WebRTCommClient.prototype.onPrivateClientConnectorClosedEvent = function() {
 			}
 		}, 1);
 	}
-};/**
+};
+
+// Notice that in order to gain some speed (since this will be invoked A LOT), we use a hardcoded number of digits
+// This add padding for a padding size that is equal or less than 2x inputNumber string length. For bigger padding sizes
+// it will just return original inputNumber
+function padNumberWithZeroes(inputNumber, paddingSize) {
+    // nothing to do if padding size is smaller or equal than string length, lets bail right away
+    if (paddingSize <= inputNumber.toString().length) {
+        return inputNumber;
+    }
+    var s = "000000000" + inputNumber;
+    
+    // With this method we can pad only if requested paddingSize if at most 2x number length. If more than that 
+    // let's return original number to be safe
+    if (paddingSize > 2 * (inputNumber.toString().length)) {
+        return inputNumber;
+    }
+
+    return s.substr(s.length - paddingSize);
+}
+
+function getTimestamp()
+{
+	var currentDate = new Date(); 
+    var timestamp = currentDate.getFullYear() + "-" +
+    			padNumberWithZeroes(currentDate.getDate(), 2) + "-" +
+                padNumberWithZeroes((currentDate.getMonth() + 1), 2)  + " " +
+                padNumberWithZeroes(currentDate.getHours(), 2) + ":" +
+                padNumberWithZeroes(currentDate.getMinutes(), 2) + ":" + 
+                padNumberWithZeroes(currentDate.getSeconds(), 2) + "." +
+                padNumberWithZeroes(currentDate.getMilliseconds(), 3);
+	return timestamp;
+}
+
+// Common logging function called by all the others with appropriate logging function
+function commonLog(logger, args, includeStackTrace)
+{
+    var e = new Error('dummy');
+    var stack = e.stack.replace(/^[^\(]+?[\n$]/gm, '')
+      .replace(/^\s+at\s+/gm, '')
+      .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@');
+      
+    if (includeStackTrace !== undefined && includeStackTrace == true) {
+        // stack trace has been requested, let's add tabs in the beginning for beautification
+        stack = stack.replace(/^/gm, "\t");
+    }
+    else {
+        stack = stack.split('\n');
+    }
+
+    Array.prototype.unshift.call(args, getTimestamp());
+    
+    if (includeStackTrace !== undefined && includeStackTrace == true) {
+        Array.prototype.push.call(args, "\n\nStack trace: \n" + stack);
+    }
+    else {
+        var checkedStack;
+        // normally stack should have at least 3 elements: current function, startup setup function below, and actual calling point, 
+        // but let's add a check just in case
+        if (stack.length >= 3) {
+            checkedStack = stack[2];
+        }
+        else {
+            checkedStack = stack;
+        }
+        Array.prototype.push.call(args, "\n\t[" + checkedStack + "]");
+    }
+    
+    // do the actual logging
+    logger.apply(this, args)   
+}
+
+// Let's override the console logging methods, to be able to add timestamps always
+(function() {
+    if (window.console && console.debug) {
+        var oldConsoleDebug = console.debug;
+        console.debug = function() {
+            commonLog(oldConsoleDebug, arguments);
+        }
+    }  
+    if (window.console && console.log) {
+        var oldConsoleLog = console.log;
+        console.log = function() {
+            commonLog(oldConsoleLog, arguments);
+        }
+    }  
+    if (window.console && console.info) {
+        var oldConsoleInfo = console.info;
+        console.info = function() {
+            commonLog(oldConsoleInfo, arguments);
+        }
+    }  
+    if (window.console && console.warn) {
+        var oldConsoleWarn = console.warn;
+        console.warn = function() {
+            commonLog(oldConsoleWarn, arguments);
+        }
+    }  
+    if (window.console && console.error) {
+        var oldConsoleError = console.error;
+        console.error = function() {
+            commonLog(oldConsoleError, arguments, true);
+        }
+    }  
+})();/**
  * @class WebRTCommClientEventListenerInterface
  * @classdesc Abstract class describing  WebRTCommClient event listener interface 
  *            required to be implented by the webapp 
