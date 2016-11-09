@@ -439,3 +439,4 @@ function commonLog(logger, args, includeStackTrace)
         }
     }  
 })();
+

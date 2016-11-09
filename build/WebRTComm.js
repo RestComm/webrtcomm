@@ -4947,7 +4947,9 @@ function commonLog(logger, args, includeStackTrace)
             commonLog(oldConsoleError, arguments, true);
         }
     }  
-})();/**
+})();
+
+/**
  * @class WebRTCommClientEventListenerInterface
  * @classdesc Abstract class describing  WebRTCommClient event listener interface 
  *            required to be implented by the webapp 
