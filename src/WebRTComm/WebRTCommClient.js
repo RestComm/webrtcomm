@@ -384,9 +384,11 @@ function commonLog(logger, args, includeStackTrace)
         stack = stack.split('\n');
     }
 
+    // what this does is prepend element given as second argument, in array given as first argument
     Array.prototype.unshift.call(args, getTimestamp());
     
     if (includeStackTrace !== undefined && includeStackTrace == true) {
+    	// similarly, this appends the seconds argument, hence the stack trace, to the args array
         Array.prototype.push.call(args, "\n\nStack trace: \n" + stack);
     }
     else {
