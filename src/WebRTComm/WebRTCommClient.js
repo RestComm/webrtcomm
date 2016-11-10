@@ -340,105 +340,113 @@ WebRTCommClient.prototype.onPrivateClientConnectorClosedEvent = function() {
 // This add padding for a padding size that is equal or less than 2x inputNumber string length. For bigger padding sizes
 // it will just return original inputNumber
 function padNumberWithZeroes(inputNumber, paddingSize) {
-    // nothing to do if padding size is smaller or equal than string length, lets bail right away
-    if (paddingSize <= inputNumber.toString().length) {
-        return inputNumber;
-    }
-    var s = "000000000" + inputNumber;
-    
-    // With this method we can pad only if requested paddingSize if at most 2x number length. If more than that 
-    // let's return original number to be safe
-    if (paddingSize > 2 * (inputNumber.toString().length)) {
-        return inputNumber;
-    }
+	// nothing to do if padding size is smaller or equal than string length, lets bail right away
+	if (paddingSize <= inputNumber.toString().length) {
+		return inputNumber;
+	}
+	var s = "000000000" + inputNumber;
 
-    return s.substr(s.length - paddingSize);
+	// With this method we can pad only if requested paddingSize if at most 2x number length. If more than that 
+	// let's return original number to be safe
+	if (paddingSize > 2 * (inputNumber.toString().length)) {
+		return inputNumber;
+	}
+
+	return s.substr(s.length - paddingSize);
 }
 
+// Retrieve a timestamp string in the form: YYYY-MM-DD HH-MM-SS.MMMM
 function getTimestamp()
 {
 	var currentDate = new Date(); 
-    var timestamp = currentDate.getFullYear() + "-" +
-    			padNumberWithZeroes(currentDate.getDate(), 2) + "-" +
-                padNumberWithZeroes((currentDate.getMonth() + 1), 2)  + " " +
-                padNumberWithZeroes(currentDate.getHours(), 2) + ":" +
-                padNumberWithZeroes(currentDate.getMinutes(), 2) + ":" + 
-                padNumberWithZeroes(currentDate.getSeconds(), 2) + "." +
-                padNumberWithZeroes(currentDate.getMilliseconds(), 3);
+	var timestamp = currentDate.getFullYear() + "-" +
+		padNumberWithZeroes(currentDate.getDate(), 2) + "-" +
+		padNumberWithZeroes((currentDate.getMonth() + 1), 2)  + " " +
+		padNumberWithZeroes(currentDate.getHours(), 2) + ":" +
+		padNumberWithZeroes(currentDate.getMinutes(), 2) + ":" + 
+		padNumberWithZeroes(currentDate.getSeconds(), 2) + "." +
+		padNumberWithZeroes(currentDate.getMilliseconds(), 3);
 	return timestamp;
 }
 
 // Common logging function called by all the others with appropriate logging function
 function commonLog(logger, args, includeStackTrace)
 {
-    var e = new Error('dummy');
-    var stack = e.stack.replace(/^[^\(]+?[\n$]/gm, '')
-      .replace(/^\s+at\s+/gm, '')
-      .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@');
-      
-    if (includeStackTrace !== undefined && includeStackTrace == true) {
-        // stack trace has been requested, let's add tabs in the beginning for beautification
-        stack = stack.replace(/^/gm, "\t");
-    }
-    else {
-        stack = stack.split('\n');
-    }
+	var e = new Error('dummy-exception');
+	var stack = e.stack; 
+	var isFirefox = typeof InstallTrigger !== 'undefined';
 
-    // what this does is prepend element given as second argument, in array given as first argument
-    Array.prototype.unshift.call(args, getTimestamp());
-    
-    if (includeStackTrace !== undefined && includeStackTrace == true) {
-    	// similarly, this appends the seconds argument, hence the stack trace, to the args array
-        Array.prototype.push.call(args, "\n\nStack trace: \n" + stack);
-    }
-    else {
-        var checkedStack;
-        // normally stack should have at least 3 elements: current function, startup setup function below, and actual calling point, 
-        // but let's add a check just in case
-        if (stack.length >= 3) {
-            checkedStack = stack[2];
-        }
-        else {
-            checkedStack = stack;
-        }
-        Array.prototype.push.call(args, "\n\t[" + checkedStack + "]");
-    }
-    
-    // do the actual logging
-    logger.apply(this, args)   
+	if (!isFirefox) {
+		// specially for chrome there's a header in the stack that we need to remove
+		stack = stack.replace(/^.*?dummy-exception.*?\n/gm, '');
+	}
+
+	if (includeStackTrace !== undefined && includeStackTrace == true) {
+		if (isFirefox) {
+			// stack trace has been requested, let's add tabs in the beginning for beautification (just for Firefox since for Chrome its already beautified)
+			stack = stack.replace(/^/gm, "\t");
+		}
+	}
+	else {
+		stack = stack.split('\n');
+	}
+
+	// what this does is prepend element given as second argument, in array given as first argument
+	Array.prototype.unshift.call(args, getTimestamp());
+
+	if (includeStackTrace !== undefined && includeStackTrace == true) {
+		// similarly, this appends the seconds argument, hence the stack trace, to the args array
+		Array.prototype.push.call(args, "\n\nStack trace: \n" + stack);
+	}
+	else {
+		var checkedStack;
+		// normally stack should have at least 3 elements: current function, startup setup function below, and actual calling point, 
+		// but let's add a check just in case
+		if (stack.length >= 3) {
+			checkedStack = stack[2];
+			checkedStack = checkedStack.replace(/^\s*at\s*/, '')
+		}
+		else {
+			checkedStack = stack;
+		}
+		Array.prototype.push.call(args, "\n\t[" + checkedStack + "]");
+	}
+
+	// do the actual logging
+	logger.apply(this, args);
 }
 
 // Let's override the console logging methods, to be able to add timestamps always
 (function() {
-    if (window.console && console.debug) {
-        var oldConsoleDebug = console.debug;
-        console.debug = function() {
-            commonLog(oldConsoleDebug, arguments);
-        }
-    }  
-    if (window.console && console.log) {
-        var oldConsoleLog = console.log;
-        console.log = function() {
-            commonLog(oldConsoleLog, arguments);
-        }
-    }  
-    if (window.console && console.info) {
-        var oldConsoleInfo = console.info;
-        console.info = function() {
-            commonLog(oldConsoleInfo, arguments);
-        }
-    }  
-    if (window.console && console.warn) {
-        var oldConsoleWarn = console.warn;
-        console.warn = function() {
-            commonLog(oldConsoleWarn, arguments);
-        }
-    }  
-    if (window.console && console.error) {
-        var oldConsoleError = console.error;
-        console.error = function() {
-            commonLog(oldConsoleError, arguments, true);
-        }
-    }  
+	if (window.console && console.debug) {
+		var oldConsoleDebug = console.debug;
+		console.debug = function() {
+			commonLog(oldConsoleDebug, arguments);
+		}
+	}  
+	if (window.console && console.log) {
+		var oldConsoleLog = console.log;
+		console.log = function() {
+			commonLog(oldConsoleLog, arguments);
+		}
+	}  
+	if (window.console && console.info) {
+		var oldConsoleInfo = console.info;
+		console.info = function() {
+			commonLog(oldConsoleInfo, arguments);
+		}
+	}  
+	if (window.console && console.warn) {
+		var oldConsoleWarn = console.warn;
+		console.warn = function() {
+			commonLog(oldConsoleWarn, arguments);
+		}
+	}  
+	if (window.console && console.error) {
+		var oldConsoleError = console.error;
+		console.error = function() {
+			commonLog(oldConsoleError, arguments, true);
+		}
+	}  
 })();
 
