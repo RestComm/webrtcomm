@@ -409,7 +409,7 @@ function commonLog(logger, args, includeStackTrace)
 		else {
 			checkedStack = stack;
 		}
-		Array.prototype.push.call(args, "\n\t[" + checkedStack + "]");
+		Array.prototype.push.call(args, "\n\t[" + checkedStack + "] ");
 	}
 
 	// do the actual logging
