@@ -1448,6 +1448,25 @@ WebRTCommCall.prototype.onRtcPeerConnectionOnAddStreamEvent = function(event) {
 			console.debug("WebRTCommCall:onRtcPeerConnectionOnAddStreamEvent(): this.peerConnectionState=" + this.peerConnectionState);
 			this.remoteBundledAudioVideoMediaStream = event.stream;
 			// https://code.google.com/p/webrtcomm/issues/detail?id=22 Make sure to call WebRTCommCall on add stream event
+			/*
+			try {
+				console.debug("WebRTCommCall:onRtcPeerConnectionOnAddStreamEvent(): creating DTMF Sender");
+				if (this.peerConnection.createDTMFSender) {
+					if (this.configuration.localMediaStream !== null) {
+						var localAudioTrack = this.configuration.localMediaStream.getAudioTracks()[0];
+						this.dtmfSender = this.peerConnection.createDTMFSender(localAudioTrack);
+						//that.dtmfSender.ontonechange = dtmfOnToneChange;
+						console.debug('Created DTMFSender');
+					} else {
+						console.debug('No local stream to create DTMF Sender');
+					}
+				} else {
+					console.warn('RTCPeerConnection method createDTMFSender() is not supported by this browser, will fallback to SIP INFO DTMF.');
+				}
+			} catch (exception) {
+				console.error("WebRTCommCall:onRtcPeerConnectionOnAddStreamEvent(): catched exception in listener:" + exception);
+			}
+			*/
 			if (this.eventListener.onWebRTCommCallOpenedEvent) {
 				var that = this;
 				setTimeout(function() {
@@ -1510,6 +1529,8 @@ WebRTCommCall.prototype.onRtcPeerConnectionOnRemoveStreamEvent = function(event)
  * @param {RTCPeerConnectionIceEvent} rtcIceCandidateEvent  RTCPeerConnection Event
  */
 WebRTCommCall.prototype.onRtcPeerConnectionIceCandidateEvent = function(rtcIceCandidateEvent) {
+	// signaling (i.e. invite/accept) should be called on onRtcPeerConnectionGatheringChangeEvent when COMPLETE, not here
+	//console.debug("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): rtcIceCandidateEvent=" + JSON.stringify(rtcIceCandidateEvent.candidate));
 	try {
 		console.debug("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): rtcIceCandidateEvent=" + JSON.stringify(rtcIceCandidateEvent.candidate));
 		if (this.peerConnection) {
@@ -1533,6 +1554,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionIceCandidateEvent = function(rtcIceCa
 						this.connector.accept(parsedSdpAnswer);
 						this.peerConnectionState = 'established';
 						// Notify opened event to listener
+						/*
 						if (this.eventListener.onWebRTCommCallOpenedEvent) {
 							var that = this;
 							setTimeout(function() {
@@ -1543,6 +1565,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionIceCandidateEvent = function(rtcIceCa
 								}
 							}, 1);
 						}
+						*/
 					} else if (this.peerConnectionState === 'established') {
 						// Why this last ice candidate event?
 					} else {
@@ -1804,6 +1827,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionSetRemoteDescriptionSuccessEvent = fu
 			if (this.peerConnectionState === 'answer-received') {
 				this.peerConnectionState = 'established';
 				console.debug("WebRTCommCall:onRtcPeerConnectionSetRemoteDescriptionSuccessEvent(): this.peerConnectionState=" + this.peerConnectionState);
+				/*
 				// Notify closed event to listener
 				if (this.eventListener.onWebRTCommCallOpenedEvent) {
 					var that = this;
@@ -1815,6 +1839,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionSetRemoteDescriptionSuccessEvent = fu
 						}
 					}, 1);
 				}
+				*/
 			} else if (this.peerConnectionState === 'offer-received') {
 				var that = this;
 				if (window.webkitRTCPeerConnection) {
@@ -1961,6 +1986,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionGatheringChangeEvent = function(event
 					this.connector.accept(parsedSdpAnswer);
 					this.peerConnectionState = 'established';
 					// Notify opened event to listener
+					/*
 					if (this.eventListener.onWebRTCommCallOpenedEvent) {
 						var that = this;
 						setTimeout(function() {
@@ -1971,6 +1997,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionGatheringChangeEvent = function(event
 							}
 						}, 1);
 					}
+					*/
 				} else if (this.peerConnectionState === 'established') {
 					// Why this last ice candidate event?
 				} else {
@@ -2021,6 +2048,23 @@ WebRTCommCall.prototype.onRtcPeerConnectionIceChangeEvent = function(event) {
 				console.error("WebRTCommCall:onRtcPeerConnectionErrorEvent(): catched exception in listener:" + exception);
 			}
 		}
+		// This should be the right moment to notify the App that we are connected, but for some reason FF doesn't transition to connected for some reason. Let's keep it out for now
+		/*
+		else if (this.peerConnection.iceConnectionState == 'connected') {
+			// Notify opened event to listener
+			if (this.eventListener.onWebRTCommCallOpenedEvent) {
+				var that = this;
+				setTimeout(function() {
+					try {
+						console.debug("WebRTCommCall:calling onWebRTCommCallOpenedEvent(): event=" + event);
+						that.eventListener.onWebRTCommCallOpenedEvent(that);
+					} catch (exception) {
+						console.error("WebRTCommCall:onRtcPeerConnectionIceChangeEvent(): catched exception in listener:" + exception);
+					}
+				}, 1);
+			}
+		}
+		*/
 	} else {
 		console.warn("WebRTCommCall:onRtcPeerConnectionIceChangeEvent(): event ignored");
 	}
