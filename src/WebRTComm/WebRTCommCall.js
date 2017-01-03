@@ -38,6 +38,9 @@ WebRTCommCall = function(webRTCommClient) {
 	}
 };
 
+// 'static' to globally tell us if we are on call
+WebRTCommCall.onCall = false;
+
 /**
  * Audio Codec Name 
  * @private
@@ -481,6 +484,9 @@ WebRTCommCall.prototype.close = function(shouldGetStats) {
 		console.debug("WebRTCommCall:close(), with no media stats");
 		this.hangup();
 	}
+
+	WebRTCommCall.onCall = false;
+	console.debug("WebRTCommCall:close():onCall=" + WebRTCommCall.onCall);
 };
 
 /**
@@ -1450,7 +1456,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionOnAddStreamEvent = function(event) {
 								console.debug('No local stream to create DTMF Sender');
 							}
 						} else {
-							console.warn('RTCPeerConnection method createDTMFSender() is not support by this browser, will fallback to SIP INFO DTMF.');
+							console.warn('RTCPeerConnection method createDTMFSender() is not supported by this browser, will fallback to SIP INFO DTMF.');
 						}
 					} catch (exception) {
 						console.error("WebRTCommCall:onRtcPeerConnectionOnAddStreamEvent(): catched exception in listener:" + exception);
