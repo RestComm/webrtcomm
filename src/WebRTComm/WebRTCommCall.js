@@ -1128,22 +1128,6 @@ WebRTCommCall.prototype.createRTCPeerConnection = function() {
 
 	rtcPeerConnectionConfiguration.iceTransportPolicy = iceTransports;
 
-	/* Old constraints that aren't used anymore. Let's keep them around in case we need to revisit in the future
-	var peerConnectionConstraints = {
-		mandatory: {
-			//IceTransports: iceTransports
-		},
-		optional: []
-			//{
-			// SCTP Channels available in Chrome 31
-			//RtpDataChannels: true
-			//}, {
-			// DTLS Mandatory and available in Chrome 35
-			//DtlsSrtpKeyAgreement: this.webRTCommClient.configuration.RTCPeerConnection.dtlsSrtpKeyAgreement
-			//  }]
-	};
-	*/
-
 	console.debug("[PC]: new RTCPeerConnection()");
 	this.peerConnection = new RTCPeerConnection(rtcPeerConnectionConfiguration, null);
 
@@ -1155,18 +1139,9 @@ WebRTCommCall.prototype.createRTCPeerConnection = function() {
 		that.onRtcPeerConnectionRemoveStreamEvent(event);
 	};
 
-	if (this.peerConnection.onstatechange) {
-		console.warn("RTCPeerConnection API: onstatechange supported");
-		this.peerConnection.onstatechange = function(event) {
-			that.onRtcPeerConnectionSignalingStateChangeEvent(event);
-		};
-	}
-	if (this.peerConnection.onsignalingstatechange) {
-		console.warn("RTCPeerConnection API: onsignalingstatechange supported");
-		this.peerConnection.onsignalingstatechange = function(event) {
-			that.onRtcPeerConnectionSignalingStateChangeEvent(event);
-		};
-	}
+	this.peerConnection.onsignalingstatechange = function(event) {
+		that.onRtcPeerConnectionSignalingStateChangeEvent(event);
+	};
 
 	this.peerConnection.onicecandidate = function(rtcIceCandidateEvent) {
 		that.onRtcPeerConnectionIceCandidateEvent(rtcIceCandidateEvent);
@@ -1176,22 +1151,8 @@ WebRTCommCall.prototype.createRTCPeerConnection = function() {
 	this.peerConnection.onicegatheringstatechange = function(event) {
 		that.onRtcPeerConnectionGatheringStateChangeEvent(event);
 	};
-	if (this.peerConnection.ongatheringstatechange) {
-		console.warn("RTCPeerConnection API: ongatheringstatechange supported");
-		this.peerConnection.ongatheringstatechange = function(event) {
-			that.onRtcPeerConnectionGatheringStateChangeEvent(event);
-		};
-	}
 	*/
 
-	/*
-	if (this.peerConnection.onicechange) {
-		console.warn("RTCPeerConnection API: onicechange supported");
-		this.peerConnection.onicechange = function(event) {
-			that.onRtcPeerConnectionIceConnectionStateChangeEvent(event);
-		};
-	}
-	*/
 	this.peerConnection.oniceconnectionstatechange = function(event) {
 		that.onRtcPeerConnectionIceConnectionStateChangeEvent(event);
 	};
@@ -1914,7 +1875,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionOpenEvent = function(event) {
  */
 WebRTCommCall.prototype.onRtcPeerConnectionSignalingStateChangeEvent = function(event) {
 	console.debug("[PC]: onsignalingstatechange()");
-	console.debug("WebRTCommCall:onRtcPeerConnectionSignalingStateChangeEvent(): event=" + event);
+	console.debug("WebRTCommCall:onRtcPeerConnectionSignalingStateChangeEvent(): event=" + JSON.stringify(event));
 	if (this.peerConnection) {
 		console.debug("WebRTCommCall:onRtcPeerConnectionSignalingStateChangeEvent(): this.peerConnection.signalingState=" + this.peerConnection.signalingState);
 		console.debug("WebRTCommCall:onRtcPeerConnectionSignalingStateChangeEvent(): this.peerConnection.iceGatheringState=" + this.peerConnection.iceGatheringState);
