@@ -189,13 +189,11 @@ WebRTCommCall.prototype.open = function(calleePhoneNumber, configuration) {
 	if (typeof(configuration) === 'object') {
 		if (this.webRTCommClient.isOpened()) {
 			// check if we are already on call
-			console.debug("WebRTCommCall:open():onCall=" + WebRTCommCall.onCall);
 			if (WebRTCommCall.onCall) {
 				//console.error("WebRTCommClient:call(): call already ongoing");
 				throw "WebRTCommClient:call(): call already ongoing";
 			}
 			WebRTCommCall.onCall = true;
-			console.debug("WebRTCommCall:open():onCall=" + WebRTCommCall.onCall);
 
 			if (this.checkConfiguration(configuration)) {
 				if (this.isOpened() === false) {
@@ -495,7 +493,6 @@ WebRTCommCall.prototype.close = function(shouldGetStats) {
 	}
 
 	WebRTCommCall.onCall = false;
-	console.debug("WebRTCommCall:close():onCall=" + WebRTCommCall.onCall);
 };
 
 /**
