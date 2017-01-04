@@ -1984,8 +1984,6 @@ WebRTCommCall.prototype.onRtcPeerConnectionIceConnectionStateChangeEvent = funct
 				console.error("WebRTCommCall:onRtcPeerConnectionErrorEvent(): catched exception in listener:" + exception);
 			}
 		}
-	} else {
-		console.warn("WebRTCommCall:onRtcPeerConnectionIceChangeEvent(): event ignored");
 	}
 };
 
