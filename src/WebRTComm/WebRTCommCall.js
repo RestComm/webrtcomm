@@ -1539,7 +1539,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionIceCandidateEvent = function(rtcIceCa
 			console.debug("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): this.peerConnection.iceConnectionState=" + this.peerConnection.iceConnectionState);
 			console.debug("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): this.peerConnectionState=" + this.peerConnectionState);
 			if (this.peerConnection.signalingState !== 'closed') {
-				if (this.peerConnection.iceGatheringState === 'complete') {
+				if (!rtcIceCandidateEvent.candidate && this.peerConnection.iceGatheringState === 'complete') {
 					if (this.peerConnectionState === 'preparing-offer') {
 						var sdpOfferString = this.peerConnection.localDescription.sdp;
 						var parsedSdpOffer = this.setRtcPeerConnectionLocalDescription(this.peerConnection.localDescription);
@@ -1554,18 +1554,16 @@ WebRTCommCall.prototype.onRtcPeerConnectionIceCandidateEvent = function(rtcIceCa
 						this.connector.accept(parsedSdpAnswer);
 						this.peerConnectionState = 'established';
 						// Notify opened event to listener
-						/*
-						if (this.eventListener.onWebRTCommCallOpenedEvent) {
-							var that = this;
-							setTimeout(function() {
-								try {
-									that.eventListener.onWebRTCommCallOpenedEvent(that);
-								} catch (exception) {
-									console.error("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): catched exception in listener:" + exception);
-								}
-							}, 1);
-						}
-						*/
+						//if (this.eventListener.onWebRTCommCallOpenedEvent) {
+						//	var that = this;
+						//	setTimeout(function() {
+						//		try {
+						//			that.eventListener.onWebRTCommCallOpenedEvent(that);
+						//		} catch (exception) {
+						//			console.error("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): catched exception in listener:" + exception);
+						//		}
+						//	}, 1);
+						//}
 					} else if (this.peerConnectionState === 'established') {
 						// Why this last ice candidate event?
 					} else {
@@ -2001,18 +1999,16 @@ WebRTCommCall.prototype.onRtcPeerConnectionGatheringStateChangeEvent = function(
 					this.connector.accept(parsedSdpAnswer);
 					this.peerConnectionState = 'established';
 					// Notify opened event to listener
-					/*
-					if (this.eventListener.onWebRTCommCallOpenedEvent) {
-						var that = this;
-						setTimeout(function() {
-							try {
-								that.eventListener.onWebRTCommCallOpenedEvent(that);
-							} catch (exception) {
-								console.error("WebRTCommCall:onRtcPeerConnectionGatheringChangeEvent(): catched exception in listener:" + exception);
-							}
-						}, 1);
-					}
-					*/
+					//if (this.eventListener.onWebRTCommCallOpenedEvent) {
+					//	var that = this;
+					//	setTimeout(function() {
+					//		try {
+					//			that.eventListener.onWebRTCommCallOpenedEvent(that);
+					//		} catch (exception) {
+					//			console.error("WebRTCommCall:onRtcPeerConnectionGatheringStateChangeEvent(): catched exception in listener:" + exception);
+					//		}
+					//	}, 1);
+					//}
 				} else if (this.peerConnectionState === 'established') {
 					// Why this last ice candidate event?
 				} else {
@@ -2026,6 +2022,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionGatheringStateChangeEvent = function(
 		console.warn("WebRTCommCall:onRtcPeerConnectionGatheringStateChangeEvent(): event ignored");
 	}
 };
+*/
 
 /**
  * RTCPeerConnection listener implementation
@@ -2064,26 +2061,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionIceConnectionStateChangeEvent = funct
 				console.error("WebRTCommCall:onRtcPeerConnectionErrorEvent(): catched exception in listener:" + exception);
 			}
 		}
-		// This should be the right moment to notify the App that we are connected, but for some reason FF doesn't transition to connected for some reason. Let's keep it out for now
-		/*
-		else if (this.peerConnection.iceConnectionState == 'connected') {
-			// Notify opened event to listener
-			if (this.eventListener.onWebRTCommCallOpenedEvent) {
-				var that = this;
-				setTimeout(function() {
-					try {
-						console.debug("WebRTCommCall:calling onWebRTCommCallOpenedEvent(): event=" + event);
-						that.eventListener.onWebRTCommCallOpenedEvent(that);
-					} catch (exception) {
-						console.error("WebRTCommCall:onRtcPeerConnectionIceChangeEvent(): catched exception in listener:" + exception);
-					}
-				}, 1);
-			}
-		}
-		*/
-	} else {
-		console.warn("WebRTCommCall:onRtcPeerConnectionIceChangeEvent(): event ignored");
-	}
+	} 
 };
 
 /**
