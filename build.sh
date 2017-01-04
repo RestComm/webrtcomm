@@ -1,7 +1,8 @@
 #! /bin/sh -x
 
-rm -R build
-mkdir build
+#rm -R build
+#mkdir build
+rm -f build/*.js
 
 cat ./src/WebRTComm/PrivateJainSipMessageConnector.js > ./build/WebRTComm.debug.js
 cat ./src/WebRTComm/PrivateJainSipCallConnector.js >> ./build/WebRTComm.debug.js

@@ -1532,17 +1532,6 @@ WebRTCommCall.prototype.onRtcPeerConnectionIceCandidateEvent = function(rtcIceCa
 
 						this.connector.accept(parsedSdpAnswer);
 						this.peerConnectionState = 'established';
-						// Notify opened event to listener
-						if (this.eventListener.onWebRTCommCallOpenedEvent) {
-							var that = this;
-							setTimeout(function() {
-								try {
-									that.eventListener.onWebRTCommCallOpenedEvent(that);
-								} catch (exception) {
-									console.error("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): catched exception in listener:" + exception);
-								}
-							}, 1);
-						}
 					} else if (this.peerConnectionState === 'established') {
 						// Why this last ice candidate event?
 					} else {
@@ -1804,17 +1793,6 @@ WebRTCommCall.prototype.onRtcPeerConnectionSetRemoteDescriptionSuccessEvent = fu
 			if (this.peerConnectionState === 'answer-received') {
 				this.peerConnectionState = 'established';
 				console.debug("WebRTCommCall:onRtcPeerConnectionSetRemoteDescriptionSuccessEvent(): this.peerConnectionState=" + this.peerConnectionState);
-				// Notify closed event to listener
-				if (this.eventListener.onWebRTCommCallOpenedEvent) {
-					var that = this;
-					setTimeout(function() {
-						try {
-							that.eventListener.onWebRTCommCallOpenedEvent(that);
-						} catch (exception) {
-							console.error("WebRTCommCall:onRtcPeerConnectionSetRemoteDescriptionSuccessEvent(): catched exception in listener:" + exception);
-						}
-					}, 1);
-				}
 			} else if (this.peerConnectionState === 'offer-received') {
 				var that = this;
 				if (window.webkitRTCPeerConnection) {
