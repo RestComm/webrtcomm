@@ -209,11 +209,13 @@ WebRTCommCall.prototype.open = function(calleePhoneNumber, configuration) {
 						////////////
 						//this.get_stats();
 						if (configuration.audioMediaFlag || configuration.videoMediaFlag) {
+							console.debug("[PC]: addStream()");
 							this.peerConnection.addStream(this.configuration.localMediaStream);
 						}
 						if (this.configuration.messageMediaFlag) {
 							if (this.peerConnection.createDataChannel) {
 								try {
+									console.debug("[PC]: createDataChannel()");
 									this.messageChannel = this.peerConnection.createDataChannel("mymessageChannel", {
 										reliable: false
 									});
@@ -248,6 +250,7 @@ WebRTCommCall.prototype.open = function(calleePhoneNumber, configuration) {
 							};
 
 							console.debug("WebRTCommCall:open():sdpConstraints=" + JSON.stringify(sdpConstraints));
+							console.debug("[PC]: createOffer()");
 							this.peerConnection.createOffer(function(offer) {
 								that.onRtcPeerConnectionCreateOfferSuccessEvent(offer);
 							}, function(error) {
@@ -261,6 +264,7 @@ WebRTCommCall.prototype.open = function(calleePhoneNumber, configuration) {
 							};
 
 							console.debug("WebRTCommCall:open():sdpConstraints=" + JSON.stringify(sdpConstraints));
+							console.debug("[PC]: createOffer()");
 							this.peerConnection.createOffer(function(offer) {
 								that.onRtcPeerConnectionCreateOfferSuccessEvent(offer);
 							}, function(error) {
@@ -321,6 +325,7 @@ WebRTCommCall.prototype.hangup = function() {
 			if (this.peerConnection && this.peerConnection.signalingState !== 'closed') {
 				if (this.messageChannel)
 					this.messageChannel.close();
+				console.debug("[PC]: close()");
 				this.peerConnection.close();
 				this.peerConnection = undefined;
 				this.dtmfSender = undefined;
@@ -476,6 +481,7 @@ WebRTCommCall.prototype.close = function(shouldGetStats) {
 		if (this.peerConnection != null && this.statsAlreadyRequested === false) {
 			var that = this;
 			this.statsAlreadyRequested = true;
+			console.debug("[PC]: getStats()");
 			this.peerConnection.getStats(null, function(results) {
 				console.debug("WebRTCommCall:close(), received media stats");
 				// do actual hangup now that we got the stats
@@ -505,6 +511,7 @@ WebRTCommCall.prototype.getStats = function() {
 	if (this.peerConnection != null && this.statsAlreadyRequested === false) {
 		var that = this;
 		this.statsAlreadyRequested = true;
+		console.debug("[PC]: getStats()");
 		this.peerConnection.getStats(null, function(results) {
 			that.statsAlreadyRequested = false;
 			console.debug("WebRTCommCall:getStats(), received media stats");
@@ -598,6 +605,7 @@ WebRTCommCall.prototype.accept = function(configuration) {
 					try {
 						this.createRTCPeerConnection();
 						if (configuration.audioMediaFlag || configuration.videoMediaFlag) {
+							console.debug("[PC]: addStream()");
 							this.peerConnection.addStream(this.configuration.localMediaStream);
 						}
 						var sdpOffer = undefined;
@@ -616,6 +624,7 @@ WebRTCommCall.prototype.accept = function(configuration) {
 						*/
 						var that = this;
 						this.peerConnectionState = 'offer-received';
+						console.debug("[PC]: setRemoteDescription()");
 						this.peerConnection.setRemoteDescription(sdpOffer, function() {
 							that.onRtcPeerConnectionSetRemoteDescriptionSuccessEvent();
 						}, function(error) {
@@ -1135,6 +1144,7 @@ WebRTCommCall.prototype.createRTCPeerConnection = function() {
 	};
 	*/
 
+	console.debug("[PC]: new RTCPeerConnection()");
 	this.peerConnection = new RTCPeerConnection(rtcPeerConnectionConfiguration, null);
 
 	this.peerConnection.onaddstream = function(event) {
@@ -1235,6 +1245,7 @@ WebRTCommCall.prototype.onPrivateCallConnectorRemoteSdpAnswerEvent = function(re
 
 		var that = this;
 		this.peerConnectionState = 'answer-received';
+		console.debug("[PC]: setRemoteDescription()");
 		this.peerConnection.setRemoteDescription(sdpAnswer, function() {
 			that.onRtcPeerConnectionSetRemoteDescriptionSuccessEvent();
 		}, function(error) {
@@ -1474,6 +1485,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionOnAddStreamEvent = function(event) {
 						if (that.peerConnection.createDTMFSender) {
 							if (that.configuration.localMediaStream !== null) {
 								var localAudioTrack = that.configuration.localMediaStream.getAudioTracks()[0];
+								console.debug("[PC]: createDTMFSender()");
 								that.dtmfSender = that.peerConnection.createDTMFSender(localAudioTrack);
 								//that.dtmfSender.ontonechange = dtmfOnToneChange;
 								console.debug('Created DTMFSender');
@@ -1587,6 +1599,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionIceCandidateEvent = function(rtcIceCa
  * @param {RTCSessionDescription} sdpOffer  RTCPeerConnection SDP offer event
  */
 WebRTCommCall.prototype.onRtcPeerConnectionCreateOfferSuccessEvent = function(sdpOffer) {
+	console.debug("[PC]: onCreateOfferSuccessEvent()");
 	try {
 		console.debug("WebRTCommCall:onRtcPeerConnectionCreateOfferSuccessEvent(): sdpOffer=" + JSON.stringify(sdpOffer));
 		if (this.peerConnection) {
@@ -1603,6 +1616,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionCreateOfferSuccessEvent = function(sd
 					this.setRtcPeerConnectionLocalDescription(sdpOffer);
 				}
 
+				console.debug("[PC]: setLocalDescription()");
 				this.peerConnection.setLocalDescription(sdpOffer, function() {
 					that.onRtcPeerConnectionSetLocalDescriptionSuccessEvent();
 				}, function(error) {
@@ -1670,6 +1684,7 @@ WebRTCommCall.prototype.setRtcPeerConnectionLocalDescription = function(sdpOffer
  * @param {object} error  RTCPeerConnection SDP offer error event
  */
 WebRTCommCall.prototype.onRtcPeerConnectionCreateOfferErrorEvent = function(error) {
+	console.debug("[PC]: onCreateOfferErrorEvent()");
 	try {
 		console.error("WebRTCommCall:onRtcPeerConnectionCreateOfferErrorEvent():error=" + JSON.stringify(error));
 		if (this.peerConnection) {
@@ -1692,6 +1707,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionCreateOfferErrorEvent = function(erro
  * @private
  */
 WebRTCommCall.prototype.onRtcPeerConnectionSetLocalDescriptionSuccessEvent = function() {
+	console.debug("[PC]: onSetLocalDescriptionSuccess()");
 	try {
 		console.debug("WebRTCommCall:onRtcPeerConnectionSetLocalDescriptionSuccessEvent():" + JSON.stringify(this.peerConnection));
 		if (this.peerConnection) {
@@ -1714,6 +1730,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionSetLocalDescriptionSuccessEvent = fun
  * @param {object} error  RTCPeerConnection SDP offer error event
  */
 WebRTCommCall.prototype.onRtcPeerConnectionSetLocalDescriptionErrorEvent = function(error) {
+	console.debug("[PC]: onSetLocalDescriptionError()");
 	try {
 		console.error("WebRTCommCall:onRtcPeerConnectionSetLocalDescriptionErrorEvent():error=" + JSON.stringify(error));
 		if (this.peerConnection) {
@@ -1737,6 +1754,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionSetLocalDescriptionErrorEvent = funct
  * @param {RTCSessionDescription} answer  RTCPeerConnection SDP answer event
  */
 WebRTCommCall.prototype.onRtcPeerConnectionCreateAnswerSuccessEvent = function(sdpAnswser) {
+	console.debug("[PC]: onCreateAnswerSuccess()");
 	try {
 		console.debug("WebRTCommCall:onRtcPeerConnectionCreateAnswerSuccessEvent():answer=" + JSON.stringify(sdpAnswser));
 		if (this.peerConnection) {
@@ -1769,6 +1787,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionCreateAnswerSuccessEvent = function(s
 
 				sdpAnswser.sdp = parsedSdpAnswer;
 				this.peerConnectionLocalDescription = parsedSdpAnswer;
+				console.debug("[PC]: setLocalDescription()");
 				this.peerConnection.setLocalDescription(sdpAnswser, function() {
 					that.onRtcPeerConnectionSetLocalDescriptionSuccessEvent();
 				}, function(error) {
@@ -1792,6 +1811,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionCreateAnswerSuccessEvent = function(s
  * @param {String} error  SDP error
  */
 WebRTCommCall.prototype.onRtcPeerConnectionCreateAnswerErrorEvent = function(error) {
+	console.debug("[PC]: onCreateAnswerError()");
 	console.error("WebRTCommCall:onRtcPeerConnectionCreateAnswerErrorEvent():error=" + JSON.stringify(error));
 	try {
 		if (this.peerConnection) {
@@ -1813,6 +1833,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionCreateAnswerErrorEvent = function(err
  * @private
  */
 WebRTCommCall.prototype.onRtcPeerConnectionSetRemoteDescriptionSuccessEvent = function() {
+	console.debug("[PC]: onSetRemoteDescriptionSuccess()");
 	try {
 		console.debug("WebRTCommCall:onRtcPeerConnectionSetRemoteDescriptionSuccessEvent()");
 		if (this.peerConnection) {
@@ -1848,6 +1869,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionSetRemoteDescriptionSuccessEvent = fu
 						optional: []
 					};
 					console.debug("WebRTCommCall:onRtcPeerConnectionSetRemoteDescriptionSuccessEvent():sdpConstraints=" + JSON.stringify(sdpConstraints));
+					console.debug("[PC]: createAnswer()");
 					this.peerConnection.createAnswer(function(answer) {
 						that.onRtcPeerConnectionCreateAnswerSuccessEvent(answer);
 					}, function(error) {
@@ -1860,6 +1882,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionSetRemoteDescriptionSuccessEvent = fu
 						mozDontOfferDataChannel: !this.configuration.messageMediaFlag
 					};
 					console.debug("WebRTCommCall:onRtcPeerConnectionSetRemoteDescriptionSuccessEvent():sdpConstraints=" + JSON.stringify(sdpConstraints));
+					console.debug("[PC]: createAnswer()");
 					this.peerConnection.createAnswer(function(answer) {
 						that.onRtcPeerConnectionCreateAnswerSuccessEvent(answer);
 					}, function(error) {
@@ -1884,6 +1907,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionSetRemoteDescriptionSuccessEvent = fu
  * @param {String} error  SDP error
  */
 WebRTCommCall.prototype.onRtcPeerConnectionSetRemoteDescriptionErrorEvent = function(error) {
+	console.debug("[PC]: onSetRemoteDescriptionError()");
 	try {
 		console.error("WebRTCommCall:onRtcPeerConnectionSetRemoteDescriptionErrorEvent():error=" + JSON.stringify(error));
 		if (this.peerConnection) {
@@ -2090,6 +2114,7 @@ WebRTCommCall.prototype.onRtcPeerConnectionIdentityResultEvent = function(event)
  * @param {Event} event  RTCPeerConnection data channel event
  */
 WebRTCommCall.prototype.onRtcPeerConnectionOnMessageChannelEvent = function(event) {
+	console.debug("[PC]: ondatachannel()");
 	console.debug("WebRTCommCall:onRtcPeerConnectionOnMessageChannelEvent():event=" + JSON.stringify(event));
 	if (this.peerConnection) {
 		console.debug("WebRTCommCall:onRtcPeerConnectionOnMessageChannelEvent(): this.peerConnection.signalingState=" + this.peerConnection.signalingState);
