@@ -1518,7 +1518,8 @@ WebRTCommCall.prototype.onRtcPeerConnectionIceCandidateEvent = function(rtcIceCa
 			console.debug("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): this.peerConnection.iceConnectionState=" + this.peerConnection.iceConnectionState);
 			console.debug("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): this.peerConnectionState=" + this.peerConnectionState);
 			if (this.peerConnection.signalingState !== 'closed') {
-				if (this.peerConnection.iceGatheringState === 'complete') {
+				// Gathering complete is signalled here when rtcIceCandidateEvent.candidate is null
+				if (!rtcIceCandidateEvent.candidate && this.peerConnection.iceGatheringState === 'complete') {
 					if (this.peerConnectionState === 'preparing-offer') {
 						var sdpOfferString = this.peerConnection.localDescription.sdp;
 						var parsedSdpOffer = this.setRtcPeerConnectionLocalDescription(this.peerConnection.localDescription);
@@ -1907,59 +1908,6 @@ WebRTCommCall.prototype.onRtcPeerConnectionIceNegotiationNeededEvent = function(
 		console.debug("WebRTCommCall:onRtcPeerConnectionIceNegotiationNeededEvent(): this.peerConnectionState=" + this.peerConnectionState);
 	} else {
 		console.warn("WebRTCommCall:onRtcPeerConnectionIceNegotiationNeededEvent(): event ignored");
-	}
-};
-
-/**
- * RTCPeerConnection listener implementation
- * @private
- * @param {Event} event  RTCPeerConnection ICE change event
- */
-WebRTCommCall.prototype.onRtcPeerConnectionGatheringChangeEvent = function(event) {
-	console.debug("WebRTCommCall:onRtcPeerConnectionGatheringChangeEvent():event=" + event);
-	if (this.peerConnection) {
-		console.debug("WebRTCommCall:onRtcPeerConnectionGatheringChangeEvent(): this.peerConnection.signalingState=" + this.peerConnection.signalingState);
-		console.debug("WebRTCommCall:onRtcPeerConnectionGatheringChangeEvent(): this.peerConnection.iceGatheringState=" + this.peerConnection.iceGatheringState);
-		console.debug("WebRTCommCall:onRtcPeerConnectionGatheringChangeEvent(): this.peerConnection.iceConnectionState=" + this.peerConnection.iceConnectionState);
-		console.debug("WebRTCommCall:onRtcPeerConnectionGatheringChangeEvent(): this.peerConnectionState=" + this.peerConnectionState);
-
-		if (this.peerConnection.signalingState !== 'closed') {
-			if (this.peerConnection.iceGatheringState === "complete") {
-				if (this.peerConnectionState === 'preparing-offer') {
-					var sdpOfferString = this.peerConnection.localDescription.sdp;
-					var parsedSdpOffer = this.setRtcPeerConnectionLocalDescription(this.peerConnection.localDescription);
-
-					// Apply modified SDP Offer
-					this.connector.invite(parsedSdpOffer);
-					this.peerConnectionState = 'offer-sent';
-				} else if (this.peerConnectionState === 'preparing-answer') {
-					var sdpAnswerString = this.peerConnection.localDescription.sdp;
-					var parsedSdpAnswer = this.setRtcPeerConnectionLocalDescription(this.peerConnection.localDescription);
-
-					this.connector.accept(parsedSdpAnswer);
-					this.peerConnectionState = 'established';
-					// Notify opened event to listener
-					if (this.eventListener.onWebRTCommCallOpenedEvent) {
-						var that = this;
-						setTimeout(function() {
-							try {
-								that.eventListener.onWebRTCommCallOpenedEvent(that);
-							} catch (exception) {
-								console.error("WebRTCommCall:onRtcPeerConnectionGatheringChangeEvent(): catched exception in listener:" + exception);
-							}
-						}, 1);
-					}
-				} else if (this.peerConnectionState === 'established') {
-					// Why this last ice candidate event?
-				} else {
-					console.error("WebRTCommCall:onRtcPeerConnectionGatheringChangeEvent(): RTCPeerConnection bad state!");
-				}
-			}
-		} else {
-			console.error("WebRTCommCall:onRtcPeerConnectionGatheringChangeEvent(): RTCPeerConnection closed!");
-		}
-	} else {
-		console.warn("WebRTCommCall:onRtcPeerConnectionGatheringChangeEvent(): event ignored");
 	}
 };
 
