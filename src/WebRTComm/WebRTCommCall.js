@@ -1269,7 +1269,7 @@ WebRTCommCall.prototype.onPrivateCallConnectorCallInProgressEvent = function() {
  * @param {string} error call control error
  */
 WebRTCommCall.prototype.onPrivateCallConnectorCallOpenErrorEvent = function(error) {
-	console.error("WebRTCommCall:onPrivateCallConnectorCallOpenErrorEvent():error=" + error);
+	console.debug("WebRTCommCall:onPrivateCallConnectorCallOpenErrorEvent():error=" + error);
 	// Notify event to the listener
 	if (this.eventListener.onWebRTCommCallOpenErrorEvent) {
 		var that = this;

@@ -750,6 +750,7 @@ PrivateJainSipCallConnector.prototype.processInvitedSipRequestEvent = function(r
 			// Close the call
 			this.close();
 		} else if (requestMethod === "ACK") {
+			// It's important to update the stored dialog with the one in the request as it might have been updated inside the JAIN SIP stack
 			this.jainSipInvitedDialog = requestEvent.getServerTransaction().getDialog();
 		} else {
 			console.error("PrivateJainSipCallConnector:processInvitedSipRequestEvent(): bad state, SIP request ignored");

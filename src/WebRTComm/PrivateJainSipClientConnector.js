@@ -216,6 +216,25 @@ PrivateJainSipClientConnector.prototype.removeSessionConnector = function(sipSes
 };
 
 /**
+ * Check if JainSipClient is busy. We 're deemed busy if there a call in any state
+ * @public
+ * @return true if client is busy, false otherwise
+ */
+PrivateJainSipClientConnector.prototype.clientIsBusy = function() {
+	var isBusy = false;
+	for (var sipCallId in this.sessionConnectors) {
+		var sessionConnector = this.sessionConnectors[sipCallId];
+		if (sessionConnector instanceof PrivateJainSipCallConnector) {
+			// if sessionConnection of type PrivateJainSipCallConnector exists in any state we are deemed busy
+			isBusy = true;
+			break;
+		}
+	}
+	console.debug("PrivateJainSipClientConnector:clientIsBusy(): " + isBusy);
+	return isBusy;
+};
+
+/**
  * Reset client context
  * @private
  */
@@ -469,6 +488,15 @@ PrivateJainSipClientConnector.prototype.processRequest = function(requestEvent) 
 			} else {
 				if (jainSipRequestMethod === "INVITE") {
 					// Incoming SIP INVITE
+					if (this.clientIsBusy()) {
+						// Client is already busy; decline new call with 480 Temporarily Unavailable
+						var jainSipResponse480 = jainSipRequest.createResponse(480, "Temporarily Unavailable");
+						jainSipResponse480.addHeader(this.jainSipContactHeader);
+						requestEvent.getServerTransaction().sendResponse(jainSipResponse480);
+						this.removeSessionConnector(sipSessionId);
+						return;
+					}
+
 					var newWebRTCommCall = new WebRTCommCall(this.webRTCommClient);
 					newWebRTCommCall.incomingCallFlag = true;
 					newWebRTCommCall.connector = this.createPrivateSessionConnector(newWebRTCommCall, sipSessionId);
