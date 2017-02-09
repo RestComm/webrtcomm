@@ -279,7 +279,7 @@ WebRTCommClient.prototype.onPrivateClientConnectorOpenedEvent = function() {
  * @param {string} error Error message
  */
 WebRTCommClient.prototype.onPrivateClientConnectorOpenErrorEvent = function(error) {
-	console.debug("WebRTCommClient:onPrivateClientConnectorOpenErrorEvent():error:" + error);
+	console.error("WebRTCommClient:onPrivateClientConnectorOpenErrorEvent():error:" + error);
 	// Force closing of the client
 	try {
 		this.close();
@@ -292,6 +292,25 @@ WebRTCommClient.prototype.onPrivateClientConnectorOpenErrorEvent = function(erro
 				that.eventListener.onWebRTCommClientOpenErrorEvent(error);
 			} catch (exception) {
 				console.error("WebRTCommClient:onPrivateClientConnectorOpenErrorEvent(): catched exception in event listener:" + exception);
+			}
+		}, 1);
+	}
+};
+
+/**
+ * Implements PrivateClientConnector warning event listener interface
+ * @private
+ * @param {string} error Error message
+ */
+WebRTCommClient.prototype.onPrivateClientConnectorOpenWarningEvent = function(warning) {
+	console.warn("WebRTCommClient:onPrivateClientConnectorOpenWarningEvent():warning:" + warning);
+	if (this.eventListener.onWebRTCommClientOpenWarningEvent !== undefined) {
+		var that = this;
+		setTimeout(function() {
+			try {
+				that.eventListener.onWebRTCommClientOpenWarningEvent(warning);
+			} catch (exception) {
+				console.error("WebRTCommClient:onPrivateClientConnectorOpenWarningEvent(): catched exception in event listener:" + exception);
 			}
 		}, 1);
 	}

@@ -24,6 +24,16 @@ WebRTCommClientEventListenerInterface.prototype.onWebRTCommClientOpenErrorEvent 
 	throw "WebRTCommClientEventListenerInterface:onWebRTCommClientOpenErrorEvent(): not implemented;";
 };
 
+/**
+ * Warning event. Used for WebRTCommClient events that the application needs to know but which are not destructive
+ * For example a REGISTER refresh that fails is such an event that we need to know, but which usually resolves
+ * itself by retrying
+ * @public
+ * @param {String} error open error message
+ */
+WebRTCommClientEventListenerInterface.prototype.onWebRTCommClientOpenWarningEvent = function(error) {
+	throw "WebRTCommClientEventListenerInterface:onWebRTCommClientOpenWarningEvent(): not implemented;";
+};
 
 /**
  * Close event 

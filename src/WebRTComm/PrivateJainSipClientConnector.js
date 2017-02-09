@@ -605,9 +605,11 @@ PrivateJainSipClientConnector.prototype.processTimeout = function(timeoutEvent) 
 		if (sessionConnector) {
 			sessionConnector.onJainSipClientConnectorSipTimeoutEvent(timeoutEvent);
 		} else if (this.jainSipRegisterRequest.getCallId().getCallId() === sipCallId) {
-			console.error("PrivateJainSipClientConnector:processTimeout(): SIP registration failed, request timeout, no response from SIP server, Call-Id: " + sipCallId);
-			this.reset();
-			this.webRTCommClient.onPrivateClientConnectorOpenErrorEvent("Request Timeout");
+			console.error("PrivateJainSipClientConnector:processTimeout(): SIP registration timed out, no response from SIP server, Call-Id: " + sipCallId + ". Retrying... ");
+
+			// Let's retry register, notice that previous REGISTER timed out after 32 seconds, so we 're here after this interval and we shouldn't be stressing the server
+			this.sendNewSipRegisterRequest(this.SIP_SESSION_EXPIRATION_TIMER);
+			this.webRTCommClient.onPrivateClientConnectorOpenWarningEvent("Register Request Timeout");
 		} else {
 			console.warn("PrivateJainSipClientConnector:processTimeout(): no dialog found, SIP timeout ignored");
 		}
