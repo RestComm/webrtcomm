@@ -28,8 +28,8 @@ PrivateJainSipClientConnector.prototype.SIP_REGISTERING_401_STATE = "SIP_REGISTE
 PrivateJainSipClientConnector.prototype.SIP_REGISTERED_STATE = "SIP_REGISTERED_STATE";
 PrivateJainSipClientConnector.prototype.SIP_UNREGISTERING_401_STATE = "SIP_UNREGISTERING_401_STATE";
 PrivateJainSipClientConnector.prototype.SIP_UNREGISTERING_STATE = "SIP_UNREGISTERING_STATE";
-PrivateJainSipClientConnector.prototype.SIP_SESSION_EXPIRATION_TIMER = 60;
-PrivateJainSipClientConnector.prototype.SIP_REGISTER_REFRESH_TIMER = 50;
+PrivateJainSipClientConnector.prototype.SIP_SESSION_EXPIRATION_TIMER = 3600;
+PrivateJainSipClientConnector.prototype.SIP_REGISTER_REFRESH_TIMER = 3550;
 
 /**
  * Get SIP client/user agent opened/closed status 
