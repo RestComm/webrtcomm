@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.restcomm</groupId>
+		<artifactId>screen-sharing</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+	<artifactId>screen-sharing-web</artifactId>
+	<packaging>war</packaging>
+	<name>WebRTC screen sharing demo webapp</name>
+
+	<dependencies>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>screen-sharing-extension</artifactId>
+			<version>${project.parent.version}</version>
+			<type>crx</type>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-war-plugin</artifactId>
+				<configuration>
+					<webResources>
+						<resource>
+							<filtering>true</filtering>
+							<directory>src/main/webapp/js</directory>
+							<targetPath>js</targetPath>
+							<includes>
+								<include>client.js</include>
+							</includes>
+						</resource>
+						<resource>
+							<filtering>false</filtering>
+							<directory>${basedir}/../screen-sharing-extension/target</directory>
+							<includes>
+								<include>screen-sharing-extension.crx</include>
+							</includes>
+						</resource>
+					</webResources>
+				</configuration>
+			</plugin>
+		</plugins>
+
+		<finalName>screen-sharing</finalName>
+	</build>
+</project>
