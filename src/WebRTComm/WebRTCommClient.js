@@ -51,25 +51,41 @@ WebRTCommClient.prototype.getConfiguration = function() {
  * Open the WebRTC communication client, asynchronous action, opened or error event are notified to the eventListener
  * @public 
  * @param {object} configuration  WebRTC communication client configuration <br>
- * <p> Client configuration sample: <br>
- * { <br>
- * <span style="margin-left: 30px">communicationMode:WebRTCommClient.prototype.SIP,<br></span>
- * <span style="margin-left: 30px">sip: {,<br></span>
- * <span style="margin-left: 60px">sipUriContactParameters:undefined,<br></span>
- * <span style="margin-left: 60px">sipUserAgent:"WebRTCommTestWebApp/0.0.1",<br></span>
- * <span style="margin-left: 60px">sipUserAgentCapabilities=undefined,<br></span>
- * <span style="margin-left: 60px">sipOutboundProxy:"ws://localhost:5082",<br></span>
- * <span style="margin-left: 60px">sipDomain:"sip.net",<br></span>
- * <span style="margin-left: 60px">sipUserName:"alice",<br></span>
- * <span style="margin-left: 60px">sipLogin:"alice@sip.net,<br></span>
- * <span style="margin-left: 60px">sipPassword:"1234567890",<br></span>
- * <span style="margin-left: 60px">sipRegisterMode:true,<br></span>
- * <span style="margin-left: 30px">}<br></span>
- * <span style="margin-left: 30px">RTCPeerConnection: {,<br></span>
- * <span style="margin-left: 60px"stunServer:undefined,<br></span>
- * <span style="margin-left: 30px">}<br></span>
- * }<br>
- *  </p>
+ * <div style="padding-left: 1.8em">
+ *    Sub-dictionary 'sip':<br>
+ *    <div style="padding-left: 1.8em">
+ *       <b>sipUriContactParameters</b>: SIP URI contact parameters (string) <br>
+ *       <b>sipUserAgent</b>: SIP User Agent string to be used in SIP headers, like <i>'Restcomm Web Olympus/1.0.0'</i> (string) <br>
+ *       <b>sipUserAgentCapabilities</b>: SIP User Agent capabilities (string) <br>
+ *       <b>sipOutboundProxy</b>: SIP outbound proxy, like <i>'wss://proxy.restcomm.com:5063'</i> (string) <br>
+ *       <b>sipDomain</b>: SIP Domain, like <i>'proxy.restcomm.com'</i> (string) <br>
+ *       <b>sipDisplayName</b>: SIP display name, like <i>'Bob'</i> (string) <br>
+ *       <b>sipUserName</b>: SIP user name, like <i>'bob'</i> (string) <br>
+ *       <b>sipLogin</b>: SIP login, like <i>'bob'</i> (string) <br>
+ *       <b>sipPassword</b>: SIP password to be used when authorizing with proxy (string) <br>
+ *       <b>sipRegisterMode</b>: SIP register mode. Should we register with registrar/proxy (true) or work in registrarless mode (false) (boolean, default true) <br>
+ *    </div>
+ *    Sub-dictionary 'RTCPeerConnection':<br>
+ *    <div style="padding-left: 1.8em">
+ *       <b>iceServers</b>: List of ICE servers. This list is typically returned when the web application programmatically requests ICE servers via an HTTP request to an auto-configuration URL and contains both of STUN and TURN servers and each entry in the list is a dictionary that might have: a <i>url</url> (mandatory), a <i>username</i> (optional) and a <i>crendential</i> (optional). For example: <br>
+ *       <div style="padding-left: 1.8em">
+ *				iceServers": [
+ *				{
+ *					"url": "stun:turn02.uswest.stun-server.com"
+ *				},
+ *				{
+ *					"username": "johndoe",
+ *					"url": "turn:turn02.uswest.turn-server.com:80?transport=udp",
+ *					"credential": "johndoes-secret"
+ *				},
+ *				...
+ *       </div>
+ *       <b>stunServer</b>: Manual STUN server URL to use when <b>not</b> using iceServers (see above), like <i>'stun:turn02.uswest.stun-server.com'</i> (string) <br>
+ *       <b>turnServer</b>: Manual TURN server URL to use when <b>not</b> using iceServers (see above), like <i>'turn:turn02.uswest.turn-server.com:80?transport=udp'</i> <br>
+ *       <b>turnLogin</b>: Manual TURN username to use for TURN authentication together with turnServer above, like <i>'johndoe'</i> <br>
+ *       <b>turnPassword</b>: Manual TURN password to use for TURN authentication together with turnServer above <br>
+ *    </div>
+ * </div>
  * @throw {String} Exception "bad argument, check API documentation"
  * @throw {String} Exception "bad configuration, missing parameter"
  * @throw {String} Exception "bad state, unauthorized action"
