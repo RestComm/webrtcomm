@@ -405,7 +405,7 @@ function getTimestamp()
 }
 
 // Common logging function called by all the others with appropriate logging function
-function commonLog(logger, args, includeStackTrace)
+function commonLog(logger, typeString, args, includeStackTrace)
 {
 	var e = new Error('dummy-exception');
 	var stack = e.stack; 
@@ -427,7 +427,7 @@ function commonLog(logger, args, includeStackTrace)
 	}
 
 	// what this does is prepend element given as second argument, in array given as first argument
-	Array.prototype.unshift.call(args, getTimestamp());
+	Array.prototype.unshift.call(args, getTimestamp() + " " + typeString);
 
 	if (includeStackTrace !== undefined && includeStackTrace == true) {
 		// similarly, this appends the seconds argument, hence the stack trace, to the args array
@@ -456,31 +456,31 @@ function commonLog(logger, args, includeStackTrace)
 	if (window.console && console.debug) {
 		var oldConsoleDebug = console.debug;
 		console.debug = function() {
-			commonLog(oldConsoleDebug, arguments);
+			commonLog(oldConsoleDebug, "DEBUG", arguments);
 		}
 	}  
 	if (window.console && console.log) {
 		var oldConsoleLog = console.log;
 		console.log = function() {
-			commonLog(oldConsoleLog, arguments);
+			commonLog(oldConsoleLog, "INFO", arguments);
 		}
 	}  
 	if (window.console && console.info) {
 		var oldConsoleInfo = console.info;
 		console.info = function() {
-			commonLog(oldConsoleInfo, arguments);
+			commonLog(oldConsoleInfo, "INFO", arguments);
 		}
 	}  
 	if (window.console && console.warn) {
 		var oldConsoleWarn = console.warn;
 		console.warn = function() {
-			commonLog(oldConsoleWarn, arguments);
+			commonLog(oldConsoleWarn, "WARN", arguments);
 		}
 	}  
 	if (window.console && console.error) {
 		var oldConsoleError = console.error;
 		console.error = function() {
-			commonLog(oldConsoleError, arguments, true);
+			commonLog(oldConsoleError, "ERROR", arguments, true);
 		}
 	}  
 })();
