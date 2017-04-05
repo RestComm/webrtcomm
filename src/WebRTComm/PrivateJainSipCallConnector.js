@@ -534,7 +534,7 @@ PrivateJainSipCallConnector.prototype.processInvitingSipResponseEvent = function
 	console.debug("PrivateJainSipCallConnector:processInvitingSipResponseEvent(): this.sipCallState=" + this.sipCallState);
 	var jainSipResponse = responseEvent.getResponse();
 	var statusCode = parseInt(jainSipResponse.getStatusCode());
-	if (this.sipCallState === this.SIP_INVITING_STATE) {
+	if (this.sipCallState === this.SIP_INVITING_STATE || this.sipCallState === this.SIP_INVITING_407_STATE) {
 		if (statusCode < 200) {
 			if (statusCode === 180) {
 				// Notify the ringing back event
@@ -543,12 +543,14 @@ PrivateJainSipCallConnector.prototype.processInvitingSipResponseEvent = function
 				// Notify asynchronously the in progress event
 				this.webRTCommCall.onPrivateCallConnectorCallInProgressEvent();
 			}
-			console.debug("PrivateJainSipCallConnector:processInvitingSipResponseEvent(): 1XX response ignored");
-		} else if (statusCode === 407) {
+			else {
+				console.debug("PrivateJainSipCallConnector:processInvitingSipResponseEvent(): 1XX response ignored");
+			}
+		} else if (statusCode === 407 && this.sipCallState === this.SIP_INVITING_STATE) {
 			// Send Authenticated SIP INVITE
 			var jainSipAuthorizationHeader = this.clientConnector.jainSipHeaderFactory.createAuthorizationHeader(jainSipResponse, this.jainSipInvitingRequest, this.clientConnector.configuration.sipPassword, this.clientConnector.configuration.sipLogin);
 			this.sendAuthenticatedSipInviteRequest(jainSipAuthorizationHeader);
-			// Update SIP call state            
+			// Update SIP call state
 			this.sipCallState = this.SIP_INVITING_407_STATE;
 		} else if (statusCode === 200) {
 			this.jainSipInvitingDialog = responseEvent.getOriginalTransaction().getDialog();
@@ -558,7 +560,7 @@ PrivateJainSipCallConnector.prototype.processInvitingSipResponseEvent = function
 				var jainSipMessageACK = this.jainSipInvitingTransaction.createAck();
 				jainSipMessageACK.addHeader(this.clientConnector.jainSipContactHeader);
 				this.jainSipInvitingDialog.sendAck(jainSipMessageACK);
-				// Update SIP call state    
+				// Update SIP call state
 				this.sipCallState = this.SIP_INVITING_ACCEPTED_STATE;
 			} catch (exception) {
 				console.error("PrivateJainSipCallConnector:processInvitingSipRequestEvent(): catched exception, exception:" + exception);
@@ -578,58 +580,18 @@ PrivateJainSipCallConnector.prototype.processInvitingSipResponseEvent = function
 			}
 		} else {
 			console.error("PrivateJainSipCallConnector:processInvitingSipRequestEvent(): SIP INVITE failed:" + jainSipResponse.getStatusCode() + "  " + jainSipResponse.getStatusLine().toString());
-			// Update SIP call state    
-			this.sipCallState = this.SIP_INVITING_ERROR_STATE;
-			// Notify asynchronously the error event
-			this.webRTCommCall.onPrivateCallConnectorCallOpenErrorEvent(jainSipResponse.getStatusLine().getReasonPhrase());
-
-			this.close();
-		}
-	} else if (this.sipCallState === this.SIP_INVITING_CANCELLING_STATE) {
-		// Update SIP call state    
-		this.sipCallState = this.SIP_INVITING_CANCELLED_STATE;
-		this.close();
-	} else if (this.sipCallState === this.SIP_INVITING_407_STATE) {
-		if (statusCode < 200) {
-			console.debug("PrivateJainSipCallConnector:processInvitingSipResponseEvent(): 1XX response ignored");
-		} else if (statusCode === 200) {
-			this.jainSipInvitingDialog = responseEvent.getOriginalTransaction().getDialog();
-
-			try {
-				// Send SIP 200 OK ACK
-				this.jainSipInvitingDialog.setRemoteTarget(jainSipResponse.getHeader("Contact"));
-				var jainSipMessageACK = this.jainSipInvitingTransaction.createAck();
-				jainSipMessageACK.addHeader(this.clientConnector.jainSipContactHeader);
-				this.jainSipInvitingDialog.sendAck(jainSipMessageACK);
-				// Update SIP call state
-				this.sipCallState = this.SIP_INVITING_ACCEPTED_STATE;
-			} catch (exception) {
-				console.error("PrivateJainSipCallConnector:processInvitingSipRequestEvent(): catched exception, exception:" + exception);
-			}
-
-
-			try {
-				var sdpAnswerString = jainSipResponse.getContent();
-				this.webRTCommCall.onPrivateCallConnectorRemoteSdpAnswerEvent(sdpAnswerString);
-			} catch (exception) {
-				console.error("PrivateJainSipCallConnector:processInvitingSipRequestEvent(): catched exception, exception:" + exception);
-
-				// Notify the error event
-				this.webRTCommCall.onPrivateCallConnectorCallOpenErrorEvent(exception);
-
-				// Close the call
-				this.close();
-			}
-		} else {
 			// Update SIP call state
 			this.sipCallState = this.SIP_INVITING_ERROR_STATE;
-
-			// Notify the error event
+			// Notify asynchronously the error event
 			this.webRTCommCall.onPrivateCallConnectorCallOpenErrorEvent(jainSipResponse.getStatusLine().getReasonPhrase());
 
 			// Close the call
 			this.close();
 		}
+	} else if (this.sipCallState === this.SIP_INVITING_CANCELLING_STATE) {
+		// Update SIP call state
+		this.sipCallState = this.SIP_INVITING_CANCELLED_STATE;
+		this.close();
 	} else if (this.sipCallState === this.SIP_INVITING_ERROR_STATE) {
 		console.error("PrivateJainSipCallConnector:processInvitingSipResponseEvent(): bad state, SIP response ignored");
 	} else if (this.sipCallState === this.SIP_INVITING_ACCEPTED_STATE) {
