@@ -1,0 +1,109 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <parent>
+        <groupId>org.mobicents</groupId>
+        <artifactId>restcomm-parent</artifactId>
+        <version>2.27.32</version>
+    </parent>    
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.restcomm.webrtcomm</groupId>
+    <artifactId>webrtcomm</artifactId>
+    <packaging>jar</packaging>
+    <version>1.0.0</version>
+
+
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    <build>
+        <resources>
+            <resource>
+                <directory>src/WebRTComm</directory>
+                <includes>
+                    <include>**</include>
+                </includes>
+                <filtering>true</filtering>
+                <!-- this special dir allows JEE inclusion-->
+                <targetPath>META-INF/resources/webrtcomm</targetPath>
+            </resource>                   
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>yuicompressor-maven-plugin</artifactId>
+                <version>1.5.1</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compress</goal>
+                        </goals>
+                        <phase>process-resources</phase>
+                        <configuration>
+                            <nosuffix>true</nosuffix>
+                            <force>true</force>
+                            <includes>
+                                <include>${project.build.directory}/classes/META-INF/resources/webrtcomm/*.js</include>
+                            </includes>
+                            <aggregations>
+                                <aggregation>
+                                    <removeIncluded>true</removeIncluded>
+                                    <insertNewLine>true</insertNewLine>
+                                    <output>${project.build.directory}/classes/META-INF/resources/webrtcomm/WebRTComm.min.js</output>
+                                    <!-- files to include, path relative to output's directory or absolute path-->
+                                    <!--inputDir>base directory for non absolute includes, default to parent dir of output</inputDir-->
+                                    <inputDir>${project.build.directory}/classes/META-INF/resources/webrtcomm/</inputDir>
+                                    <includes>
+                                        <include>*.js</include>
+                                    </includes>
+                                </aggregation>
+                            </aggregations>
+                        </configuration>
+                    </execution>
+                </executions>                 
+            </plugin>
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>1.3</version>
+                <executions>
+                    <execution>
+                        <id>install node and npm</id>
+                        <goals>
+                            <goal>install-node-and-npm</goal>
+                        </goals>
+                        <phase>deploy</phase>
+                        <configuration>
+                            <nodeVersion>v4.6.0</nodeVersion>
+
+                            <!-- optional: with node version greater than 4.0.0 will use npm provided by node distribution -->
+                            <npmVersion>2.15.9</npmVersion>
+        
+                        </configuration>                          
+                    </execution>                      
+                    <execution>
+                        <id>publishToNPM</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>deploy</phase>
+                        <configuration>
+                            <arguments>publish ${project.build.directory}/classes/META-INF/resources/webrtcomm --access public </arguments>
+                        </configuration>
+                    </execution>                                                        
+                </executions>
+
+              
+            </plugin>            
+        </plugins>
+    </build>
+
+    
+    <pluginRepositories>
+        <pluginRepository>
+            <name>oss.sonatype.org</name>
+            <id>oss.sonatype.org</id>
+            <url>http://oss.sonatype.org/content/groups/public</url>
+        </pluginRepository>
+    </pluginRepositories>   
+    
+</project>

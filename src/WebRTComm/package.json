@@ -1,0 +1,26 @@
+{
+  "name": "webrtcomm",
+  "version": "${project.version}",
+  "description": "Restcomm WebRTC SDK",
+  "main": "WebRTComm.min.js",
+  "scripts": {
+  },
+  "dependencies": {
+  },
+  "engines": {
+    "node": "4.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RestComm/webrtcomm/"
+  },
+  "keywords": [
+    "webrtc",
+    "restcomm",
+    "communications"
+  ],
+  "author": "Restcomm",
+  "contributors": [
+  ],
+  "license": "Lesser GPL"
+}
