@@ -329,6 +329,8 @@ WebRTCommCall.prototype.hangup = function() {
 				this.peerConnection.close();
 				this.peerConnection = undefined;
 				this.dtmfSender = undefined;
+				// normalization of stats if messed up currently, so let's avoid printing normalized stats
+				//console.log('Retrieved call media stats: ' + JSON.stringify(this.stats));
 				// Notify asynchronously the closed event
 				var that = this;
 				setTimeout(function() {
@@ -387,11 +389,13 @@ function dumpStats(results) {
  * ssrc: synchronization source for this stream, like 501954246
  */
 WebRTCommCall.prototype.normalizeStats = function(stats) {
-	//var statsString = dumpStats(stats);
-	//console.error('--------: ' + JSON.stringify(statsString));
+	var statsString = dumpStats(stats);
+	console.log('Media stats before normalization: ' + JSON.stringify(statsString));
 
-	// array of objects
 	var normalizedStats = [];
+	// TODO: Normalization got messed up because names have been changed by chrome
+	/*
+	// array of objects
 	// calculate video bitrate
 	Object.keys(stats).forEach(function(result) {
 		var report = stats[result];
@@ -461,6 +465,7 @@ WebRTCommCall.prototype.normalizeStats = function(stats) {
 			normalizedStats.push(normalizedStat);
 		}
 	});
+	*/
 
 	return normalizedStats;
 }
@@ -483,7 +488,7 @@ WebRTCommCall.prototype.close = function(shouldGetStats) {
 			this.statsAlreadyRequested = true;
 			console.debug("[PC]: getStats()");
 			this.peerConnection.getStats(null, function(results) {
-				console.debug("WebRTCommCall:close(), received media stats");
+				console.log("WebRTCommCall:close(), received media stats");
 				// do actual hangup now that we got the stats
 				that.hangup();
 
