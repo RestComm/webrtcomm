@@ -1108,7 +1108,7 @@ WebRTCommCall.prototype.createRTCPeerConnection = function() {
 	var that = this;
 	/* https://code.google.com/p/webrtcomm/issues/detail?id=14 */
 	if (this.webRTCommClient.configuration.RTCPeerConnection.iceServers) {
-		rtcPeerConnectionConfiguration = this.webRTCommClient.configuration.RTCPeerConnection.iceServers;
+		rtcPeerConnectionConfiguration.iceServers = this.webRTCommClient.configuration.RTCPeerConnection.iceServers;
 	} else {
 		if (this.webRTCommClient.configuration.RTCPeerConnection.stunServer) {
 			rtcPeerConnectionConfiguration.iceServers.push({
