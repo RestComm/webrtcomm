@@ -42,3 +42,11 @@ WebRTCommClientEventListenerInterface.prototype.onWebRTCommClientOpenWarningEven
 WebRTCommClientEventListenerInterface.prototype.onWebRTCommClientClosedEvent = function() {
 	throw "WebRTCommClientEventListenerInterface:onWebRTCommClientClosedEvent(): not implemented;";
 };
+
+/**
+ * Keep-alive event
+ * @public
+ */
+WebRTCommClientEventListenerInterface.prototype.onWebRTCommClientKeepAliveEvent = function() {
+	throw "WebRTCommClientEventListenerInterface:onWebRTCommClientKeepAliveEvent(): not implemented;";
+};

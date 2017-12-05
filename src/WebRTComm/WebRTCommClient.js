@@ -371,6 +371,25 @@ WebRTCommClient.prototype.onPrivateClientConnectorClosedEvent = function() {
 	}
 };
 
+/**
+ * Implements PrivateClientConnector keep alive event listener interface
+ * @private
+ */
+
+WebRTCommClient.prototype.onPrivateClientConnectorKeepAliveEvent = function() {
+	console.debug("WebRTCommClient:onPrivateClientConnectorKeepAliveEvent()");
+	if (this.eventListener.onWebRTCommClientKeepAliveEvent !== undefined) {
+		var that = this;
+		setTimeout(function() {
+			try {
+				that.eventListener.onWebRTCommClientKeepAliveEvent();
+			} catch (exception) {
+				console.error("WebRTCommClient:onPrivateClientConnectorKeepAliveEvent(): catched exception in event listener:" + exception);
+			}
+		}, 1);
+	}
+};
+
 // Notice that in order to gain some speed (since this will be invoked A LOT), we use a hardcoded number of digits
 // This add padding for a padding size that is equal or less than 2x inputNumber string length. For bigger padding sizes
 // it will just return original inputNumber

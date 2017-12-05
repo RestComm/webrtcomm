@@ -479,6 +479,7 @@ PrivateJainSipClientConnector.prototype.processRequest = function(requestEvent) 
 		var jainSipRequestMethod = jainSipRequest.getMethod();
 		if (jainSipRequestMethod === "OPTIONS") {
 			this.processSipOptionRequest(requestEvent);
+			this.webRTCommClient.onPrivateClientConnectorKeepAliveEvent();
 		} else {
 			// Find related PrivateJainSipCallConnector (subsequent request)
 			var sipSessionId = jainSipRequest.getCallId().getCallId();
