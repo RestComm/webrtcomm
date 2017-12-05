@@ -136,7 +136,7 @@ function gotStream(stream)
 {
 	// got local stream as result of getUserMedia() -add it to localVideo html element
 	trace("Received local stream");
-	localVideo.src = URL.createObjectURL(stream);
+	localVideo.srcObject = stream;
 	localStream = stream;
 	callButton.disabled = false;
 }
@@ -147,7 +147,7 @@ function start()
 	trace("Requesting local stream");
 
 	// webrtc getUserMedia
-	getUserMedia({audio:true, video:videoEnabled}, gotStream,
+	navigator.mediaDevices.getUserMedia({audio:true, video:videoEnabled}).then(gotStream).catch(
 			function(error) {
 				trace("getUserMedia error: ", error);
 			});
