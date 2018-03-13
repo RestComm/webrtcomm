@@ -1256,36 +1256,20 @@ SIPMessage.prototype.setStackTransaction =function(transaction){
     this.stackTransaction = transaction;
 }
 
-SIPMessage.prototype.addViaHeaderList =function(viaheader){
+SIPMessage.prototype.addViaHeaderList =function(viaheader) {
     if(logger!=undefined) logger.debug("SIPMessage:addViaHeaderList():viaheader="+viaheader);
-    var hn=new Array();
-    var n=0;
-    for(var i=0;i<this.headers.length;i++)
-    {            
-        hn[n]=this.headers[i];
-        n=n+1;
-        if ((this.headers[i] instanceof ViaList)) {
-            if(i==this.headers.length-1||!(this.headers[i] instanceof ViaList))
-            {
-                hn[n]=viaheader;
-                n=n+1;
-            }
-            if(!(this.headers[i-1] instanceof ViaList)&&i!=0)
-            {
-                var array=new Array();
-                array[0]=this.headers[i].getName().toLowerCase();
-                array[1]=this.headers[i];
-                this.nameTable.push(array);
-            }
+    // let's check for existing Via headers
+    for(var i = 0; i < this.headers.length; i++) {
+        if (this.headers[i] instanceof ViaList) {
+            // we've found, let's concatenate with existing and return
+            this.headers[i].concatenate(viaheader);
+            return;
         }
     }
-    if(n==i)
-    {
-        hn[n]=viaheader;
-        array=new Array();
-        array[0]=viaheader.getName().toLowerCase();
-        array[1]=viaheader;
-        this.nameTable.push(array);
-    }
-    this.headers=hn;
+    // we didn't found existing via headers, let's add a new header
+    array = new Array();
+    array[0] = viaheader.getName().toLowerCase();
+    array[1] = viaheader;
+    this.headers[i] = viaheader;
+    this.nameTable.push(array);
 }

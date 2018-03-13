@@ -372,10 +372,10 @@ SIPHeaderList.prototype.addAll =function(){
         
         var collection=arguments[0];
         var length=this.hlist.length;
-        for(var i=0;i<collection.length;i++)
+        for(var i=0;i<collection.hlist.length;i++)
         {
             var n=i+length;
-            this.hlist[n]=collection[i];
+            this.hlist[n]=collection.hlist[i];
         }
         if(this.hlist.length!=length)
         {
