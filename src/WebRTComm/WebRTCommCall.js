@@ -33,6 +33,9 @@ WebRTCommCall = function(webRTCommClient) {
 		this.statsAlreadyRequested = false;
 		// webrtc media stats (i.e. coming from PeerConnection.getStats())
 		this.stats = undefined;
+		// gatheringConsideredDone is set to true when the SDK-level gathering timeout has fired (in contrast to 'gathering complete' of WebRTC Peer Connection, which can happen at a different time)
+		this.gatheringConsideredDone = false;
+		this.candidateTimer = undefined;
 	} else {
 		throw "WebRTCommCall:WebRTCommCall(): bad arguments"
 	}
@@ -206,8 +209,6 @@ WebRTCommCall.prototype.open = function(calleePhoneNumber, configuration) {
 
 						// Setup RTCPeerConnection first
 						this.createRTCPeerConnection();
-						////////////
-						//this.get_stats();
 						if (configuration.audioMediaFlag || configuration.videoMediaFlag) {
 							console.debug("[PC]: addStream()");
 							this.peerConnection.addStream(this.configuration.localMediaStream);
@@ -609,6 +610,7 @@ WebRTCommCall.prototype.accept = function(configuration) {
 				if (this.isOpened() === false) {
 					try {
 						this.createRTCPeerConnection();
+
 						if (configuration.audioMediaFlag || configuration.videoMediaFlag) {
 							console.debug("[PC]: addStream()");
 							this.peerConnection.addStream(this.configuration.localMediaStream);
@@ -1179,6 +1181,8 @@ WebRTCommCall.prototype.createRTCPeerConnection = function() {
 		that.onRtcPeerConnectionOnMessageChannelEvent(event);
 	};
 
+	this.startCandidateTimer();
+
 	console.debug("WebRTCommCall:createPeerConnection(): this.peerConnection=" + JSON.stringify(this.peerConnection));
 };
 
@@ -1495,45 +1499,18 @@ WebRTCommCall.prototype.onRtcPeerConnectionRemoveStreamEvent = function(event) {
  */
 WebRTCommCall.prototype.onRtcPeerConnectionIceCandidateEvent = function(rtcIceCandidateEvent) {
 	console.debug("[PC]: onicecandidate()");
-	try {
-		console.debug("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): rtcIceCandidateEvent=" + JSON.stringify(rtcIceCandidateEvent.candidate));
-		if (this.peerConnection) {
-			console.debug("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): this.peerConnection.signalingState=" + this.peerConnection.signalingState);
-			console.debug("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): this.peerConnection.iceGatheringState=" + this.peerConnection.iceGatheringState);
-			console.debug("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): this.peerConnection.iceConnectionState=" + this.peerConnection.iceConnectionState);
-			console.debug("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): this.peerConnectionState=" + this.peerConnectionState);
-			if (this.peerConnection.signalingState !== 'closed') {
-				// Gathering complete is signalled here when rtcIceCandidateEvent.candidate is null
-				if (!rtcIceCandidateEvent.candidate || this.peerConnection.iceGatheringState === 'complete') {
-					if (this.peerConnectionState === 'preparing-offer') {
-						var sdpOfferString = this.peerConnection.localDescription.sdp;
-						var parsedSdpOffer = this.setRtcPeerConnectionLocalDescription(this.peerConnection.localDescription);
 
-						// Apply modified SDP Offer
-						this.connector.invite(parsedSdpOffer);
-						this.peerConnectionState = 'offer-sent';
-					} else if (this.peerConnectionState === 'preparing-answer') {
-						var sdpAnswerString = this.peerConnection.localDescription.sdp;
-						var parsedSdpAnswer = this.setRtcPeerConnectionLocalDescription(this.peerConnection.localDescription);
+  console.debug("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): rtcIceCandidateEvent=" + JSON.stringify(rtcIceCandidateEvent.candidate));
+  if (this.peerConnection) {
+    console.debug("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): this.peerConnection.signalingState=" + this.peerConnection.signalingState);
+    console.debug("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): this.peerConnection.iceGatheringState=" + this.peerConnection.iceGatheringState);
+    console.debug("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): this.peerConnection.iceConnectionState=" + this.peerConnection.iceConnectionState);
+    console.debug("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): this.peerConnectionState=" + this.peerConnectionState);
 
-						this.connector.accept(parsedSdpAnswer);
-						this.peerConnectionState = 'established';
-					} else if (this.peerConnectionState === 'established') {
-						// Why this last ice candidate event?
-					} else {
-						console.error("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): RTCPeerConnection bad state!" + this.peerConnectionState);
-					}
-				}
-			} else {
-				console.error("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): RTCPeerConnection closed!");
-			}
-		} else {
-			console.warn("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): event ignored");
-		}
-	} catch (exception) {
-		console.error("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): catched exception, exception:" + exception);
-		this.onRtcPeerConnectionErrorEvent(exception);
-	}
+    this.handleCandidateEvent(rtcIceCandidateEvent.candidate, false);
+  } else {
+    console.warn("WebRTCommCall:onRtcPeerConnectionIceCandidateEvent(): event ignored");
+  }
 };
 
 /**
@@ -2494,4 +2471,105 @@ WebRTCommCall.prototype.forceTurnMediaRelay = function(sessionDescription) {
 	} else {
 		throw "WebRTCommCall:forceTurnMediaRelay(): bad arguments"
 	}
+};
+
+/**
+ * Helper that handles the logic for WebRTC candidate events.
+ * @private
+ * @param {RTCPeerConnectionIceEvent.candidate} candidate  RTCPeerConnection candidate
+ * @param {boolean} gatheringTimedOut  True, if handleCandidateEvent was called as a result of candidate gathering timing out in the SDK level.
+ *        False, if handleCandidateEvent was called from WebRTC notifying us of a new candidate event
+ */
+WebRTCommCall.prototype.handleCandidateEvent = function(candidate, gatheringTimedOut) {
+  try {
+    if (this.gatheringConsideredDone) {
+      // Ignore candidate if candidate gathering has already timed out in the SDK level. Notice that if candidate == null we still want to ignore but but not show warning
+      if (candidate) {
+        console.warn("WebRTCommCall:handleCandidateEvent(): Ignoring candidate: \'" + candidate.candidate + "\' because candidate gathering has already timed out in the SDK layer. Warning: this might be a hint that candidateTimeout should be increased")
+      }
+      return;
+    }
+
+    if (this.peerConnection.signalingState !== 'closed') {
+      // Gathering complete is signalled here when candidate is null
+      if (gatheringTimedOut || (!candidate || this.peerConnection.iceGatheringState === 'complete')) {
+        if (this.candidateTimer) {
+          clearTimeout(this.candidateTimer);
+        }
+        if (this.peerConnectionState === 'preparing-offer') {
+          var sdpOfferString = this.peerConnection.localDescription.sdp;
+          var parsedSdpOffer = this.setRtcPeerConnectionLocalDescription(this.peerConnection.localDescription);
+
+          // Apply modified SDP Offer
+          this.connector.invite(parsedSdpOffer);
+          this.peerConnectionState = 'offer-sent';
+        } else if (this.peerConnectionState === 'preparing-answer') {
+          var sdpAnswerString = this.peerConnection.localDescription.sdp;
+          var parsedSdpAnswer = this.setRtcPeerConnectionLocalDescription(this.peerConnection.localDescription);
+
+          this.connector.accept(parsedSdpAnswer);
+          this.peerConnectionState = 'established';
+        } else if (this.peerConnectionState === 'established') {
+          // Why this last ice candidate event?
+        } else {
+          console.error("WebRTCommCall:handleCandidateEvent(): RTCPeerConnection bad state!" + this.peerConnectionState);
+        }
+      }
+    } else {
+      console.error("WebRTCommCall:handleCandidateEvent(): RTCPeerConnection closed!");
+    }
+  } catch (exception) {
+    console.error("WebRTCommCall:handleCandidateEvent(): catched exception, exception:" + exception);
+    this.onRtcPeerConnectionErrorEvent(exception);
+  }
+}
+
+/**
+ * Sets up the candidate timeout timer, if applicable. The way this works is that the app provides a timer integer setting (as part of
+ * webRTCommClient.configuration.RTCPeerConnection.candidateTimeout) that tells the SDK how long to wait for WebRTC candidates. If the
+ * timer fires before WebRTC iceGatheringState transitions to 'complete', it attempts goes ahead with any candidates it has already gathered.
+ * Notice that if iceGatheringState transitions to 'complete' before the timer fires, then we kill the timer and continue with the call normally
+ *
+ * @private
+ * @returns {boolean} true if timer was started, false if it wasn't, due to configuration
+ */
+WebRTCommCall.prototype.startCandidateTimer = function() {
+  // If candidateTimeout is undefined or zero then no timer is used in the SDK level and we depend on the internal WebRTC timer, which at the point of this writing
+  // is 40 seconds.
+  if (!this.webRTCommClient.configuration.RTCPeerConnection.candidateTimeout ||
+    this.webRTCommClient.configuration.RTCPeerConnection.candidateTimeout <= 0) {
+    console.info("WebRTCommCall:startCandidateTimer(): Candidate timeout parameter is not set; disabling SDK-level timeout");
+    return false;
+  }
+
+  var that = this;
+  this.candidateTimer = setTimeout(function () {
+    that.onCandidatesTimeout();
+  }, parseInt(this.webRTCommClient.configuration.RTCPeerConnection.candidateTimeout));
+
+  return true;
+}
+
+/**
+ * Called if the candidate gathering times out
+ * @private
+ */
+WebRTCommCall.prototype.onCandidatesTimeout = function() {
+  console.warn("WebRTCommCall:onCandidatesTimeout(): Candidate gathering timed out after " + this.webRTCommClient.configuration.RTCPeerConnection.candidateTimeout + " miliseconds");
+
+  // Parse the SDP to retrieve the current number of candidates
+  var gatheredCandidatesCount = (this.peerConnection.localDescription.sdp.match(/a=candidate/g) || []).length;
+  if (this.peerConnection && this.peerConnection.signalingState !== 'closed' && this.peerConnection.iceGatheringState !== 'complete') {
+    if (gatheredCandidatesCount > 0) {
+      console.warn("WebRTCommCall:onCandidatesTimeout(): Will attempt to establish media connection with: " + gatheredCandidatesCount + " candidate(s)");
+
+      this.handleCandidateEvent(null, true);
+      this.gatheringConsideredDone = true;
+    }
+    else {
+      // No candidates gathered; need to hangup and notify of error
+      console.error("WebRTCommCall:onCandidatesTimeout(): No candidates have been gathered yet, call cannot be established. Consider increasing the candidateTimeout duration");
+      this.onRtcPeerConnectionErrorEvent();
+    }
+  }
 };
