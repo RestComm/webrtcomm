@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta content="width=device-width, initial-scale=1" name="viewport">
+		<title> WebRTC screen sharing demo </title>
+		<link href="css/bootstrap.min.css" rel="stylesheet">
+		<link href="favicon.ico" rel="shortcut icon">
+		<script src="js/lib/jquery.min.js">
+		</script>
+		<script src="js/lib/bootstrap.min.js">
+		</script>
+		<script src='js/lib/adapter.js'>
+		</script>
+		<script src='js/lib/jain-sip.js'>
+		</script>
+		<script src='js/lib/WebRTComm.js'>
+		</script>
+	</head>
+
+	<body>
+		<div class="container-fluid">
+			<div id="header">
+				<div class="row" style="background-color:#272D50">
+					<div class="col-md-12"> <img src="img/telestax_logo_white.png" style="padding:20px"> </div>
+				</div>
+			</div>
+			<div class="jumbotron" id="helloJumbo" style="display:none">
+				<h3 id="helloJumboUser"><span class="label label-success">#</span> </h3>
+				<p id="helloJumboMessage">#</p>
+				<p>
+					<a class="btn btn-primary btn-lg" href="#" id="helloJumboButton" role="button" style="background-color:#272D50"></a>
+				</p>
+			</div>
+		</div>
+		<div class="container" id="chooseUserForm">
+			<div class="alert alert-info alert-dismissible" role="alert" style="margin-top:2%;"> <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button> <strong>Important!</strong> Please <a href="#" class="alert-link" id="extDownloadHref">download</a> and <a href="http://www.howtogeek.com/120743/how-to-install-extensions-from-outside-the-chrome-web-store/" class="alert-link">install</a> screen capture extension before using this demo. </div>
+			<div class="row" style="margin-top:10%"">
+				<div class="col-md-4"> </div>
+				<div class="col-md-4">
+					<div class="panel panel-default">
+						<div class="panel-heading" style="background-color:#272D50">
+							<h3 class="text-center" style="padding:5px">
+								<font color="white"><b>Choose user</b></font>
+							</h3>
+						</div>
+						<div class="panel-body" style="display: inline">
+							<div> <img height="150" src="img/female_head.png" style="margin:30px" width="150"> <button class="btn btn-primary btn-lg" id="aliceButton" style="background-color:#272D50;margin:30px" type="button"><b>Alice</b></button> </div>
+							<div> <img height="150" src="img/man_head.png" style="margin:30px" width="150"> <button class="btn btn-primary btn-lg" id="bobButton" style="background-color:#272D50;margin:30px" type="button"><b>Bob</b></button> </div>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-4"> </div>
+			</div>
+		</div>
+		<div class="container-fluid"> <video autoplay id="screenVideo"></video> </div>
+		<script>
+			var jsElm = document.createElement("script");
+			jsElm.type = "application/javascript";
+			jsElm.src = "js/client.js";
+			document.body.appendChild(jsElm);
+		</script>
+	</body>
+
+</html>
